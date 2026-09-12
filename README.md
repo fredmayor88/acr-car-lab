@@ -2,11 +2,12 @@
 
 **→ https://fredmayor88.github.io/acr-car-lab/**
 
-Interactive gearing and power charts for every car in Assetto Corsa Rally. One page per
+Interactive gearing and power charts for 17 cars in Assetto Corsa Rally. One page per
 car: the power and torque curve, every selectable final drive, where each gear tops out,
 shift points, and speed against revs.
 
-Every number is read from the game's own files.
+Every gearing number is read from the game's own files. The rolling radius factor is
+fitted, not read — see below.
 
 ## How the numbers are made
 
