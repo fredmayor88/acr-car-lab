@@ -217,8 +217,9 @@ function wireHover(id, toHover) {
   svg.addEventListener('pointermove', e => {
     const map = maps[id];
     // Redrawing replaces every node, so a redraw between pointerdown and pointerup would
-    // swap the lane name out from under a click and the click would never fire.
-    if (!map || e.buttons) return;
+    // swap the lane name out from under a click and the click would never fire. Mouse
+    // only: a touch or pen in contact always reports a button, and would never hover.
+    if (!map || (e.pointerType === 'mouse' && e.buttons)) return;
     const box = svg.getBoundingClientRect();
     const vb = svg.viewBox.baseVal;
     const p = {
