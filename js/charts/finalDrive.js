@@ -64,7 +64,7 @@ export function render(svg, car, state, onPick) {
   const maxPct = Math.max(...rows.map(r => r.pct));
   const xs = v => L + ((v - 97) / (maxPct * 1.06 - 97)) * (R - L);
   const bottom = T + rows.length * step;
-  svg.setAttribute('viewBox', `0 0 1100 ${bottom + 56}`);
+  svg.setAttribute('viewBox', `0 0 1100 ${bottom + 30}`);
 
   for (let v = 100; v <= maxPct + 6; v += 10) {
     el(svg, 'line', { x1: xs(v), x2: xs(v), y1: T, y2: bottom,
@@ -102,8 +102,4 @@ export function render(svg, car, state, onPick) {
                                   class: 'hit' });
     hit.addEventListener('click', () => onPick(r.index));
   });
-
-  text(svg, L - 190, bottom + 40,
-       '100% is the shortest combination. Speed is top gear of '
-       + car.gear_sets[state.set].label.toLowerCase() + '.', 'lbl');
 }
