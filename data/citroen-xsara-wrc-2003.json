@@ -192,6 +192,10 @@
  "gear_sets": [
   {
    "label": "Gear set 1",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "37//12",
@@ -221,6 +225,10 @@
   },
   {
    "label": "Gear set 2",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "37//12",
@@ -250,6 +258,10 @@
   },
   {
    "label": "Gear set 3",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//12",
@@ -279,6 +291,10 @@
   },
   {
    "label": "Gear set 4",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "37//12",
@@ -304,6 +320,10 @@
   },
   {
    "label": "Gear set 5",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//12",
@@ -330,12 +350,7 @@
  ],
  "final_drive": {
   "adjustment": "Center Differential Ratio",
-  "primaries": [
-   {
-    "name": "25//25",
-    "value": 1.0
-   }
-  ],
+  "primaries": [],
   "options": [
    {
     "name": "39//24",
@@ -406,6 +421,5 @@
  },
  "defaults": {
   "loaded_radius_factor": 0.9562
- },
- "generated": "2026-09-12"
+ }
 }

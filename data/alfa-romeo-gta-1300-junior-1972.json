@@ -192,6 +192,10 @@
  "gear_sets": [
   {
    "label": "Gear set 1",
+   "primary": {
+    "name": "30//23",
+    "value": 1.3043478260869565
+   },
    "gears": [
     {
      "name": "38//15",
@@ -217,6 +221,10 @@
   },
   {
    "label": "Gear set 2",
+   "primary": {
+    "name": "30//23",
+    "value": 1.3043478260869565
+   },
    "gears": [
     {
      "name": "36//17",
@@ -242,6 +250,10 @@
   },
   {
    "label": "Gear set 3",
+   "primary": {
+    "name": "30//23",
+    "value": 1.3043478260869565
+   },
    "gears": [
     {
      "name": "35//18",
@@ -267,6 +279,10 @@
   },
   {
    "label": "Gear set 4",
+   "primary": {
+    "name": "30//23",
+    "value": 1.3043478260869565
+   },
    "gears": [
     {
      "name": "35//18",
@@ -292,6 +308,10 @@
   },
   {
    "label": "Gear set 5",
+   "primary": {
+    "name": "30//23",
+    "value": 1.3043478260869565
+   },
    "gears": [
     {
      "name": "34//19",
@@ -318,12 +338,7 @@
  ],
  "final_drive": {
   "adjustment": "Differential Ratio Rear",
-  "primaries": [
-   {
-    "name": "30//23",
-    "value": 1.3043478260869565
-   }
-  ],
+  "primaries": [],
   "options": [
    {
     "name": "41//6",
@@ -394,6 +409,5 @@
  },
  "defaults": {
   "loaded_radius_factor": 0.9562
- },
- "generated": "2026-09-12"
+ }
 }

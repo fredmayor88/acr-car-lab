@@ -172,6 +172,10 @@
  "gear_sets": [
   {
    "label": "Gear set 1",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "41//12",
@@ -197,6 +201,10 @@
   },
   {
    "label": "Gear set 2",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//12",
@@ -247,6 +255,5 @@
  },
  "defaults": {
   "loaded_radius_factor": 0.9562
- },
- "generated": "2026-09-12"
+ }
 }

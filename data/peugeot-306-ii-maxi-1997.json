@@ -212,6 +212,10 @@
  "gear_sets": [
   {
    "label": "Gear set 1",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "36//12",
@@ -245,6 +249,10 @@
   },
   {
    "label": "Gear set 2",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "36//12",
@@ -278,6 +286,10 @@
   },
   {
    "label": "Gear set 3",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "29//11",
@@ -307,6 +319,10 @@
   },
   {
    "label": "Gear set 4",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "31//11",
@@ -336,6 +352,10 @@
   },
   {
    "label": "Gear set 5",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//12",
@@ -365,6 +385,10 @@
   },
   {
    "label": "Gear set 6",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "42//13",
@@ -394,6 +418,10 @@
   },
   {
    "label": "Gear set 7",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//13",
@@ -423,6 +451,10 @@
   },
   {
    "label": "Gear set 8",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//13",
@@ -452,6 +484,10 @@
   },
   {
    "label": "Gear set 9",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//13",
@@ -477,6 +513,10 @@
   },
   {
    "label": "Gear set 10",
+   "primary": {
+    "name": "25//25",
+    "value": 1.0
+   },
    "gears": [
     {
      "name": "38//13",
@@ -503,12 +543,7 @@
  ],
  "final_drive": {
   "adjustment": "Differential Ratio Front",
-  "primaries": [
-   {
-    "name": "25//25",
-    "value": 1.0
-   }
-  ],
+  "primaries": [],
   "options": [
    {
     "name": "68//12",
@@ -715,6 +750,5 @@
  },
  "defaults": {
   "loaded_radius_factor": 0.9562
- },
- "generated": "2026-09-12"
+ }
 }
