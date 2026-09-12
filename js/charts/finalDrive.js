@@ -73,11 +73,15 @@ export function render(svg, car, state, onPick) {
 
   rows.forEach((r, i) => {
     const y = T + i * step + step / 2;
-    const hit = el(svg, 'rect', { x: 6, y: y - 12, width: 1080, height: 24,
-                                  fill: r.selected ? C.cyan : 'transparent',
-                                  'fill-opacity': r.selected ? 0.07 : 0,
-                                  rx: 2, class: 'hit' });
-    hit.addEventListener('click', () => onPick(r.index));
+    // Paint order, and it matters: the selected row's tint goes down first so the marks
+    // sit on it, then the marks, then the click target LAST so nothing paints over it.
+    // SVG gives a click to the topmost painted element, and these are siblings with no
+    // listener of their own — with the target underneath, clicking the row label or the
+    // km/h readout (the two most natural targets) hit a text node and the event was lost.
+    if (r.selected) {
+      el(svg, 'rect', { x: 6, y: y - 12, width: 1080, height: 24, rx: 2,
+                        fill: C.cyan, 'fill-opacity': 0.07 });
+    }
     el(svg, 'line', { x1: xs(100), x2: xs(r.pct), y1: y, y2: y, stroke: C.steel,
                       'stroke-opacity': 0.42, 'stroke-width': 1.3 });
     el(svg, 'circle', { cx: xs(r.pct), cy: y, r: r.selected ? 6.4 : 5,
@@ -88,6 +92,12 @@ export function render(svg, car, state, onPick) {
     text(svg, xs(r.pct) + 12, y + 3.6,
          `${r.pct.toFixed(0).padStart(3)}%     ${r.kmh.toFixed(0)} km/h`, 'val',
          { 'fill-opacity': r.selected ? 1 : 0.72 });
+    // `fill: transparent` is still a painted fill, so `visiblePainted` hit-testing finds
+    // it; `pointer-events: all` says so outright rather than relying on that reading.
+    const hit = el(svg, 'rect', { x: 6, y: y - 12, width: 1080, height: 24, rx: 2,
+                                  fill: 'transparent', 'pointer-events': 'all',
+                                  class: 'hit' });
+    hit.addEventListener('click', () => onPick(r.index));
   });
 
   text(svg, L - 190, bottom + 40,

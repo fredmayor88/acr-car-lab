@@ -12,11 +12,22 @@ const surfacesFor = car =>
 
 const combosFor = car => (car.final_drive ? finalDriveCombos(car.final_drive) : []);
 
-/** The combination the car ships with, so the page opens on something real. */
+/**
+ * The combination the car ships with, so the page opens on something real.
+ *
+ * The option alone does not identify it on the Stratos: its stock option pairs with all
+ * eight selectable primaries, and the first of those is the 1.375, not the 1.1 the car is
+ * actually fitted with. The fitted primary is the one stored in the gear set asset, so a
+ * combo that carries a primary has to match that too. Combos with `primary: null` (every
+ * other car with a selector) have nothing to match and the option is enough.
+ */
 function stockIndex(car) {
   const combos = combosFor(car);
   if (!combos.length) return 0;
-  const i = combos.findIndex(c => c.option.name === car.final_drive.stock_option);
+  const fitted = car.gear_sets[0].primary;
+  const i = combos.findIndex(c =>
+    c.option.name === car.final_drive.stock_option
+    && (!c.primary || (fitted != null && c.primary.name === fitted.name)));
   return i < 0 ? 0 : i;
 }
 

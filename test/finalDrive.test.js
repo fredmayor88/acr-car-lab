@@ -73,6 +73,16 @@ test('the gear set primary is what drives speed when the combo has none', () => 
   assert.ok(b.value > a.value);
 });
 
+test('shape-2 speeds are pinned: the Fiat 131 shortest combo on its three gear sets', () => {
+  // Both halves of the speed path vary here — the top gear AND the set's primary
+  // (1.043 / 1.045 / 1.269) — so dropping the primary from the path fails this.
+  // The Mini cannot catch that: its four sets all have top gear x primary = 1.0000.
+  const fiat = load('fiat-131-abarth-1976');
+  const speeds = fiat.gear_sets.map((_, set) =>
+    Number(layout(fiat, stateFor(fiat, { set })).rows[0].kmh.toFixed(1)));
+  assert.deepEqual(speeds, [173.2, 139.0, 159.7]);
+});
+
 test('the selected row is flagged once, wherever it sorts', () => {
   const rows = layout(stratos, stateFor(stratos, { fd: 5 })).rows;
   assert.equal(rows.filter(r => r.selected).length, 1);

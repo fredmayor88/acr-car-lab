@@ -1,10 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
 import { defaultState, parseHash, toHash } from '../js/state.js';
+import { finalDriveCombos } from '../js/gearing.js';
+import { layout } from '../js/charts/finalDrive.js';
+
+const set = (label, primary) => ({ label, gears: [], primary: { name: primary, value: 1 } });
 
 const car = {
-  gear_sets: [{ label: 'Gear set 1', gears: [] }, { label: 'Gear set 2', gears: [] },
-              { label: 'Gear set 3', gears: [] }],
+  gear_sets: [set('Gear set 1', 'b'), set('Gear set 2', 'b'), set('Gear set 3', 'b')],
   final_drive: {
     primaries: [{ name: 'a', value: 1.375 }, { name: 'b', value: 1.1 }],
     options: [{ name: 'x', value: 3.8 }, { name: 'y', value: 3.4 }],
@@ -74,4 +78,47 @@ test('an empty hash gives the default state', () => {
 test('a car with no adjustable final drive still parses', () => {
   const plain = { ...car, final_drive: null };
   assert.equal(parseHash('#fd=3', plain).fd, 0);
+});
+
+test('the stock combo matches the fitted primary, not just the option', () => {
+  // stock option 'y' pairs with both primaries; the gear sets are fitted with 'b'
+  const combos = finalDriveCombos(car.final_drive);
+  const stock = combos[defaultState(car).fd];
+  assert.equal(stock.option.name, 'y');
+  assert.equal(stock.primary.name, 'b');
+});
+
+const load = slug =>
+  JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
+
+test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 215 km/h', () => {
+  const stratos = load('lancia-stratos');
+  const state = defaultState(stratos);
+  const stock = finalDriveCombos(stratos.final_drive)[state.fd];
+  assert.equal(stock.primary.name, '33//31*31//30');
+  assert.equal(stock.option.name, '65//19');
+  const row = layout(stratos, state).rows.find(r => r.selected);
+  assert.equal(Math.round(row.kmh), 215);
+});
+
+test('every car opens on a combo carrying its stock option and fitted primary', () => {
+  const slugs = readdirSync(new URL('../data/', import.meta.url))
+    .filter(f => f.endsWith('.json') && f !== 'index.json')
+    .map(f => f.slice(0, -5));
+  for (const slug of slugs) {
+    const c = load(slug);
+    const state = defaultState(c);
+    if (!c.final_drive) {
+      assert.equal(state.fd, 0, slug);
+      continue;
+    }
+    const combos = finalDriveCombos(c.final_drive);
+    const stock = combos[state.fd];
+    assert.equal(stock.option.name, c.final_drive.stock_option, slug);
+    if (stock.primary) {
+      assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
+    }
+    // and it is the row the chart highlights
+    assert.equal(layout(c, state).rows.filter(r => r.selected).length, 1, slug);
+  }
 });
