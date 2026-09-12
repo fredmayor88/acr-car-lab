@@ -1,6 +1,6 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { track, resetTracking, _queue } from '../js/tracking.js';
+import { track, resetTracking, flush, _queue } from '../js/tracking.js';
 
 beforeEach(() => {
   resetTracking();
@@ -31,5 +31,32 @@ test('the queue drains once goatcounter arrives', () => {
   globalThis.window.goatcounter = { count: e => seen.push(e) };
   track('pick-gearset');
   assert.deepEqual(seen.map(e => e.path), ['copy-link', 'pick-gearset']);
+  assert.equal(_queue().length, 0);
+});
+
+test('an event tracked before goatcounter exists is sent by a later flush() with no further track() call', () => {
+  track('car-load');
+  assert.equal(_queue().length, 1);
+  const seen = [];
+  globalThis.window.goatcounter = { count: e => seen.push(e) };
+  flush();
+  assert.deepEqual(seen.map(e => e.path), ['car-load']);
+  assert.equal(_queue().length, 0);
+});
+
+test('flush() with no goatcounter keeps the queue intact', () => {
+  track('some-event');
+  flush();
+  assert.equal(_queue().length, 1);
+  assert.equal(_queue()[0].path, 'some-event');
+});
+
+test('calling flush() twice sends each event once', () => {
+  track('event-one');
+  const seen = [];
+  globalThis.window.goatcounter = { count: e => seen.push(e) };
+  flush();
+  flush();
+  assert.deepEqual(seen.map(e => e.path), ['event-one']);
   assert.equal(_queue().length, 0);
 });
