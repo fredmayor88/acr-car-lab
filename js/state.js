@@ -1,0 +1,75 @@
+// Page state, and its round trip through the URL hash. A link has to reproduce exactly
+// what someone was looking at, so every control's value lives here and nowhere else.
+// Values arriving from a URL get the same validation as typed input.
+
+import { DEFAULT_FACTOR, SURFACES, finalDriveCombos } from './gearing.js';
+
+const K_MIN = 0.80;
+const K_MAX = 1.10;
+
+const surfacesFor = car =>
+  SURFACES.filter(s => Object.prototype.hasOwnProperty.call(car.tyres, s.key));
+
+const combosFor = car => (car.final_drive ? finalDriveCombos(car.final_drive) : []);
+
+/** The combination the car ships with, so the page opens on something real. */
+function stockIndex(car) {
+  const combos = combosFor(car);
+  if (!combos.length) return 0;
+  const i = combos.findIndex(c => c.option.name === car.final_drive.stock_option);
+  return i < 0 ? 0 : i;
+}
+
+export function defaultState(car) {
+  const available = surfacesFor(car);
+  return {
+    surface: available.length ? available[0].key : 'Tarmac_Dry',
+    fd: stockIndex(car),
+    set: 0,
+    draw: [0],
+    k: car.defaults?.loaded_radius_factor ?? DEFAULT_FACTOR,
+  };
+}
+
+const intOr = (raw, fallback) => {
+  const n = Number.parseInt(raw, 10);
+  return Number.isInteger(n) ? n : fallback;
+};
+
+export function parseHash(hash, car) {
+  const base = defaultState(car);
+  const q = new URLSearchParams((hash || '').replace(/^#/, ''));
+  const out = { ...base };
+
+  const surface = q.get('s');
+  if (surface && surfacesFor(car).some(x => x.key === surface)) out.surface = surface;
+
+  const combos = combosFor(car);
+  const fd = intOr(q.get('fd'), -1);
+  if (fd >= 0 && fd < combos.length) out.fd = fd;
+
+  const set = intOr(q.get('set'), -1);
+  if (set >= 0 && set < car.gear_sets.length) out.set = set;
+
+  if (q.has('draw')) {
+    const drawn = [...new Set((q.get('draw') || '').split(',')
+      .map(v => intOr(v, -1))
+      .filter(i => i >= 0 && i < car.gear_sets.length))].sort((a, b) => a - b);
+    if (drawn.length) out.draw = drawn;
+  }
+
+  const k = Number.parseFloat(q.get('k'));
+  if (Number.isFinite(k) && k >= K_MIN && k <= K_MAX) out.k = k;
+
+  return out;
+}
+
+export function toHash(state, car) {
+  const q = new URLSearchParams();
+  q.set('s', state.surface);
+  if (combosFor(car).length) q.set('fd', String(state.fd));
+  q.set('set', String(state.set));
+  q.set('draw', state.draw.join(','));
+  q.set('k', String(state.k));
+  return '#' + q.toString();
+}
