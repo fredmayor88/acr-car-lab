@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { layout, shiftReadout } from '../js/charts/shiftPoints.js';
+import { chipX, layout, shiftReadout } from '../js/charts/shiftPoints.js';
 
 // Stratos-shape: final_drive.primaries non-empty, each gear set also carries its own
 // primary (unused here since the combo's primary replaces it) — same fixture shape as
@@ -127,4 +127,32 @@ test('a fixed-final-drive car (final_drive null) still lays out to finite, posit
     assert.ok(Number.isFinite(bar.from) && bar.from > 0);
     assert.ok(Number.isFinite(bar.to) && bar.to > 0);
   });
+});
+
+// --- the readout never describes a state the gear cannot reach ------------------------
+
+test('hovering past the end of a gear\'s bar clamps to the rev limit, not beyond', () => {
+  const bars = layout(car, state).bars;
+  const r = shiftReadout(car, state, 0, 300);
+  assert.ok(Math.abs(r.speed - bars[0].to) < 1e-9);
+  assert.ok(Math.abs(r.rpm - car.engine.redline) < 1e-6);
+});
+
+test('hovering before the start of a gear\'s bar clamps to the rev floor', () => {
+  const bars = layout(car, state).bars;
+  const r = shiftReadout(car, state, 4, 10);
+  assert.ok(Math.abs(r.speed - bars[4].from) < 1e-9);
+});
+
+// --- the shift chips stay inside the 1100-wide viewBox ---------------------------------
+
+test('a chip sits right of the cursor line when it fits', () => {
+  assert.equal(chipX(500, 200), 513);
+});
+
+test('a chip that would overflow the right edge flips to the left of the cursor line', () => {
+  const cw = '↓ downshift 9311 rpm   over limit'.length * 6.4 + 18;
+  const x = chipX(990, cw);
+  assert.ok(x + cw <= 1096, 'chip must end inside the viewBox');
+  assert.ok(x + cw <= 990, 'chip must not cover the cursor line or its marker');
 });

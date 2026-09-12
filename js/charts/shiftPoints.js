@@ -37,6 +37,10 @@ export function layout(car, state) {
 export function shiftReadout(car, state, gear, speed) {
   const circ = circOf(car, state);
   const tot = totals(car, state);
+  // The axis runs past every bar, so the cursor can sit where this gear cannot be:
+  // clamp to its own bar, rev floor to limiter, or the readout invents revs.
+  speed = Math.min(Math.max(speed, kmh(REV_FLOOR, tot[gear], circ)),
+                   kmh(car.engine.redline, tot[gear], circ));
   const revsIn = i => rpmAt(speed, tot[i], circ);
   const up = gear + 1 < tot.length ? { gear: gear + 1, rpm: revsIn(gear + 1) } : null;
   const down = gear > 0 ? { gear: gear - 1, rpm: revsIn(gear - 1) } : null;
@@ -48,6 +52,12 @@ export function shiftReadout(car, state, gear, speed) {
     down,
     overRev: down !== null && down.rpm > car.engine.redline,
   };
+}
+
+/** Left edge of a shift chip: right of the cursor line, or left of it when that overflows. */
+export function chipX(cursorX, width, edge = 1096) {
+  const right = cursorX + 13;
+  return right + width <= edge ? right : cursorX - 13 - width;
 }
 
 export function render(svg, car, state, hover = null) {
@@ -83,8 +93,8 @@ export function render(svg, car, state, hover = null) {
   text(svg, 16, T - 44, car.gear_sets[state.set].label, 'lbl', { fill: C.cyan });
 
   if (hover) {
-    const speed = hover.speed;
-    const r = shiftReadout(car, state, hover.gear, speed);
+    const r = shiftReadout(car, state, hover.gear, hover.speed);
+    const speed = r.speed;
     el(svg, 'line', { x1: xs(speed), x2: xs(speed), y1: T - 34, y2: bottom,
                       stroke: C.dark, 'stroke-width': 1.3, 'stroke-opacity': 0.7,
                       'stroke-dasharray': '3 3' });
@@ -107,9 +117,10 @@ export function render(svg, car, state, hover = null) {
       el(svg, 'circle', { cx: xs(speed), cy: y, r: 4.4,
                           fill: warn ? C.warn : C.dark, stroke: C.warm,
                           'stroke-width': 1.6 });
-      el(svg, 'rect', { x: xs(speed) + 13, y: y - 10.5, width: cw, height: 21,
+      const cx = chipX(xs(speed), cw);
+      el(svg, 'rect', { x: cx, y: y - 10.5, width: cw, height: 21,
                         rx: 2, fill: warn ? C.warn : C.dark });
-      text(svg, xs(speed) + 13 + cw / 2, y + 3.8, t, 'val',
+      text(svg, cx + cw / 2, y + 3.8, t, 'val',
            { 'text-anchor': 'middle', fill: C.warm, 'font-weight': '600' });
     };
     if (r.up) chip(r.up, '↑ upshift', false);
