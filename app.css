@@ -1,0 +1,86 @@
+:root{
+  --warm:#F5F2EB; --graphite:#30353A; --dark:#212529; --steel:#7B858E;
+  --walnut:#7A583B; --cyan:#148FAC; --warn:#9C3B2E;
+  --line:rgba(123,133,142,.28);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--warm);color:var(--graphite);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+header{border-bottom:1px solid var(--line);margin-bottom:26px}
+.brandrow{display:flex;align-items:baseline;gap:14px;padding:22px 0 4px}
+.brand{font-size:12.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--steel);font-weight:600}
+.brand b{color:var(--cyan);font-weight:600}
+.crumb{font-size:12.5px;color:var(--steel);text-decoration:none;margin-left:auto}
+h1{font-size:31px;margin:2px 0 3px;color:var(--dark);letter-spacing:-.015em}
+.sub{color:var(--steel);font-size:13.5px;margin:0 0 20px}
+.sub span{color:var(--graphite)}
+
+.bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;
+  background:rgba(255,255,255,.62);border:1px solid var(--line);border-radius:3px;
+  padding:14px 18px 15px;margin-bottom:8px;position:sticky;top:0;z-index:5}
+.ctl{display:flex;flex-direction:column;gap:5px}
+.ctl label{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--steel);font-weight:600}
+select{font:13.5px/1 "SF Mono",Menlo,Consolas,monospace;padding:7px 10px;
+  border:1px solid var(--line);background:#fff;color:var(--graphite);
+  border-radius:2px;min-width:200px}
+.copy{margin-left:auto;font-size:12.5px;color:var(--cyan);
+  border:1px solid rgba(20,143,172,.35);background:rgba(20,143,172,.05);
+  padding:8px 14px;border-radius:2px;cursor:pointer}
+.barnote{font-size:11.5px;color:var(--steel);margin:0 0 32px;padding-left:2px}
+
+section{margin-bottom:42px}
+h2{font-size:17px;margin:0 0 2px;color:var(--dark);letter-spacing:-.01em}
+.cap{font-size:12.5px;color:var(--steel);margin:0 0 14px}
+.cap b{color:var(--graphite);font-weight:600}
+.panel{background:rgba(255,255,255,.62);border:1px solid var(--line);
+  border-radius:3px;padding:16px 18px}
+.panel.row{display:flex;gap:18px;align-items:flex-start}
+.panel.row svg{flex:1;min-width:0}
+svg{display:block;width:100%;height:auto}
+.axis{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--steel)}
+.lbl{font:11px -apple-system,"Segoe UI",sans-serif;fill:var(--steel)}
+.rowlbl{font:11px -apple-system,"Segoe UI",sans-serif;fill:var(--graphite)}
+.val{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--graphite)}
+.pip{font:9px "SF Mono",Menlo,Consolas,monospace;fill:var(--warm);font-weight:700}
+.hit{cursor:pointer}
+
+.setlist{width:158px;flex:0 0 158px;padding-top:6px}
+.setlist h4{font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--steel);margin:0 0 8px;font-weight:600}
+.opt{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:2px;
+  font:12px "SF Mono",Menlo,Consolas,monospace;color:var(--steel);
+  border:1px solid transparent;cursor:pointer}
+.opt i{width:12px;height:12px;border:1px solid var(--line);border-radius:2px;
+  background:#fff;flex:0 0 12px}
+.opt.on{color:var(--graphite);border-color:var(--line);background:#fff}
+.opt small{color:var(--steel);font-size:10.5px}
+
+.foot{border-top:1px solid var(--line);padding-top:22px;display:flex;gap:34px;
+  flex-wrap:wrap;align-items:flex-start}
+.foot h3{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--steel);margin:0 0 8px;font-weight:600}
+.kbox{display:flex;align-items:center;gap:10px}
+.kbox input{font:14px "SF Mono",Menlo,Consolas,monospace;width:104px;padding:7px 10px;
+  border:1px solid var(--line);border-radius:2px;background:#fff;color:var(--graphite)}
+.kbox a{font-size:12px;color:var(--cyan);text-decoration:none}
+.fnote{font-size:12px;color:var(--steel);max-width:430px;margin:9px 0 0}
+.limits{font-size:12px;color:var(--steel);margin:0;max-width:390px}
+.limits ul{margin:0;padding-left:16px}
+.limits li{margin-bottom:3px}
+.notadjustable{font-size:13px;color:var(--steel);margin:0;padding:10px 2px}
+
+.carlist{list-style:none;margin:0;padding:0;display:grid;gap:2px;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.carlist a{display:block;padding:12px 14px;text-decoration:none;color:var(--graphite);
+  border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.62)}
+.carlist a:hover{border-color:var(--cyan);color:var(--cyan)}
+
+@media (max-width:720px){
+  .wrap{padding:0 16px 60px}
+  .panel.row{flex-direction:column}
+  .setlist{width:100%;flex:1 1 auto}
+}
