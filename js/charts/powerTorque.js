@@ -98,8 +98,15 @@ export function render(svg, car, hoverRpm = null) {
                         stroke: C.warm, 'stroke-width': 1.6 });
     el(svg, 'circle', { cx: xs(r.rpm), cy: yp(r.kw), r: 4.4, fill: C.cyan,
                         stroke: C.warm, 'stroke-width': 1.6 });
-    // parks bottom-left, where neither curve runs, so it cannot cover the peak labels
-    tip(svg, L + 16, B - 76, [
+    // Parks top-left. Bottom-left was tried and rejected: both curves start at zero,
+    // and zero is the bottom of the plot, so bottom-left is the one corner every car's
+    // torque curve is guaranteed to pass through at low rpm — it hid the curve. The
+    // top-left corner requires high torque at very low rpm, which no car's curve does;
+    // checked against all 17 cars in data/, including the two closest-margin curves
+    // (Citroen Xsara WRC, Audi Quattro Gr4 — both turbo, both torque-heavy low down):
+    // the tooltip box's y-range never reaches the curve's y at the rpm the box's
+    // x-range spans. See task-6-report.md for the per-car numbers.
+    tip(svg, L + 16, T + 6, [
       `${r.rpm} rpm`,
       `${r.nm.toFixed(0)} Nm    ${r.nmPct}% of peak`,
       `${r.kw.toFixed(0)} kW    ${r.kwPct}% of peak`,
