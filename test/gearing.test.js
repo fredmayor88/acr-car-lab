@@ -12,8 +12,21 @@ const near = (a, b, eps = 0.5) =>
 
 // The real exported data, not fixtures — these three files are the three shapes the
 // site has to handle, and a test against the real bytes is the only honest one.
-const car = slug =>
-  JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url), 'utf8'));
+const read = name => {
+  const url = new URL(`../data/${name}.json`, import.meta.url);
+  try {
+    return JSON.parse(readFileSync(url, 'utf8'));
+  } catch (err) {
+    throw new Error(`data/${name}.json could not be read (${err.code || err.message}) — ` +
+                    `is the slug in data/index.json still correct?`);
+  }
+};
+
+const car = slug => read(slug);
+
+// The manifest, so "every car" in the fleet test means every car and new exports are
+// covered without editing this file.
+const index = read('index');
 
 const stratos = car('lancia-stratos');            // selectable primary
 const mini = car('mini-cooper-s-1964');           // fixed primary, selectable diff
@@ -71,8 +84,17 @@ test('constants match the spec', () => {
     ['Tarmac_Dry', 'Tarmac_Wet', 'Gravel', 'Sweden', 'Montecarlo']);
   assert.deepEqual(SURFACES.map(s => s.label),
     ['Dry tarmac', 'Wet tarmac', 'Gravel', 'Snow', 'Winter tarmac']);
-  assert.ok(SET_COLOURS.length >= 8);
-  assert.ok(SET_COLOURS.every(c => /^#[0-9A-Fa-f]{6}$/.test(c)));
+  assert.deepEqual([...SET_COLOURS],
+    ['#7A583B', '#148FAC', '#30353A', '#B07A4E', '#0E6E85',
+     '#8D949B', '#4FB3C9', '#5A3F29']);
+});
+
+test('the shared constants are frozen — one chart cannot poison another', () => {
+  assert.ok(Object.isFrozen(SURFACES));
+  assert.ok(Object.isFrozen(SET_COLOURS));
+  assert.ok(SURFACES.every(s => Object.isFrozen(s)));
+  assert.throws(() => SET_COLOURS.push('#FFFFFF'));
+  assert.throws(() => { SURFACES[0].label = 'nope'; });
 });
 
 test('studded Montecarlo is not offered', () => {
@@ -182,6 +204,28 @@ test('Fabia: belowGearbox falls back to fixed_final_drive, not 1', () => {
   assert.notEqual(belowGearbox(fabia, null), 1);
 });
 
+test('belowGearbox throws rather than returning null when a combo is required', () => {
+  // Every shape-2 car has fixed_final_drive: null, so `primary * null` would be 0 and
+  // km/h would come out Infinity — silently drawn by a chart. Fail loudly instead.
+  assert.equal(mini.fixed_final_drive, null);
+  assert.throws(() => belowGearbox(mini, null), /mini-cooper-s-1964/);
+  assert.throws(() => overallRatio(mini, 0, null), /combo is required/);
+});
+
+test('no car in data/ can produce a non-finite speed through the public path', () => {
+  for (const { slug } of index.cars) {
+    const c = car(slug);
+    const combos = finalDriveCombos(c.final_drive);
+    if (combos.length === 0) {
+      assert.notEqual(c.fixed_final_drive, null, `${slug} has neither combos nor a fixed FD`);
+      assert.ok(Number.isFinite(overallRatio(c, 0, null)) && overallRatio(c, 0, null) > 0);
+    } else {
+      assert.throws(() => belowGearbox(c, null), /combo is required/,
+        `${slug} should demand a combo`);
+    }
+  }
+});
+
 test('Fabia gear set 1 is 59.9/84.5/115.0/152.0/188.9 km/h on dry tarmac', () => {
   const tops = gearTops(fabia.gear_sets[0].gears, overallRatio(fabia, 0, null),
                         dry(fabia), fabia.engine.redline);
@@ -195,11 +239,8 @@ test('Fabia: the gear set primary still applies even with no final drive object'
 // --- the whole fleet ---------------------------------------------------------------
 
 test('every car in data/ produces finite top speeds for every gear set', () => {
-  const slugs = ['lancia-stratos', 'mini-cooper-s-1964', 'skoda-fabia-rs-rally2-2022',
-                 'hyundai-i20-rally2-2021', 'peugeot-208-rally4',
-                 'volkswagen-polo-gti-r5-2018', 'lancia-037-evoluzione-2-1984',
-                 'audi-quattro-gr4-1981', 'subaru-impreza-555-s3-1993'];
-  for (const slug of slugs) {
+  assert.ok(index.cars.length >= 17, `index.json lists only ${index.cars.length} cars`);
+  for (const { slug } of index.cars) {
     const c = car(slug);
     const combos = finalDriveCombos(c.final_drive);
     const choices = combos.length ? combos : [null];

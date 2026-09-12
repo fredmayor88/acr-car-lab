@@ -18,16 +18,19 @@
 export const DEFAULT_FACTOR = 0.9562;
 export const REV_FLOOR = 3000;
 
-export const SURFACES = [
-  { key: 'Tarmac_Dry', label: 'Dry tarmac' },
-  { key: 'Tarmac_Wet', label: 'Wet tarmac' },
-  { key: 'Gravel', label: 'Gravel' },
-  { key: 'Sweden', label: 'Snow' },
-  { key: 'Montecarlo', label: 'Winter tarmac' },
-];
+// Frozen: these are shared across every chart module on the page, and one in-place
+// .sort() or .splice() by a consumer would poison all the others for the page's lifetime.
+export const SURFACES = Object.freeze([
+  Object.freeze({ key: 'Tarmac_Dry', label: 'Dry tarmac' }),
+  Object.freeze({ key: 'Tarmac_Wet', label: 'Wet tarmac' }),
+  Object.freeze({ key: 'Gravel', label: 'Gravel' }),
+  Object.freeze({ key: 'Sweden', label: 'Snow' }),
+  Object.freeze({ key: 'Montecarlo', label: 'Winter tarmac' }),
+]);
 
-export const SET_COLOURS = ['#7A583B', '#148FAC', '#30353A', '#B07A4E', '#0E6E85',
-                            '#8D949B', '#4FB3C9', '#5A3F29'];
+export const SET_COLOURS = Object.freeze(
+  ['#7A583B', '#148FAC', '#30353A', '#B07A4E', '#0E6E85',
+   '#8D949B', '#4FB3C9', '#5A3F29']);
 
 /** A loaded tyre rolls on a smaller radius than the stored free one. */
 export const circumference = (freeRadius, factor) => 2 * Math.PI * freeRadius * factor;
@@ -69,9 +72,23 @@ export function finalDriveCombos(fd) {
 export const effectivePrimary = (car, setIndex, combo) =>
   (combo && combo.primary) ? combo.primary : car.gear_sets[setIndex].primary;
 
-/** Everything under the gearbox: the selected combo, or the car's fixed final drive. */
-export const belowGearbox = (car, combo) =>
-  combo ? combo.below : car.fixed_final_drive;
+/**
+ * Everything under the gearbox: the selected combo, or the car's fixed final drive.
+ *
+ * Throws when neither exists. The twelve fixed-primary cars have `fixed_final_drive: null`
+ * and REQUIRE a combo; without this guard `primary * null` is 0 and km/h comes out
+ * Infinity, which a chart draws silently. Failing loudly here is the cheapest place to
+ * catch a UI that renders before a combo is picked, or nulls the combo on a car change.
+ */
+export function belowGearbox(car, combo) {
+  if (combo) return combo.below;
+  if (car.fixed_final_drive == null) {
+    throw new Error(
+      `${car.slug}: a final-drive combo is required for this car ` +
+      `(fixed_final_drive is null, so there is no ratio below the gearbox without one)`);
+  }
+  return car.fixed_final_drive;
+}
 
 /**
  * The whole drivetrain below the individual gear, for one gear set and one combo.
