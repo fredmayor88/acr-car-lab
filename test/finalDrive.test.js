@@ -1,0 +1,119 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+import { layout } from '../js/charts/finalDrive.js';
+
+const load = slug =>
+  JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
+
+const stateFor = (car, over = {}) => ({
+  surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0],
+  k: car.defaults.loaded_radius_factor, ...over,
+});
+
+// Shape 1 — selectable primaries (the Stratos is the only car in the game with them).
+const stratos = load('lancia-stratos');
+// Shape 2 — an empty `primaries` list: the primary comes from the gear set.
+const mini = load('mini-cooper-s-1964');
+// Shape 3 — no adjustable final drive at all.
+const i20 = load('hyundai-i20-rally2-2021');
+
+test('every primary x option combination gets a row', () => {
+  assert.equal(layout(stratos, stateFor(stratos)).rows.length, 8 * 2);
+});
+
+test('a car with an empty primaries list gets one row per option', () => {
+  const rows = layout(mini, stateFor(mini)).rows;
+  assert.equal(rows.length, mini.final_drive.options.length);
+  assert.ok(rows.every(r => r.primary === null));
+});
+
+test('rows without a primary are labelled with the option alone', () => {
+  const rows = layout(mini, stateFor(mini)).rows;
+  assert.equal(rows[0].label, '67//14');
+  assert.equal(layout(stratos, stateFor(stratos)).rows[0].label,
+               '35//30*33//28  ·  65//17');
+});
+
+test('rows are sorted shortest gearing first and the first row is 100%', () => {
+  const rows = layout(stratos, stateFor(stratos)).rows;
+  assert.equal(rows[0].pct, 100);
+  assert.ok(rows[0].value > rows[rows.length - 1].value);
+  assert.ok(rows[rows.length - 1].pct > 100);
+  for (let i = 1; i < rows.length; i++) assert.ok(rows[i - 1].value >= rows[i].value);
+});
+
+test('the picked primary replaces the gear set primary instead of stacking on it', () => {
+  const rows = layout(stratos, stateFor(stratos)).rows;
+  const top = rows[0];
+  // 1.375 x 3.8235, not 1.375 x 1.1 x 3.8235
+  assert.ok(Math.abs(top.value - 1.375 * (65 / 17)) < 1e-9);
+});
+
+test('the stock Stratos combination reads 215 km/h and 140% of the shortest', () => {
+  const state = stateFor(stratos, { set: 0 });
+  const rows = layout(stratos, state).rows;
+  const stock = rows.find(r => r.primary.name === '33//31*31//30'
+                            && r.option.name === '65//19');
+  assert.equal(Math.round(stock.kmh), 215);
+  assert.equal(Math.round(stock.pct), 140);
+});
+
+test('speed uses the top gear of the selected gear set', () => {
+  // Stratos gear set 3 tops out at 0.897, taller than set 1's 1.154, so it reads faster
+  const a = layout(stratos, stateFor(stratos, { set: 0 })).rows[0].kmh;
+  const b = layout(stratos, stateFor(stratos, { set: 2 })).rows[0].kmh;
+  assert.ok(b > a);
+});
+
+test('the gear set primary is what drives speed when the combo has none', () => {
+  // Mini set 3 has primary 1.25 against set 1's 1.043, so it gears the car down
+  const a = layout(mini, stateFor(mini, { set: 0 })).rows[0];
+  const b = layout(mini, stateFor(mini, { set: 2 })).rows[0];
+  assert.ok(b.value > a.value);
+});
+
+test('the selected row is flagged once, wherever it sorts', () => {
+  const rows = layout(stratos, stateFor(stratos, { fd: 5 })).rows;
+  assert.equal(rows.filter(r => r.selected).length, 1);
+  const picked = rows.find(r => r.selected);
+  assert.equal(picked.index, 5);
+});
+
+test('row.index addresses the unsorted combo list, not the display order', () => {
+  const rows = layout(mini, stateFor(mini)).rows;
+  assert.deepEqual(rows.map(r => r.index).sort((a, b) => a - b),
+                   rows.map((_, i) => i));
+  assert.equal(mini.final_drive.options[rows[0].index].name, rows[0].option.name);
+});
+
+test('a car with no adjustable final drive reports it instead of drawing rows', () => {
+  const l = layout(i20, stateFor(i20));
+  assert.equal(l.adjustable, false);
+  assert.deepEqual(l.rows, []);
+});
+
+test('surface changes every speed', () => {
+  const dry = layout(stratos, stateFor(stratos)).rows.map(r => r.kmh);
+  const snow = layout(stratos, stateFor(stratos, { surface: 'Sweden' })).rows
+    .map(r => r.kmh);
+  assert.ok(snow.every((v, i) => v > dry[i]));
+});
+
+test('every car in data/ lays out without throwing, on every gear set', () => {
+  const slugs = readdirSync(new URL('../data/', import.meta.url))
+    .filter(f => f.endsWith('.json') && f !== 'index.json')
+    .map(f => f.slice(0, -5));
+  assert.ok(slugs.length >= 17);
+  for (const slug of slugs) {
+    const car = load(slug);
+    for (let set = 0; set < car.gear_sets.length; set++) {
+      const l = layout(car, stateFor(car, { set }));
+      assert.equal(l.adjustable, Boolean(car.final_drive), slug);
+      for (const r of l.rows) {
+        assert.ok(Number.isFinite(r.kmh) && r.kmh > 0 && r.kmh < 500, `${slug} ${r.kmh}`);
+        assert.ok(r.pct >= 100, slug);
+      }
+    }
+  }
+});
