@@ -273,7 +273,13 @@ function draw() {
   for (const id in RENDER) RENDER[id]();
 }
 
+/** A hover belongs to the chart it was taken on; a new gear set can make it meaningless. */
+function clearHover() {
+  for (const id in hover) hover[id] = null;
+}
+
 function commit() {
+  clearHover();
   history.replaceState(null, '', toHash(state, car));
   syncControls();
   draw();
@@ -313,6 +319,7 @@ async function main() {
   commit();
   window.addEventListener('hashchange', () => {
     state = parseHash(location.hash, car);
+    clearHover();
     syncControls();
     draw();
   });
