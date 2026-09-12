@@ -305,7 +305,8 @@ async function main() {
   try {
     [car, index] = await Promise.all([
       fetch(`../data/${slug}.json`).then(r => r.json()),
-      fetch('../data/index.json').then(r => r.json()),
+      // only the footer date comes from here, so a missing index must not sink the page
+      fetch('../data/index.json').then(r => r.json()).catch(() => ({})),
     ]);
   } catch (err) {
     const loading = root.querySelector('.loading');
