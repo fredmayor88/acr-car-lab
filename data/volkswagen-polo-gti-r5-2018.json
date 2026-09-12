@@ -222,6 +222,7 @@
   }
  ],
  "final_drive": null,
+ "fixed_final_drive": 3.7857142857142856,
  "tyres": {
   "Tarmac_Dry": {
    "asset": "MichelinT00",

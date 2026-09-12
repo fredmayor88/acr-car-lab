@@ -296,6 +296,7 @@
   "stock_option": "63//16",
   "rest": 1.0
  },
+ "fixed_final_drive": null,
  "tyres": {
   "Tarmac_Dry": {
    "asset": "DunlopT00",

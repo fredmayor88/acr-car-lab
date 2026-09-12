@@ -197,6 +197,7 @@
   }
  ],
  "final_drive": null,
+ "fixed_final_drive": 4.230769230769231,
  "tyres": {
   "Tarmac_Dry": {
    "asset": "PirelliT08",

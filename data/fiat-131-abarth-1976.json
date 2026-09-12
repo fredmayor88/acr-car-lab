@@ -322,6 +322,7 @@
   "stock_option": "39//8",
   "rest": 1.0
  },
+ "fixed_final_drive": null,
  "tyres": {
   "Tarmac_Dry": {
    "asset": "MichelinT05",

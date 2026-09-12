@@ -457,6 +457,7 @@
   "stock_option": "51//13",
   "rest": 0.9558823529411764
  },
+ "fixed_final_drive": null,
  "tyres": {
   "Tarmac_Dry": {
    "asset": "PirelliT06",
