@@ -86,7 +86,12 @@ test('constants match the spec', () => {
     ['Dry tarmac', 'Wet tarmac', 'Gravel', 'Snow', 'Winter tarmac']);
   assert.deepEqual([...SET_COLOURS],
     ['#7A583B', '#148FAC', '#30353A', '#B07A4E', '#0E6E85',
-     '#8D949B', '#4FB3C9', '#5A3F29']);
+     '#8D949B', '#4FB3C9', '#5A3F29', '#555D64', '#7A6E64']);
+});
+
+test('the 306 Maxi has ten gear sets, and no two of them share a colour', () => {
+  assert.ok(SET_COLOURS.length >= 10);
+  assert.equal(new Set(SET_COLOURS.slice(0, 10).map(c => c.toUpperCase())).size, 10);
 });
 
 test('the shared constants are frozen — one chart cannot poison another', () => {

@@ -30,7 +30,9 @@ export const SURFACES = Object.freeze([
 
 export const SET_COLOURS = Object.freeze(
   ['#7A583B', '#148FAC', '#30353A', '#B07A4E', '#0E6E85',
-   '#8D949B', '#4FB3C9', '#5A3F29']);
+   '#8D949B', '#4FB3C9', '#5A3F29',
+   // 50/50 mixes: GRAPHITE with STEEL, WALNUT with STEEL. Sets 9 and 10 of the 306 Maxi.
+   '#555D64', '#7A6E64']);
 
 /** A loaded tyre rolls on a smaller radius than the stored free one. */
 export const circumference = (freeRadius, factor) => 2 * Math.PI * freeRadius * factor;
