@@ -21,8 +21,11 @@ import { el, text, clear } from '../svg.js';
 const C = { warm: '#F5F2EB', graphite: '#30353A', steel: '#7B858E',
             walnut: '#7A583B', cyan: '#148FAC' };
 
-/** Cars with an empty `primaries` list have no primary of their own to show. */
-const comboLabel = combo =>
+/**
+ * Cars with an empty `primaries` list have no primary of their own to show.
+ * Exported so the control bar's final-drive dropdown labels rows the same way.
+ */
+export const comboLabel = combo =>
   combo.primary ? `${combo.primary.name}  ·  ${combo.option.name}` : combo.option.name;
 
 export function layout(car, state) {
