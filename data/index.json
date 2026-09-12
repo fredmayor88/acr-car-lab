@@ -1,0 +1,72 @@
+{
+ "cars": [
+  {
+   "slug": "alfa-romeo-gta-1300-junior-1972",
+   "name": "Alfa Romeo GTA 1300 Junior 1972"
+  },
+  {
+   "slug": "alpine-a110-1-8-1973",
+   "name": "Alpine A110 1.8 1973"
+  },
+  {
+   "slug": "audi-quattro-gr4-1981",
+   "name": "Audi Quattro Gr.4 1981"
+  },
+  {
+   "slug": "citroen-xsara-wrc-2003",
+   "name": "Citroen Xsara WRC 2003"
+  },
+  {
+   "slug": "fiat-124-abarth-rally-16v-1974",
+   "name": "Fiat 124 Abarth Rally 16V 1974"
+  },
+  {
+   "slug": "fiat-131-abarth-1976",
+   "name": "Fiat 131 Abarth 1976"
+  },
+  {
+   "slug": "hyundai-i20-rally2-2021",
+   "name": "Hyundai i20 Rally2 2021"
+  },
+  {
+   "slug": "lancia-037-evoluzione-2-1984",
+   "name": "Lancia 037 Evoluzione 2 1984"
+  },
+  {
+   "slug": "lancia-delta-integrale-evoluzione-1992",
+   "name": "Lancia Delta Integrale Evoluzione 1992"
+  },
+  {
+   "slug": "lancia-fulvia-coupe-hf-1970",
+   "name": "Lancia Fulvia Coup\u00e9 HF 1970"
+  },
+  {
+   "slug": "lancia-stratos",
+   "name": "Lancia Stratos HF 1976"
+  },
+  {
+   "slug": "mini-cooper-s-1964",
+   "name": "Mini Cooper S 1964"
+  },
+  {
+   "slug": "peugeot-208-rally4",
+   "name": "Peugeot 208 Rally4 2020"
+  },
+  {
+   "slug": "peugeot-306-ii-maxi-1997",
+   "name": "Peugeot 306 II Maxi 1997"
+  },
+  {
+   "slug": "skoda-fabia-rs-rally2-2022",
+   "name": "Skoda Fabia RS Rally2 2022"
+  },
+  {
+   "slug": "subaru-impreza-555-s3-1993",
+   "name": "Subaru Impreza 555 (S3) 1993"
+  },
+  {
+   "slug": "volkswagen-polo-gti-r5-2018",
+   "name": "Volkswagen Polo GTI R5 2018"
+  }
+ ]
+}
