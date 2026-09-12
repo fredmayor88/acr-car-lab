@@ -3,10 +3,10 @@
 // answer for a car like the 306 Maxi with ten sets of differing gear counts.
 //
 // fdValue() takes an explicit setIndex (defaulting to the selected set) because every
-// lane must use its OWN gear set's overall ratio, not the selected set's. On the twelve
-// cars whose final_drive.primaries is empty, each gear set carries a different primary
-// (see js/gearing.js), so folding in the selected set's ratio for every lane published
-// speeds up to 26% wrong on the other lanes. Only the Stratos's selectable primary
+// lane must use its OWN gear set's overall ratio, not the selected set's. Every gear set
+// carries its own primary, and on four cars (Mini, Fiat 124, Fiat 131, Fulvia) that
+// primary differs between sets, so folding in the selected set's ratio for every lane
+// published speeds up to 26% wrong on the other lanes. Only the Stratos's selectable primary
 // (final_drive.primaries non-empty) replaces every lane's primary uniformly — see
 // overallRatio / effectivePrimary in js/gearing.js.
 
@@ -41,9 +41,16 @@ export function layout(car, state) {
   return { lanes, base: Math.min(...all), vmax: Math.max(...all) * 1.05 };
 }
 
+/** A hovered speed, held inside its lane: a standing start up to that lane's top gear. */
+export function clampSpeed(l, laneIndex, speed) {
+  const tops = l.lanes[laneIndex].tops;
+  return Math.min(Math.max(speed, 0), tops[tops.length - 1]);
+}
+
 /** Speed, gear, revs. One line. Uses the hovered lane's own ratio, not the selected set's. */
 export function hoverLine(car, state, laneIndex, speed) {
   const l = layout(car, state);
+  speed = clampSpeed(l, laneIndex, speed);
   const tops = l.lanes[laneIndex].tops;
   const gear = gearAtSpeed(tops, speed);
   const total = car.gear_sets[laneIndex].gears[gear].value * fdValue(car, state, laneIndex);
@@ -100,7 +107,8 @@ export function render(svg, car, state, onPickSet, hover = null) {
   });
 
   if (hover) {
-    const { lane, speed } = hover;
+    const { lane } = hover;
+    const speed = clampSpeed(l, lane, hover.speed);
     const y = T + lane * step + step / 2;
     el(svg, 'line', { x1: xs(speed), x2: xs(speed), y1: T - 10, y2: bottom,
                       stroke: '#212529', 'stroke-width': 1.3, 'stroke-opacity': 0.7,

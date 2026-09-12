@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fdValue, layout, hoverLine } from '../js/charts/ladder.js';
+import { clampSpeed, fdValue, layout, hoverLine } from '../js/charts/ladder.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
 // REPLACES each gear set's own primary. Values line up with the game's real Stratos data
@@ -122,4 +122,16 @@ test('a fixed-final-drive car (shape 3) still lays out per-set with its own prim
   const l = layout(fixed, emptyState);
   assert.equal(l.lanes.length, 2);
   assert.ok(l.lanes[1].tops[0] < l.lanes[0].tops[0]);
+});
+
+test('hovering past a lane\'s last dot clamps to that lane\'s top speed', () => {
+  // gear set 1 tops out at 215 km/h; the axis runs further, but the car does not
+  assert.match(hoverLine(car, state, 0, 260), /^215 km\/h {2}· {2}gear 5 {2}· {2}8750 rpm$/);
+});
+
+test('clampSpeed keeps a hovered speed inside the lane, from a standing start to its top', () => {
+  const l = layout(car, state);
+  assert.equal(clampSpeed(l, 1, -5), 0);
+  assert.equal(clampSpeed(l, 0, 999), l.lanes[0].tops[4]);
+  assert.equal(clampSpeed(l, 0, 120), 120);
 });
