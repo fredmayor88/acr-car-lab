@@ -4,8 +4,8 @@
 // left off the chart.
 //
 // fdValue(car, state, si) is called per set inside the loop, not hoisted once outside it.
-// Every gear set carries its own primary, and on the twelve cars whose final_drive.primaries
-// is empty that primary differs between sets — hoisting fdValue(car, state) (which resolves
+// Every gear set carries its own primary, and on four cars (Mini, Fiat 124, Fiat 131,
+// Fulvia) that primary differs between sets — hoisting fdValue(car, state) (which resolves
 // to state.set's ratio) and reusing it for every drawn set would publish speeds up to 26%
 // wrong on any set other than the selected one. This exact bug already shipped once in this
 // project's PNG charts (see js/charts/ladder.js).
@@ -15,6 +15,25 @@ import { fdValue } from './ladder.js';
 import { el, text, tip, tipWidth, clear } from '../svg.js';
 
 const C = { warm: '#F5F2EB', graphite: '#30353A', steel: '#7B858E' };
+
+/** Plot frame in viewBox units. The km/h title sits above the plot, clear of the ticks. */
+export const FRAME = Object.freeze({ L: 64, R: 876, T: 38, B: 346, H: 416, titleY: 20 });
+
+const MIN_WIDTH = 940;
+const COLUMN_STEP = 26;
+const LABEL_ROOM = 22;          // widest gear number plus a margin
+
+/**
+ * One gear-number column per drawn set, right of the rev-limit line. The viewBox widens
+ * to fit them rather than letting the last columns run off the edge.
+ */
+export function labelColumns(redlineX, count) {
+  const xs = Array.from({ length: count }, (_, i) => redlineX + 11 + i * COLUMN_STEP);
+  return { xs, width: Math.max(MIN_WIDTH, Math.ceil(xs[count - 1] + LABEL_ROOM)) };
+}
+
+/** Top of a hover tooltip drawn above its point, held inside the viewBox. */
+export const tipTop = pointY => Math.max(4, pointY - 46);
 
 export function layout(car, state) {
   const circ = circumference(car.tyres[state.surface].free_radius, state.k);
@@ -51,11 +70,12 @@ export function nearestLine(lines, redline, rpm, speed) {
 export function render(svg, car, state, hover = null) {
   clear(svg);
   const l = layout(car, state);
-  const L = 64, R = 876, T = 22, B = 330;
+  const { L, R, T, B } = FRAME;
   const rpmMax = Math.ceil(car.engine.redline / 1000) * 1000 + 300;
   const xs = r => L + (r / rpmMax) * (R - L);
   const ys = v => B - (v / l.vmax) * (B - T);
-  svg.setAttribute('viewBox', '0 0 940 400');
+  const cols = labelColumns(xs(car.engine.redline), state.draw.length);
+  svg.setAttribute('viewBox', `0 0 ${cols.width} ${FRAME.H}`);
 
   for (let v = 0; v <= l.vmax; v += 40) {
     el(svg, 'line', { x1: L, x2: R, y1: ys(v), y2: ys(v),
@@ -77,7 +97,7 @@ export function render(svg, car, state, hover = null) {
                       y2: ys(line.topSpeed), stroke: colour, 'stroke-width': 2.1,
                       'stroke-opacity': 0.85 });
     // one label column per gear set, so two sets never collide
-    text(svg, xs(car.engine.redline) + 11 + state.draw.indexOf(line.set) * 26,
+    text(svg, cols.xs[state.draw.indexOf(line.set)],
          ys(line.topSpeed) + 3.6, line.gear + 1, 'val', { fill: colour });
   });
 
@@ -94,13 +114,13 @@ export function render(svg, car, state, hover = null) {
       // left edge at low rpm — flip it to the right of the point instead when it would.
       const leftX = xs(hover.rpm) - tipWidth(lines) - 13;
       const tipX = leftX < 4 ? xs(hover.rpm) + 13 : leftX;
-      tip(svg, tipX, ys(v) - 46, lines);
+      tip(svg, tipX, tipTop(ys(v)), lines);
     }
   }
 
   text(svg, (L + R) / 2, B + 42, 'engine speed — rpm', 'lbl',
        { 'text-anchor': 'middle' });
-  text(svg, L - 9, T + 2, 'km/h', 'lbl', { 'text-anchor': 'end' });
+  text(svg, L - 9, FRAME.titleY, 'km/h', 'lbl', { 'text-anchor': 'end' });
   return {
     atPoint(x, y) {
       const rpm = Math.max(0, Math.min(car.engine.redline, (x - L) / (R - L) * rpmMax));

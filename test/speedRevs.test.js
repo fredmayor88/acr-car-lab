@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { layout, nearestLine } from '../js/charts/speedRevs.js';
+import { FRAME, labelColumns, layout, nearestLine, tipTop } from '../js/charts/speedRevs.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
 // REPLACES each gear set's own primary. Gear set 1 top gear pins to the game's real
@@ -131,4 +131,32 @@ test('final_drive null with a numeric fixed_final_drive still produces finite, p
     assert.ok(Number.isFinite(line.topSpeed));
     assert.ok(line.topSpeed > 0);
   });
+});
+
+// --- label columns, title and tooltip stay inside the frame -----------------------------
+
+test('every gear-number column fits the viewBox with all ten sets drawn', () => {
+  const x = FRAME.R - 30;               // the rev limit can sit this close to the plot edge
+  const cols = labelColumns(x, 10);
+  assert.equal(cols.xs.length, 10);
+  // a two-character label at 10.5px monospace is under 14 units wide
+  assert.ok(cols.xs[9] + 14 <= cols.width, `last column at ${cols.xs[9]} overflows ${cols.width}`);
+});
+
+test('columns never overlap and the default width holds for a single set', () => {
+  const cols = labelColumns(800, 3);
+  assert.ok(cols.xs[1] - cols.xs[0] >= 14);
+  assert.equal(labelColumns(800, 1).width, 940);
+});
+
+test('the km/h axis title sits clear of the top tick label', () => {
+  // top tick label: baseline at ys(v) + 3.5 >= T + 3.5, glyphs ~8 units tall
+  const tickTop = FRAME.T + 3.5 - 8;
+  // title baseline at titleY; descenders ~3 units
+  assert.ok(FRAME.titleY + 3 < tickTop, `title at ${FRAME.titleY} meets tick top ${tickTop}`);
+});
+
+test('the hover tooltip never starts above the viewBox', () => {
+  assert.equal(tipTop(FRAME.T), 4);
+  assert.equal(tipTop(200), 154);
 });
