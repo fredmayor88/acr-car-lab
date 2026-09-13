@@ -152,6 +152,7 @@ svg{display:block;width:100%;height:auto}
 .carlist a{display:block;padding:12px 14px;text-decoration:none;color:var(--fg);
   border:1px solid var(--line);border-radius:2px;background:var(--surface)}
 .carlist a:hover{border-color:var(--accent);color:var(--accent-text)}
+.carlist + .foot{margin-top:34px}
 
 @media (max-width:720px){
   .wrap{padding:0 16px 60px}

@@ -65,6 +65,11 @@ The site holds no numbers in its code, so a patch only changes `data/`.
    make car-lab
    ```
 
+   The game version the footer names comes from the install as well: `ProjectVersion` in
+   `acr/Config/DefaultGame.ini` inside the paks (`0.6.0.100866` is shown as `0.6`). It is
+   written to `data/index.json` as `game_version`, next to `generated`. If it cannot be
+   read, the export fails before writing anything.
+
 3. Check the result before committing:
    - New cars appear in `data/index.json` and have their own folder.
    - No car lost a surface. Three cars legitimately have four tyre entries instead of five
@@ -97,7 +102,7 @@ The site holds no numbers in its code, so a patch only changes `data/`.
 4. Commit here:
 
    ```bash
-   git add -A && git commit -m "chore: regenerate for game build <version>"
+   git add -A && git commit -m "chore: regenerate for ACR <game_version from data/index.json>"
    ```
 
 ## Local development
