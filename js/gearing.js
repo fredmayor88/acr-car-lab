@@ -34,6 +34,14 @@ export const SET_COLOURS = Object.freeze(
    // 50/50 mixes: GRAPHITE with STEEL, WALNUT with STEEL. Sets 9 and 10 of the 306 Maxi.
    '#555D64', '#7A6E64']);
 
+// The same ten roles for the dark theme, where walnut and graphite vanish on the panel.
+// Brand colours and mixes of them only: Light Oak, Signal Cyan, Warm White, Oak/Warm White,
+// Deep Cyan, Steel/Warm White, Signal Cyan/Warm White, Oak/Walnut, Steel, Oak/Steel.
+// Every one clears 3:1 on the dark panel (#30353A).
+export const SET_COLOURS_DARK = Object.freeze(
+  ['#B89873', '#25C4E2', '#F5F2EB', '#D7C5AF', '#148FAC',
+   '#A6ABAF', '#8DDBE7', '#997857', '#7B858E', '#9A8F80']);
+
 /** A loaded tyre rolls on a smaller radius than the stored free one. */
 export const circumference = (freeRadius, factor) => 2 * Math.PI * freeRadius * factor;
 
