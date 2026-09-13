@@ -11,6 +11,9 @@ import { C, el, text, clear } from '../svg.js';
 const circOf = (car, state) =>
   circumference(car.tyres[state.surface].free_radius, state.k);
 
+// The floor comes from state; a state from before it was configurable gets the old constant.
+const floorOf = state => state.floor ?? REV_FLOOR;
+
 const totals = (car, state) =>
   car.gear_sets[state.set].gears.map(g => g.value * fdValue(car, state));
 
@@ -20,7 +23,7 @@ export function layout(car, state) {
   const tops = gearTops(car.gear_sets[state.set].gears, fdValue(car, state), circ,
                         car.engine.redline);
   return {
-    bars: tot.map((t, i) => ({ gear: i, from: kmh(REV_FLOOR, t, circ), to: tops[i] })),
+    bars: tot.map((t, i) => ({ gear: i, from: kmh(floorOf(state), t, circ), to: tops[i] })),
     tops,
     vmax: tops[tops.length - 1] * 1.06,
   };
@@ -36,7 +39,7 @@ export function shiftReadout(car, state, gear, speed) {
   const tot = totals(car, state);
   // The axis runs past every bar, so the cursor can sit where this gear cannot be:
   // clamp to its own bar, rev floor to limiter, or the readout invents revs.
-  speed = Math.min(Math.max(speed, kmh(REV_FLOOR, tot[gear], circ)),
+  speed = Math.min(Math.max(speed, kmh(floorOf(state), tot[gear], circ)),
                    kmh(car.engine.redline, tot[gear], circ));
   const revsIn = i => rpmAt(speed, tot[i], circ);
   const up = gear + 1 < tot.length ? { gear: gear + 1, rpm: revsIn(gear + 1) } : null;
@@ -51,13 +54,25 @@ export function shiftReadout(car, state, gear, speed) {
   };
 }
 
+export const shiftCaption = floor =>
+  'The selected gear set, one row per gear. Each bar covers the speeds where that gear '
+  + `is usable, from ${floor} rpm to the rev limit. Where bars overlap you have a `
+  + 'choice of gear. Hover for the revs either side of a shift.';
+
+/**
+ * Left edge of the readout above the plot: centred on the cursor, kept inside the chart
+ * and short of `edge`, where the rev floor control starts when it sits over the chart.
+ */
+export const readoutX = (cursorX, width, edge = 1096) =>
+  Math.max(Math.min(cursorX - width / 2, edge - width), 4);
+
 /** Left edge of a shift chip: right of the cursor line, or left of it when that overflows. */
 export function chipX(cursorX, width, edge = 1096) {
   const right = cursorX + 13;
   return right + width <= edge ? right : cursorX - 13 - width;
 }
 
-export function render(svg, car, state, hover = null) {
+export function render(svg, car, state, hover = null, readoutEdge = 1096) {
   clear(svg);
   const l = layout(car, state);
   const L = 132, R = 1012, T = 76, step = 44;
@@ -99,7 +114,7 @@ export function render(svg, car, state, hover = null) {
     const label = `${speed.toFixed(0)} km/h   ·   gear ${r.gear + 1}`
                 + `   ·   ${r.rpm.toFixed(0)} rpm`;
     const w = label.length * 6.4 + 24;
-    const x = Math.min(Math.max(xs(speed) - w / 2, 4), 1096 - w);
+    const x = readoutX(xs(speed), w, readoutEdge);
     el(svg, 'rect', { x, y: T - 62, width: w, height: 25, rx: 3, fill: C.tipBg });
     text(svg, x + w / 2, T - 44.5, label, 'val',
          { 'text-anchor': 'middle', fill: C.tipFg, 'font-weight': '600' });

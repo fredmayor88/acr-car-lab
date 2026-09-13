@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chipX, layout, shiftReadout } from '../js/charts/shiftPoints.js';
+import { chipX, layout, readoutX, shiftCaption, shiftReadout }
+  from '../js/charts/shiftPoints.js';
 
 // Stratos-shape: final_drive.primaries non-empty, each gear set also carries its own
 // primary (unused here since the combo's primary replaces it) — same fixture shape as
@@ -155,4 +156,46 @@ test('a chip that would overflow the right edge flips to the left of the cursor 
   const x = chipX(990, cw);
   assert.ok(x + cw <= 1096, 'chip must end inside the viewBox');
   assert.ok(x + cw <= 990, 'chip must not cover the cursor line or its marker');
+});
+
+// --- the configurable rev floor -------------------------------------------------------
+
+test('bars start at the configured rev floor, not the constant', () => {
+  const at3000 = layout(car, state).bars;
+  const at5000 = layout(car, { ...state, floor: 5000 }).bars;
+  at3000.forEach((bar, i) => {
+    assert.ok(Math.abs(at5000[i].from / bar.from - 5000 / 3000) < 1e-9, `gear ${i}`);
+    assert.equal(at5000[i].to, bar.to, 'the top end does not move');
+  });
+  assert.equal(layout(car, { ...state, floor: 0 }).bars[0].from, 0);
+});
+
+test('a state with no floor uses the 3000 rpm default', () => {
+  assert.deepEqual(layout(car, state).bars, layout(car, { ...state, floor: 3000 }).bars);
+});
+
+test('the readout clamps to the configured rev floor', () => {
+  const s = { ...state, floor: 6000 };
+  const r = shiftReadout(car, s, 4, 10);
+  assert.ok(Math.abs(r.speed - layout(car, s).bars[4].from) < 1e-9);
+  assert.ok(Math.abs(r.rpm - 6000) < 1e-6);
+});
+
+test('the caption names the current rev floor', () => {
+  assert.match(shiftCaption(3000), /from 3000 rpm to the rev limit/);
+  assert.match(shiftCaption(4500), /from 4500 rpm to the rev limit/);
+});
+
+// --- the readout above the plot keeps clear of the rev floor control -------------------
+
+test('the readout centres on the cursor when there is room', () => {
+  assert.equal(readoutX(500, 200), 400);
+});
+
+test('the readout never runs past the edge it is given', () => {
+  const w = 270;
+  assert.ok(readoutX(1010, w) + w <= 1096);
+  assert.ok(readoutX(1010, w, 820) + w <= 820, 'must stop short of the control box');
+  assert.ok(readoutX(700, w, 820) + w <= 820);
+  assert.equal(readoutX(10, w, 820), 4, 'and never runs off the left');
 });
