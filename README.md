@@ -114,3 +114,11 @@ node --test
 | `data/` | Generated. Never edit by hand. |
 | `index.html` | Generated. Never edit by hand. |
 | `<slug>/index.html` | Generated. Never edit by hand. |
+
+## Licence
+
+Code, chart design and docs: [AGPL-3.0](LICENSE). Reuse is welcome; keep the copyright notice
+and release what you build from it under the same licence, including when it runs as a
+network service.
+
+Game data in `data/` is extracted from Assetto Corsa Rally and belongs to its rights holders.
