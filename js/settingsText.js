@@ -5,7 +5,11 @@
 import { DEFAULT_FACTOR, SURFACES, ceilingOf, circumference, finalDriveCombos, gearTops } from './gearing.js';
 import { fdValue } from './charts/ladder.js';
 
-export function settingsText(car, state) {
+/**
+ * `url` is the link that reproduces this view (what Copy link copies). When given it is the
+ * last line, on its own, so a pasted note carries the way back to these exact settings.
+ */
+export function settingsText(car, state, url) {
   const set = car.gear_sets[state.set];
   const combo = car.final_drive ? finalDriveCombos(car.final_drive)[state.fd] : null;
   const circ = circumference(car.tyres[state.surface].free_radius, state.k);
@@ -23,5 +27,6 @@ export function settingsText(car, state) {
   if (state.k !== (car.defaults?.loaded_radius_factor ?? DEFAULT_FACTOR)) {
     lines.push(`Rolling radius factor: ${state.k}`);
   }
+  if (url) lines.push(url);
   return lines.join('\n');
 }

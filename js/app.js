@@ -131,7 +131,12 @@ function buildShell() {
   };
   const copies = h('div', { class: 'copies' },
     copyButton('Copy link', 'copy-link', () => location.href),
-    copyButton('Copy settings', 'copy-settings', () => settingsText(car, state)));
+    // the hash is written on every commit(); writing it again here makes the link line match
+    // the settings above it even if something changed state without committing
+    copyButton('Copy settings', 'copy-settings', () => {
+      history.replaceState(null, '', toHash(state, car));
+      return settingsText(car, state, location.href);
+    }));
 
   // On a wide screen the head is hidden and the controls box lays out as if it were not
   // there (display: contents), so the bar is the row of controls it always was. On a narrow

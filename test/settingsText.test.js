@@ -8,16 +8,32 @@ import { layout } from '../js/charts/shiftPoints.js';
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
 
-test('Stratos, stock: the exact text, with the primary and 215 km/h in top gear', () => {
+const STRATOS_URL = 'https://example.test/lancia-stratos/gears/#s=Tarmac_Dry&fd=5&set=0&draw=0&k=0.9562';
+
+test('Stratos, stock: the exact text, with the primary, 215 km/h in top gear and the link', () => {
   const car = load('lancia-stratos');
-  assert.equal(settingsText(car, defaultState(car)), [
+  assert.equal(settingsText(car, defaultState(car), STRATOS_URL), [
     'Lancia Stratos HF 1976',
     'Gear set: Gear set 1 (5-speed)',
     'Primary Gear: 33//31*31//30',
     'Differential Ratio Rear: 65//19',
     'Gears: 42//15 · 39//19 · 34//21 · 33//25 · 30//26',
     'Top speed per gear (Dry tarmac, 8750 rpm): 89 · 121 · 153 · 188 · 215 km/h',
+    STRATOS_URL,
   ].join('\n'));
+});
+
+test('the link is the last line, exactly as passed, after every other line and no blank one', () => {
+  const car = load('lancia-stratos');
+  const url = 'http://localhost:8000/lancia-stratos/gears/#s=Gravel&fd=5&set=1&draw=0&k=0.97&ceil=7000';
+  const state = { ...defaultState(car), surface: 'Gravel', set: 1, k: 0.97, ceil: 7000 };
+  const without = settingsText(car, state);
+  const text = settingsText(car, state, url);
+  assert.equal(text, without + '\n' + url);
+  const lines = text.split('\n');
+  assert.equal(lines[lines.length - 1], url);
+  assert.equal(lines[lines.length - 2], 'Rolling radius factor: 0.97');
+  assert.ok(lines.every(l => l.trim() !== ''));
 });
 
 test('Stratos: the selected gear set, surface and final drive are the ones named', () => {
@@ -79,13 +95,15 @@ test('the rev floor is not a gearing setting and stays out of the text', () => {
 
 test('Stratos at a 7000 rpm ceiling: top speeds and the heading rpm are the ceiling', () => {
   const car = load('lancia-stratos');
-  assert.equal(settingsText(car, { ...defaultState(car), floor: 4000, ceil: 7000 }), [
+  const url = STRATOS_URL + '&floor=4000&ceil=7000';
+  assert.equal(settingsText(car, { ...defaultState(car), floor: 4000, ceil: 7000 }, url), [
     'Lancia Stratos HF 1976',
     'Gear set: Gear set 1 (5-speed)',
     'Primary Gear: 33//31*31//30',
     'Differential Ratio Rear: 65//19',
     'Gears: 42//15 · 39//19 · 34//21 · 33//25 · 30//26',
     'Top speed per gear (Dry tarmac, 7000 rpm): 71 · 97 · 123 · 150 · 172 km/h',
+    url,
   ].join('\n'));
 });
 
