@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { barSummary, barSummaryParts } from '../js/barSummary.js';
 import { defaultState, parseHash, toHash } from '../js/state.js';
-import { SURFACES, finalDriveCombos } from '../js/gearing.js';
-import { comboLabel } from '../js/charts/finalDrive.js';
+import { SURFACES, finalDriveCombos, hasRatioSettings } from '../js/gearing.js';
+import { comboLabel, finalDriveReadout } from '../js/charts/finalDrive.js';
 
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
@@ -33,7 +33,7 @@ test('a car with no final drive adjustment leaves that part out', () => {
   assert.equal(parts[1], `${car.gear_sets[state.set].label}  (${car.gear_sets[state.set].gears.length}-speed)`);
 });
 
-test('every car: the parts are exactly the labels the three selects show', () => {
+test('every car: the parts are exactly the labels the selects show (the readout on the averaged-axle cars)', () => {
   let fixed = 0;
   for (const slug of slugs) {
     const car = load(slug);
@@ -42,7 +42,11 @@ test('every car: the parts are exactly the labels the three selects show', () =>
     car.gear_sets.forEach((set, i) => {
       const state = { ...defaultState(car), set: i, fd: Math.max(0, combos.length - 1) };
       const want = [SURFACES.find(s => s.key === state.surface).label];
-      if (combos.length) want.push(comboLabel(combos[state.fd]));
+      if (hasRatioSettings(car)) {
+        const readout = finalDriveReadout(car, state);
+        const primary = combos[state.fd].primary;
+        want.push(primary ? `${primary.name}  ·  ${readout}` : readout);
+      } else if (combos.length) want.push(comboLabel(combos[state.fd]));
       want.push(`${set.label}  (${set.gears.length}-speed)`);
       assert.equal(barSummary(car, state), want.join('  ·  '), slug);
     });
@@ -76,4 +80,12 @@ test('a lowered rev ceiling is appended; at the rev limit it is left out', () =>
   const polo = load('volkswagen-polo-gti-r5-2018');
   assert.deepEqual(barSummaryParts(polo, { ...defaultState(polo), ceil: 6000 }).at(-1),
     { key: 'ceil', text: 'ceiling 6000 rpm' });
+});
+
+test('an averaged-axle car summarises its final drive readout, below the gearbox only', () => {
+  const delta = load('lancia-delta-integrale-evoluzione-1992');
+  assert.equal(barSummary(delta, defaultState(delta)),
+    'Dry tarmac  ·  final drive 3.84  ·  Gear set 1  (6-speed)');
+  const p206 = load('peugeot-206-wrc-1999');
+  assert.equal(barSummaryParts(p206, defaultState(p206))[1].text, '21//24  ·  final drive 5.34');
 });

@@ -15,7 +15,9 @@
 // Row order is display order; `row.index` is the combo's index in `finalDriveCombos`,
 // which is what `state.fd` and the URL hash mean. They are not the same number.
 
-import { ceilingOf, circumference, finalDriveCombos, kmh, overallRatio } from '../gearing.js';
+import { averagedBelow, ceilingOf, circumference, finalDriveCombos, hasRatioSettings, kmh,
+  matchingRow, overallRatio, ratioSteps } from '../gearing.js';
+import { selectedRow } from '../state.js';
 import { C, el, text, clear } from '../svg.js';
 
 /**
@@ -34,21 +36,67 @@ export function caption(car, state) {
     + 'Click a row to use that final drive.';
 }
 
+/**
+ * The averaged-axle cars' line under the caption: how their settings make the final drive.
+ * Built from the data's formula, so it names exactly the settings the car publishes.
+ */
+export function formulaNote(car) {
+  if (!hasRatioSettings(car)) return '';
+  const fd = car.final_drive;
+  const f = fd.formula;
+  const name = key => fd.settings.find(s => s.key === key).adjustment;
+  const chain = keys => keys.map(name).join(' × ');
+  if (!f.front.length && !f.rear.length) {
+    const fixed = f.fixed_pre * (f.fixed_front + f.fixed_rear) / 2;
+    return `Final drive = ${chain(f.pre)} × ${fixed.toFixed(3)} `
+      + '(the front and rear differentials are fixed).';
+  }
+  if (!f.front.length) {
+    return `Final drive = average of the front axle (${chain(f.pre)}) and the rear axle `
+      + `(${chain([...f.pre, ...f.rear])}).`;
+  }
+  const average = `average of ${chain(f.front)} and ${chain(f.rear)}`;
+  return f.pre.length ? `Final drive = ${chain(f.pre)} × ${average}.` : `Final drive = ${average}.`;
+}
+
+/** Only on a car with no centre differential, and only while its row settings disagree. */
+export function axleWarning(car, state) {
+  if (!hasRatioSettings(car) || car.final_drive.formula.centre_differential !== false) return '';
+  return matchingRow(car.final_drive, state.ratios) < 0
+    ? 'No centre differential: different front and rear ratios make the axles fight and the car '
+      + 'hard to control.'
+    : '';
+}
+
+/** The bar's readout on an averaged-axle car: below the gearbox, primary not included. */
+export const finalDriveReadout = (car, state) =>
+  `final drive ${averagedBelow(car.final_drive, state.ratios).toFixed(2)}`;
+
+/** Each ratio setting's game name and spelling, in the car's order. */
+export const ratioLines = (car, state) => {
+  const steps = ratioSteps(car.final_drive, state.ratios);
+  return car.final_drive.settings.map(s => `${s.adjustment}: ${steps[s.key].name}`);
+};
+
 export function layout(car, state) {
   if (!car.final_drive) return { adjustable: false, rows: [] };
 
   const circ = circumference(car.tyres[state.surface].free_radius, state.k);
   // One stated gear set keeps the speed something a real configuration produces.
   const top = Math.min(...car.gear_sets[state.set].gears.map(g => g.value));
+  // an averaged-axle car: each row holds every other setting as selected, and the highlighted
+  // row is the one the settings sit on (none when they sit on none)
+  const averaged = hasRatioSettings(car) && state.ratios;
+  const selected = averaged ? selectedRow(car, state) : state.fd;
 
-  const rows = finalDriveCombos(car.final_drive)
+  const rows = finalDriveCombos(car.final_drive, averaged ? state.ratios : null)
     .map((combo, index) => ({
       index,
       primary: combo.primary,
       option: combo.option,
       label: comboLabel(combo),
       value: overallRatio(car, state.set, combo),
-      selected: index === state.fd,
+      selected: index === selected,
     }))
     .sort((a, b) => b.value - a.value); // shortest gearing first — largest ratio
 

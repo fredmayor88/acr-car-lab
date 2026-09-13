@@ -18,7 +18,7 @@ const car = {
     stock_option: 'y', rest: 1,
   },
   tyres: { Tarmac_Dry: {}, Gravel: {} },
-  defaults: { loaded_radius_factor: 0.9858 },
+  defaults: { loaded_radius_factor: 0.9904 },
 };
 
 test('the default state is dry tarmac, first gear set, first set drawn', () => {
@@ -26,7 +26,7 @@ test('the default state is dry tarmac, first gear set, first set drawn', () => {
   assert.equal(s.surface, 'Tarmac_Dry');
   assert.equal(s.set, 0);
   assert.deepEqual(s.draw, [0]);
-  assert.equal(s.k, 0.9858);
+  assert.equal(s.k, 0.9904);
 });
 
 test('exactly one gear set is drawn by default', () => {
@@ -68,9 +68,9 @@ test('drawn sets are de-duplicated and sorted', () => {
 });
 
 test('the factor is clamped to a sane range', () => {
-  assert.equal(parseHash('#k=0', car).k, 0.9858);
-  assert.equal(parseHash('#k=-3', car).k, 0.9858);
-  assert.equal(parseHash('#k=99', car).k, 0.9858);
+  assert.equal(parseHash('#k=0', car).k, 0.9904);
+  assert.equal(parseHash('#k=-3', car).k, 0.9904);
+  assert.equal(parseHash('#k=99', car).k, 0.9904);
   assert.equal(parseHash('#k=1.02', car).k, 1.02);
 });
 
@@ -95,14 +95,14 @@ test('the stock combo matches the fitted primary, not just the option', () => {
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
 
-test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 214 km/h', () => {
+test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 215 km/h', () => {
   const stratos = load('lancia-stratos');
   const state = defaultState(stratos);
   const stock = finalDriveCombos(stratos.final_drive)[state.fd];
   assert.equal(stock.primary.name, '33//31*31//30');
   assert.equal(stock.option.name, '65//19');
   const row = layout(stratos, state).rows.find(r => r.selected);
-  assert.equal(Math.round(row.kmh), 214);
+  assert.equal(Math.round(row.kmh), 215);
 });
 
 test('every car opens on a combo carrying its stock option and fitted primary', () => {

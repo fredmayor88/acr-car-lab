@@ -2,8 +2,8 @@
 // Pure: no DOM. Each part is the label the matching select shows, so the line always reads
 // the same as the controls it stands for.
 
-import { SURFACES, ceilingOf, finalDriveCombos } from './gearing.js';
-import { comboLabel } from './charts/finalDrive.js';
+import { SURFACES, ceilingOf, finalDriveCombos, hasRatioSettings } from './gearing.js';
+import { comboLabel, finalDriveReadout } from './charts/finalDrive.js';
 
 export const setLabel = set => `${set.label}  (${set.gears.length}-speed)`;
 
@@ -14,7 +14,12 @@ export const setLabel = set => `${set.label}  (${set.gears.length}-speed)`;
 export function barSummaryParts(car, state) {
   const parts = [{ key: 'surface',
     text: SURFACES.find(s => s.key === state.surface)?.label ?? state.surface }];
-  if (car.final_drive) {
+  if (hasRatioSettings(car) && state.ratios) {
+    // an averaged-axle car: the Primary Gear where it has one, then the final drive readout
+    const combo = finalDriveCombos(car.final_drive)[state.fd];
+    const readout = finalDriveReadout(car, state);
+    parts.push({ key: 'fd', text: combo?.primary ? `${combo.primary.name}  ·  ${readout}` : readout });
+  } else if (car.final_drive) {
     const combo = finalDriveCombos(car.final_drive)[state.fd];
     if (combo) parts.push({ key: 'fd', text: comboLabel(combo) });
   }

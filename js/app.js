@@ -2,11 +2,11 @@
 // and re-renders everything on any state change. All arithmetic lives in the modules;
 // this file only moves state around.
 
-import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos, withRevLimit }
-  from './gearing.js';
+import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos, hasRatioSettings,
+  withRevLimit } from './gearing.js';
 import { REV_LIMIT_MAX, REV_LIMIT_MIN, applyRevLimit, floorFocusAfterStep, parseCeil, parseFloor,
-  parseHash, parseRevLimit, revControlViews, rpmInputKey, stepCeil, stepFloor, toHash }
-  from './state.js';
+  parseHash, parseRevLimit, pickRow, primaryIndex, revControlViews, rpmInputKey, setPrimary,
+  setRatio, stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
 import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from './footer.js';
@@ -156,7 +156,8 @@ function buildShell() {
   // one the bar collapses to the head: a summary line and a button that opens the controls.
   const ctls = h('div', { class: 'barctls', id: 'bar-controls' },
     h('div', { class: 'ctl' }, h('label', {}, 'Surface'), surfaceSel));
-  if (combos.length) {
+  const ratios = hasRatioSettings(car) ? buildRatioControls() : null;
+  if (!ratios && combos.length) {
     ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Final drive'), fdSel));
   }
   ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Gear set'), setSel));
@@ -164,6 +165,13 @@ function buildShell() {
   const barCeil = buildRpmControl(ceilSpec('bar-rev-ceiling'), { stacked: true });
   ctls.appendChild(barCeil.box);
   ctls.appendChild(copies);
+  if (ratios) {
+    // an averaged-axle car: the Primary Gear where it has one, a select per ratio setting in
+    // the game's order, and what they make below the gearbox. They do not fit beside the other
+    // controls at 1280, so they take a second row of the bar, on these cars only.
+    ctls.appendChild(h('div', { class: 'ratiorow', role: 'group', 'aria-label': 'Final drive' },
+      ...ratios.boxes));
+  }
 
   const summary = h('p', { class: 'barsum' });
   const setOpen = open => {
@@ -197,9 +205,14 @@ function buildShell() {
     if (s.id === 'shift') panel.appendChild(revs.box);
     // the 206 WRC runs on another car's curve, and its power section says whose
     const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
+    // the averaged-axle cars say how their settings make the final drive
+    const formula = s.id === 'fd' ? finalDrive.formulaNote(car) : '';
+    const warn = s.id === 'fd' && car.final_drive?.formula?.centre_differential === false;
     root.appendChild(h('section', { id: 'sec-' + s.id },
       h('h2', {}, s.title), h('p', { class: 'cap' }, s.cap),
-      ...(borrowed ? [h('p', { class: 'cap borrowed' }, borrowed)] : []), panel));
+      ...(borrowed ? [h('p', { class: 'cap borrowed' }, borrowed)] : []),
+      ...(formula ? [h('p', { class: 'cap formula' }, formula)] : []),
+      ...(warn ? [h('p', { class: 'cap axlewarn', role: 'status' })] : []), panel));
   }
   const { foot, factor, revLimit } = buildFooter();
   root.appendChild(foot);
@@ -211,7 +224,45 @@ function buildShell() {
   wireLanePick();
 
   return { surfaceSel, fdSel, setSel, factor, revLimit, revs, summary, subLimit: sub.limit,
-    ceils: [revs.ceil, barCeil] };
+    ceils: [revs.ceil, barCeil], ratios };
+}
+
+// The bar's short labels for the ratio settings; each select's accessible name and title is
+// the game's own adjustment name.
+const RATIO_LABELS = Object.freeze({
+  cdr: 'Centre diff', ctf: 'Centre to front', ctr: 'Centre to rear',
+  dfr: 'Front diff', drr: 'Rear diff',
+});
+
+/** An averaged-axle car's Primary Gear (206 WRC), ratio setting selects and readout. */
+function buildRatioControls() {
+  const fd = car.final_drive;
+  const boxes = [];
+  let primary = null;
+  if (fd.primaries.length) {
+    primary = h('select', { id: 'bar-primary', class: 'ratio', onchange: e => {
+      state = setPrimary(data, state, Number(e.target.value));
+      track('change-final-drive');
+      commit();
+    } }, ...fd.primaries.map((p, i) => h('option', { value: String(i) }, p.name)));
+    boxes.push(h('div', { class: 'ctl' }, h('label', { for: 'bar-primary' }, 'Primary Gear'),
+      primary));
+  }
+  const selects = fd.settings.map(s => {
+    const id = 'bar-ratio-' + s.key;
+    const sel = h('select', { id, class: 'ratio', title: s.adjustment, 'aria-label': s.adjustment,
+      onchange: e => {
+        state = setRatio(data, state, s.key, Number(e.target.value));
+        track('edit-final-drive-setting');
+        commit();
+      } }, ...s.steps.map((st, i) => h('option', { value: String(i) }, st.name)));
+    boxes.push(h('div', { class: 'ctl' },
+      h('label', { for: id, title: s.adjustment }, RATIO_LABELS[s.key] ?? s.adjustment), sel));
+    return { key: s.key, sel };
+  });
+  const readout = h('span', { class: 'fdread', 'aria-live': 'polite' });
+  boxes.push(h('div', { class: 'ctl fdreadbox' }, readout));
+  return { boxes, primary, selects, readout };
 }
 
 /** The bar toggle's glyph: a chevron in the button's text colour, turned over when open. */
@@ -481,8 +532,13 @@ function renderFinalDrive() {
   if (car.final_drive) {
     svg.style.display = '';
     section.querySelector('.cap').textContent = finalDrive.caption(car, state);
+    const warning = section.querySelector('.axlewarn');
+    if (warning) {
+      warning.textContent = finalDrive.axleWarning(car, state);
+      warning.hidden = !warning.textContent;
+    }
     finalDrive.render(svg, car, state, i => {
-      state.fd = i;
+      state = pickRow(data, state, i);
       track('change-final-drive');
       commit();
     });
@@ -531,7 +587,12 @@ function commit() {
 
 function syncControls() {
   controls.surfaceSel.value = state.surface;
-  if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
+  if (controls.ratios) {
+    const { primary, selects, readout } = controls.ratios;
+    if (primary) primary.value = String(primaryIndex(car, state));
+    for (const { key, sel } of selects) sel.value = String(state.ratios[key]);
+    readout.textContent = finalDrive.finalDriveReadout(car, state);
+  } else if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
   controls.revLimit.value = String(state.rl);

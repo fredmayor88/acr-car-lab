@@ -25,8 +25,9 @@ export function revLimitNote(source) {
 
 /** The rolling radius factor's note. */
 export const FACTOR_NOTE = 'A loaded tyre rolls on a smaller radius than the stored one. This '
-  + 'factor was fitted against measured in-game top speeds on four cars (Stratos, 306 Maxi, '
-  + 'Xsara WRC, 037), and is applied to every car and surface. Edit it and every chart redraws.';
+  + 'factor was fitted against measured in-game top speeds on seven cars (Stratos, 306 Maxi, '
+  + 'Xsara WRC, 037, 206 WRC, Delta Integrale, Impreza), and is applied to every car and '
+  + 'surface. Edit it and every chart redraws.';
 
 export const PROMO = Object.freeze({
   before: 'Want a setup, not just the numbers? ',

@@ -17,11 +17,12 @@ import { C, el, text, tip, tipWidth, clear } from '../svg.js';
 /**
  * The overall ratio below the individual gear, for one gear set (default: the selected
  * one). Reused as-is by charts 4 and 5 (Tasks 9/10), which call fdValue(car, state) and
- * get the selected set's ratio.
+ * get the selected set's ratio. On an averaged-axle car the combo only supplies the primary;
+ * below the gearbox comes from every ratio setting (`state.ratios`).
  */
 export function fdValue(car, state, setIndex = state.set) {
   const combos = finalDriveCombos(car.final_drive);
-  return overallRatio(car, setIndex, combos[state.fd] ?? combos[0] ?? null);
+  return overallRatio(car, setIndex, combos[state.fd] ?? combos[0] ?? null, state.ratios);
 }
 
 const circOf = (car, state) =>

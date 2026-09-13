@@ -3,8 +3,9 @@
 // same gearing functions the charts draw with, so the text can never disagree with them.
 
 import { DEFAULT_FACTOR, SURFACES, ceilingOf, circumference, finalDriveCombos, gearTops,
-  withRevLimit } from './gearing.js';
+  hasRatioSettings, withRevLimit } from './gearing.js';
 import { fdValue } from './charts/ladder.js';
+import { ratioLines } from './charts/finalDrive.js';
 
 /**
  * `url` is the link that reproduces this view (what Copy link copies). When given it is the
@@ -23,7 +24,8 @@ export function settingsText(data, state, url) {
 
   const lines = [car.name, `Gear set: ${set.label} (${set.gears.length}-speed)`];
   if (combo?.primary) lines.push(`Primary Gear: ${combo.primary.name}`);
-  lines.push(combo ? `${car.final_drive.adjustment}: ${combo.option.name}` : 'Final drive: fixed');
+  if (hasRatioSettings(car) && state.ratios) lines.push(...ratioLines(car, state));
+  else lines.push(combo ? `${car.final_drive.adjustment}: ${combo.option.name}` : 'Final drive: fixed');
   lines.push('Gears: ' + set.gears.map(g => g.name).join(' · '));
   lines.push(`Top speed per gear (${surface}, ${ceil} rpm): `
     + tops.map(v => v.toFixed(0)).join(' · ') + ' km/h');

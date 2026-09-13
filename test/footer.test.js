@@ -71,9 +71,9 @@ test('the rev limit note says where the limit came from, then how to change it',
   assert.equal(revLimitNote(undefined), 'If your limiter differs, edit it here.');
 });
 
-test('the factor note names the four cars it was fitted on, not the old Stratos-only fit', async () => {
+test('the factor note names the seven cars it was fitted on, not the old Stratos-only fit', async () => {
   const { FACTOR_NOTE } = await import('../js/footer.js');
-  assert.match(FACTOR_NOTE,
-    /measured in-game top speeds on four cars \(Stratos, 306 Maxi, Xsara WRC, 037\)/);
+  assert.ok(FACTOR_NOTE.includes('measured in-game top speeds on seven cars (Stratos, '
+    + '306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale, Impreza)'));
   assert.doesNotMatch(FACTOR_NOTE, /15 gears/);
 });

@@ -2,7 +2,8 @@
 // what someone was looking at, so every control's value lives here and nowhere else.
 // Values arriving from a URL get the same validation as typed input.
 
-import { DEFAULT_FACTOR, REV_FLOOR, SURFACES, finalDriveCombos, withRevLimit } from './gearing.js';
+import { DEFAULT_FACTOR, REV_FLOOR, SURFACES, finalDriveCombos, hasRatioSettings, matchingRow,
+  rowRatios, stockRatios, withRevLimit } from './gearing.js';
 
 const K_MIN = 0.80;
 const K_MAX = 1.10;
@@ -139,7 +140,7 @@ function stockIndex(car) {
 
 export function defaultState(car) {
   const available = surfacesFor(car);
-  return {
+  const state = {
     surface: available.length ? available[0].key : 'Tarmac_Dry',
     fd: stockIndex(car),
     set: 0,
@@ -149,7 +150,58 @@ export function defaultState(car) {
     rl: car.engine.redline,
     ceil: car.engine.redline,
   };
+  // only the averaged-axle cars carry ratios; every other car's state is exactly as it was
+  if (hasRatioSettings(car)) state.ratios = stockRatios(car.final_drive);
+  return state;
 }
+
+// --- the averaged-axle cars' ratio settings ----------------------------------------------
+//
+// `state.ratios` is the truth below the gearbox. `state.fd` still names a combo, but only its
+// primary is read (the 206 WRC's Primary Gear); its option is the row the ratios sit on, or
+// the stock row when they sit on none, so one state has one `fd` and a link round-trips.
+
+const rowCount = car => car.final_drive.options.length;
+
+/** The selected primary's index in `final_drive.primaries` (0 on a car without a selector). */
+export const primaryIndex = (car, state) => Math.floor(state.fd / rowCount(car));
+
+/** `fd` for a primary index and the ratios: that primary on the matching row, else the stock row. */
+function fdFor(car, primary, ratios) {
+  const fd = car.final_drive;
+  const row = matchingRow(fd, ratios);
+  const stockRow = fd.options.findIndex(o => o.name === fd.stock_option);
+  return primary * rowCount(car) + (row >= 0 ? row : Math.max(0, stockRow));
+}
+
+/** A Final drive chart row, or an old `fd=N` link: its primary, and its row's settings. */
+export function pickRow(car, state, index) {
+  if (!hasRatioSettings(car)) return { ...state, fd: index };
+  const ratios = rowRatios(car.final_drive, state.ratios, index % rowCount(car));
+  return { ...state, ratios, fd: fdFor(car, Math.floor(index / rowCount(car)), ratios) };
+}
+
+/** One ratio setting moved to step `index`; every other setting held. */
+export function setRatio(car, state, key, index) {
+  const ratios = { ...state.ratios, [key]: index };
+  return { ...state, ratios, fd: fdFor(car, primaryIndex(car, state), ratios) };
+}
+
+/** A new Primary Gear (index into `final_drive.primaries`); the ratios held. */
+export const setPrimary = (car, state, primary) =>
+  ({ ...state, fd: fdFor(car, primary, state.ratios) });
+
+/** The Final drive chart row the state is on, or -1 when the row settings disagree. */
+export function selectedRow(car, state) {
+  if (!hasRatioSettings(car)) return state.fd;
+  const row = matchingRow(car.final_drive, state.ratios);
+  return row < 0 ? -1 : primaryIndex(car, state) * rowCount(car) + row;
+}
+
+const stepIndexOr = (raw, steps) => {
+  const n = raw !== null && /^\s*\d+\s*$/.test(raw) ? Number(raw) : -1;
+  return n >= 0 && n < steps.length ? n : null;
+};
 
 const intOr = (raw, fallback) => {
   const n = Number.parseInt(raw, 10);
@@ -167,6 +219,7 @@ export function parseHash(hash, car) {
   const combos = combosFor(car);
   const fd = intOr(q.get('fd'), -1);
   if (fd >= 0 && fd < combos.length) out.fd = fd;
+  if (hasRatioSettings(car)) Object.assign(out, parseRatios(q, car, out));
 
   const set = intOr(q.get('set'), -1);
   if (set >= 0 && set < car.gear_sets.length) out.set = set;
@@ -194,11 +247,40 @@ export function parseHash(hash, car) {
   return out;
 }
 
+/**
+ * An averaged-axle car's ratios and primary from a link. An old `fd=N` picks Final drive chart
+ * row N (its primary and row settings, every other setting at stock); then `pg` (the Primary
+ * Gear index) and one key per setting (its step index) override it. Invalid values are ignored.
+ */
+function parseRatios(q, car, base) {
+  const fd = car.final_drive;
+  const picked = q.has('fd') ? pickRow(car, base, base.fd) : base;
+  let primary = primaryIndex(car, picked);
+  const pg = stepIndexOr(q.get('pg'), fd.primaries);
+  if (pg !== null) primary = pg;
+  const ratios = { ...picked.ratios };
+  for (const s of fd.settings) {
+    const i = stepIndexOr(q.get(s.key), s.steps);
+    if (i !== null) ratios[s.key] = i;
+  }
+  return { ratios, fd: fdFor(car, primary, ratios) };
+}
+
 /** `car` is the car as loaded, so an edited rev limit is told apart from the car's own. */
 export function toHash(state, car) {
   const q = new URLSearchParams();
   q.set('s', state.surface);
-  if (combosFor(car).length) q.set('fd', String(state.fd));
+  if (hasRatioSettings(car)) {
+    // one key per setting off its stock step, and the Primary Gear off the stock one
+    const stock = defaultState(car);
+    const pg = primaryIndex(car, state);
+    if (car.final_drive.primaries.length && pg !== primaryIndex(car, stock)) {
+      q.set('pg', String(pg));
+    }
+    for (const s of car.final_drive.settings) {
+      if (state.ratios[s.key] !== stock.ratios[s.key]) q.set(s.key, String(state.ratios[s.key]));
+    }
+  } else if (combosFor(car).length) q.set('fd', String(state.fd));
   q.set('set', String(state.set));
   q.set('draw', state.draw.join(','));
   q.set('k', String(state.k));

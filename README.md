@@ -35,16 +35,29 @@ adjustment in setup; the one you pick there replaces the gear set's primary.
 **Final drive.** Everything after the gearbox, as one number:
 
 - On most cars it is the differential ratio you pick in setup.
-- On the Citroen Xsara WRC and Lancia Delta Integrale, setup adjusts the centre
-  differential, so the fixed axle reduction behind it is multiplied in as well. That fixed
-  part is stored as `final_drive.rest` in the data; on the other adjustable cars it is 1.
 - The Hyundai i20, Skoda Fabia, VW Polo R5 and Peugeot 208 Rally4 have no final drive
   adjustment. Their final drive is a single fixed number, stored as `fixed_final_drive`.
 
-`rolling_radius_factor` defaults to `0.9858`. A loaded tyre rolls on a smaller radius than
-the stored free one; the factor was fitted against measured in-game top speeds on four cars
-(Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037), each read at that car's
-measured rev limit, and is applied to every car and every surface. It is editable at the
+**Averaged axles.** On the Lancia Delta Integrale, Peugeot 206 WRC, Subaru Impreza, Citroen
+Xsara WRC and Audi Quattro the drive splits to a front and a rear axle, each with its own chain
+of ratios. With every wheel at the same road speed the gearbox output turns at the average of
+the two chains. That was measured in game with speed runs on the Delta, 206 and Impreza:
+
+```
+final_drive = pre-split ratios * (front axle chain + rear axle chain) / 2
+```
+
+Each ratio on those chains that setup offers is its own control on these pages, and the note
+under their Final drive chart spells out the formula. The fixed ratios are read from the car
+data (the Xsara's two differentials are fixed). The Audi has no centre differential, so it
+cannot be driven with the front and rear ratios apart to measure it; the same formula is
+assumed, and its page warns while they differ. In the data these cars carry
+`final_drive.settings` and `final_drive.formula`.
+
+`rolling_radius_factor` defaults to `0.9904`. A loaded tyre rolls on a smaller radius than
+the stored free one; the factor was fitted against measured in-game top speeds on seven cars
+(Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037, Peugeot 206 WRC, Lancia
+Delta Integrale, Subaru Impreza), each read at that car's measured rev limit, and is applied to every car and every surface. It is editable at the
 foot of each car page.
 
 **Rev limit.** Every top speed is read at the rev limit. The rev limits come from in-game
@@ -106,7 +119,7 @@ The site holds no numbers in its code, so a patch only changes `data/`.
      Prints nothing if nothing shrank. Any output names the car and the missing surface —
      that means a tyre asset stopped resolving.
    - Spot-check one top speed in game. The Stratos on gear set 1, top gear, stock final
-     drive, dry tarmac should read 214 km/h. If it has drifted, the rolling radius factor
+     drive, dry tarmac should read 215 km/h. If it has drifted, the rolling radius factor
      needs refitting rather than the code changing. The export warns when a car's engine
      data changed since its rev limit was measured (`measured-stale`): re-measure that car.
 

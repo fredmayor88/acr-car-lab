@@ -40,16 +40,16 @@ const R = 0.2960;
 const CIRC = circumference(R, DEFAULT_FACTOR);
 
 test('circumference applies the loaded-radius factor to the free radius', () => {
-  near(CIRC, 2 * Math.PI * R * 0.9858, 1e-9);
+  near(CIRC, 2 * Math.PI * R * 0.9904, 1e-9);
 });
 
 test('the factor is what makes the control real — a different factor moves the number', () => {
   assert.notEqual(circumference(R, 0.99), CIRC);
 });
 
-test('top gear at the measured 8450 rpm rev limit on the stock final drive is 214 km/h', () => {
+test('top gear at the measured 8450 rpm rev limit on the stock final drive is 215 km/h', () => {
   const total = totalRatio(1.154, 1.100, 1.0 * 3.4211);
-  near(kmh(8450, total, CIRC), 214, 1);
+  near(kmh(8450, total, CIRC), 215, 1);
 });
 
 test('rpmAt inverts kmh', () => {
@@ -61,8 +61,8 @@ test('rpmAt inverts kmh', () => {
 test('gearTops gives each gear its speed at the rev limit', () => {
   const gears = [{ name: '', value: 2.8 }, { name: '', value: 1.154 }];
   const tops = gearTops(gears, 1.100 * 3.4211, CIRC, 8450);
-  near(tops[0], 88, 1);
-  near(tops[1], 214, 1);
+  near(tops[0], 89, 1);
+  near(tops[1], 215, 1);
 });
 
 test('gearAtSpeed picks the lowest gear that has not topped out', () => {
@@ -78,7 +78,7 @@ test('gearAtSpeed clamps above the top gear rather than returning -1', () => {
 });
 
 test('constants match the spec', () => {
-  assert.equal(DEFAULT_FACTOR, 0.9858);
+  assert.equal(DEFAULT_FACTOR, 0.9904);
   assert.equal(REV_FLOOR, 3000);
   assert.deepEqual(SURFACES.map(s => s.key),
     ['Tarmac_Dry', 'Tarmac_Wet', 'Gravel', 'Sweden', 'Montecarlo']);
@@ -158,13 +158,13 @@ test('Stratos: with no combo chosen, the gear set primary applies', () => {
   assert.equal(effectivePrimary(stratos, 0, null).value, 1.1);
 });
 
-test('Stratos gear set 1 on the stock final drive is 88/120/153/187/214 km/h', () => {
+test('Stratos gear set 1 on the stock final drive is 89/121/153/188/215 km/h', () => {
   const stock = finalDriveCombos(stratos.final_drive)
     .find(c => c.primary.name === '33//31*31//30' && c.option.name === '65//19');
   const tops = gearTops(stratos.gear_sets[0].gears,
                         overallRatio(stratos, 0, stock), dry(stratos),
                         stratos.engine.redline);
-  [88, 120, 153, 187, 214].forEach((expected, i) => near(tops[i], expected, 1));
+  [89, 121, 153, 188, 215].forEach((expected, i) => near(tops[i], expected, 1));
 });
 
 test('shortest gearing is the largest overall ratio', () => {
@@ -231,10 +231,10 @@ test('no car in data/ can produce a non-finite speed through the public path', (
   }
 });
 
-test('Fabia gear set 1 is 59.8/84.4/114.7/151.7/188.4 km/h on dry tarmac', () => {
+test('Fabia gear set 1 is 60.0/84.7/115.2/152.4/189.3 km/h on dry tarmac', () => {
   const tops = gearTops(fabia.gear_sets[0].gears, overallRatio(fabia, 0, null),
                         dry(fabia), fabia.engine.redline);
-  [59.8, 84.4, 114.7, 151.7, 188.4].forEach((expected, i) => near(tops[i], expected, 0.2));
+  [60.0, 84.7, 115.2, 152.4, 189.3].forEach((expected, i) => near(tops[i], expected, 0.2));
 });
 
 test('Fabia: the gear set primary still applies even with no final drive object', () => {

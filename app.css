@@ -4,6 +4,8 @@
      take var(). The one indexed list, the gear-set colours, lives in js/gearing.js. */
   --bg:#F5F2EB; --fg:#30353A; --fg-strong:#212529; --muted:#7B858E;
   --data:#7A583B; --accent:#148FAC; --warn:#9C3B2E;
+  /* warning text on the page ground: brand red in light; in dark the tooltip's red mix */
+  --warn-text:#9C3B2E;
   /* text only: Steel and Deep Cyan darkened until text clears 4.5:1 on ground and panel.
      Steel and Deep Cyan themselves stay for rules, grid, curves and marks. */
   --muted-text:#676F77; --accent-text:#0E6E85;
@@ -36,6 +38,7 @@
     --halo:#30353A; --on-data:#212529; --ink:#F5F2EB;
     --tip-bg:#F5F2EB; --tip-fg:#212529;
     --tip-warn:#9C3B2E; --on-warn:#F5F2EB; --warn-edge:#F5F2EB; --warn-ring:#F5F2EB;
+    --warn-text:#CE9D97;
   }
 }
 :root[data-theme="dark"]{
@@ -49,6 +52,7 @@
   --halo:#30353A; --on-data:#212529; --ink:#F5F2EB;
   --tip-bg:#F5F2EB; --tip-fg:#212529;
   --tip-warn:#9C3B2E; --on-warn:#F5F2EB; --warn-edge:#F5F2EB; --warn-ring:#F5F2EB;
+  --warn-text:#CE9D97;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);
@@ -92,6 +96,13 @@ select{font:13.5px/1 "SF Mono",Menlo,Consolas,monospace;padding:7px 10px;
 .copy{font-size:12.5px;color:var(--accent-text);
   border:1px solid var(--accent-edge);background:var(--accent-wash);
   padding:8px 14px;border-radius:2px;cursor:pointer}
+/* the averaged-axle cars: a second bar row with a select per ratio setting, as wide as its
+   steps, and the final drive they make, level with the selects' text */
+.ratiorow{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 26px;flex-basis:100%}
+.bar select.ratio{min-width:0}
+.fdreadbox{justify-content:flex-end}
+.fdread{display:flex;align-items:center;height:30px;white-space:nowrap;
+  font:12.5px/1 "SF Mono",Menlo,Consolas,monospace;color:var(--muted-text)}
 .barnote{font-size:11.5px;color:var(--muted-text);margin:0 0 32px;padding-left:2px}
 /* the collapsed bar's summary and toggle exist for narrow screens only; on a wide one the
    controls box is laid out as though it were not there */
@@ -103,7 +114,9 @@ h2{font-size:17px;margin:0 0 2px;color:var(--fg-strong);letter-spacing:-.01em}
 .cap{font-size:12.5px;color:var(--muted-text);margin:0 0 14px}
 .cap b{color:var(--fg);font-weight:600}
 /* a second caption line (the 206 WRC's borrowed curve) sits tight under the first */
-.cap:has(+ .cap){margin-bottom:4px}
+.cap:has(+ .cap:not([hidden])){margin-bottom:4px}
+/* the Audi's front-and-rear warning, shown only while the two differ */
+.cap.axlewarn{color:var(--warn-text);font-weight:600}
 .panel{background:var(--surface);border:1px solid var(--line);
   border-radius:3px;padding:16px 18px}
 .panel.row{display:flex;gap:18px;align-items:flex-start}
@@ -143,6 +156,7 @@ svg{display:block;width:100%;height:auto}
    it. The Stratos, with the widest final-drive labels, is the tight case. */
 @media (min-width:721px) and (max-width:1179px){
   .bar{gap:14px}
+  .ratiorow{gap:14px}
   .bar select{min-width:120px;padding:7px 4px}
   .copies{gap:6px}
   .copy{padding:8px 10px}

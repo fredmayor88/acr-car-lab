@@ -68,7 +68,7 @@ test('changing the selected set moves the flag but drops no lane', () => {
 
 test('lane tops match the known Stratos figures', () => {
   const tops = layout(car, state).lanes[0].tops.map(Math.round);
-  assert.deepEqual(tops, [88, 120, 153, 187, 214]);
+  assert.deepEqual(tops, [89, 121, 153, 188, 215]);
 });
 
 test('base is the slowest gear across every lane, for the relative axis', () => {
@@ -127,8 +127,8 @@ test('a fixed-final-drive car (shape 3) still lays out per-set with its own prim
 });
 
 test('hovering past a lane\'s last dot clamps to that lane\'s top speed', () => {
-  // gear set 1 tops out at 214 km/h; the axis runs further, but the car does not
-  assert.match(hoverLine(car, state, 0, 260), /^214 km\/h {2}· {2}gear 5 {2}· {2}8450 rpm$/);
+  // gear set 1 tops out at 215 km/h; the axis runs further, but the car does not
+  assert.match(hoverLine(car, state, 0, 260), /^215 km\/h {2}· {2}gear 5 {2}· {2}8450 rpm$/);
 });
 
 test('clampSpeed keeps a hovered speed inside the lane, from a standing start to its top', () => {
@@ -200,11 +200,11 @@ test('a lowered ceiling reads every lane top at the ceiling rpm, and the relativ
     assert.ok(Math.abs(v - full.lanes[i].tops[gi] * 7000 / 8450) < 1e-9)));
   assert.ok(Math.abs(low.base - full.base * 7000 / 8450) < 1e-9);
   assert.ok(Math.abs(low.vmax - full.vmax * 7000 / 8450) < 1e-9);
-  assert.equal(Math.round(low.lanes[0].tops[4]), 177);
+  assert.equal(Math.round(low.lanes[0].tops[4]), 178);
   assert.equal(axisTitle(car, { ...state, ceil: 7000 }), 'speed at the 7000 rpm rev ceiling — km/h');
 });
 
 test('hover past the last dot under a lowered ceiling clamps to the ceiling rpm', () => {
   assert.match(hoverLine(car, { ...state, ceil: 7000 }, 0, 260),
-    /^177 km\/h {2}· {2}gear 5 {2}· {2}7000 rpm$/);
+    /^178 km\/h {2}· {2}gear 5 {2}· {2}7000 rpm$/);
 });

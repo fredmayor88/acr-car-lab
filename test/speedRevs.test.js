@@ -5,7 +5,7 @@ import { DEFAULT_FACTOR } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
 // REPLACES each gear set's own primary. Gear set 1 top gear pins to the game's real
-// Stratos top speed (214 km/h at the measured 8450 rpm limit) — see test/ladder.test.js for the same pin.
+// Stratos top speed (215 km/h at the measured 8450 rpm limit) — see test/ladder.test.js for the same pin.
 const car = {
   slug: 'test-stratos',
   engine: { redline: 8450 },
@@ -46,7 +46,7 @@ test('each line carries its set index so it can be coloured consistently', () =>
 
 test('top speed matches the known Stratos top gear figure', () => {
   const l = layout(car, state);
-  assert.equal(Math.round(l.lines[4].topSpeed), 214);
+  assert.equal(Math.round(l.lines[4].topSpeed), 215);
 });
 
 test('vmax leaves headroom above the fastest drawn line', () => {
@@ -178,7 +178,7 @@ test('a lowered ceiling ends every line at the ceiling rpm, and vmax follows', (
     assert.ok(Math.abs(line.topSpeed - full.lines[i].topSpeed * 7000 / 8450) < 1e-9);
   });
   assert.ok(Math.abs(low.vmax - full.vmax * 7000 / 8450) < 1e-9);
-  assert.equal(Math.round(low.lines[4].topSpeed), 177);
+  assert.equal(Math.round(low.lines[4].topSpeed), 178);
 });
 
 test('nearestLine against the ceiling: a line at half the ceiling sits at half its top', () => {
