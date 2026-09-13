@@ -11,7 +11,7 @@ import { barSummaryParts, setLabel } from './barSummary.js';
 import { ISSUES, PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
-import { leaveRedraws, movesHover } from './hover.js';
+import { coarseClick, leaveRedraws, movesHover } from './hover.js';
 import * as powerTorque from './charts/powerTorque.js';
 import * as finalDrive from './charts/finalDrive.js';
 import * as ladder from './charts/ladder.js';
@@ -175,6 +175,7 @@ function buildShell() {
   wireHover('ladder', (map, p) => ({ lane: map.yToLane(p.y), speed: map.xToSpeed(p.x) }));
   wireHover('shift', (map, p) => ({ gear: map.yToGear(p.y), speed: map.xToSpeed(p.x) }));
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
+  wireLanePick();
 
   return { surfaceSel, fdSel, setSel, factor, revs, summary };
 }
@@ -343,6 +344,15 @@ function buildFooter() {
  * Turn a pointer position into whatever this chart's render() takes as `hover`.
  * The SVGs scale, so client pixels have to go back through the viewBox first.
  */
+function toViewBox(svg, e) {
+  const box = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  return {
+    x: (e.clientX - box.left) / box.width * (vb.width || box.width),
+    y: (e.clientY - box.top) / box.height * (vb.height || box.height),
+  };
+}
+
 function wireHover(id, toHover) {
   const svg = svgOf(id);
   svg.addEventListener('pointermove', e => {
@@ -350,13 +360,7 @@ function wireHover(id, toHover) {
     // Redrawing replaces every node, so a redraw between pointerdown and click swaps the
     // lane name out from under the click. See js/hover.js.
     if (!map || !movesHover(e)) return;
-    const box = svg.getBoundingClientRect();
-    const vb = svg.viewBox.baseVal;
-    const p = {
-      x: (e.clientX - box.left) / box.width * (vb.width || box.width),
-      y: (e.clientY - box.top) / box.height * (vb.height || box.height),
-    };
-    hover[id] = toHover(map, p);
+    hover[id] = toHover(map, toViewBox(svg, e));
     if (id === 'shift') track('shift-helper');
     RENDER[id]();
   });
@@ -364,6 +368,28 @@ function wireHover(id, toHover) {
     if (!leaveRedraws(hover[id])) return;
     hover[id] = null;
     RENDER[id]();
+  });
+}
+
+/**
+ * Picking a gear set from its lane name. One listener on the ladder's <svg>, which is built
+ * once and never replaced, rather than on name nodes that any redraw throws away.
+ */
+function wireLanePick() {
+  const svg = svgOf('ladder');
+  let downType = '';
+  svg.addEventListener('pointerdown', e => { downType = e.pointerType; });
+  svg.addEventListener('click', e => {
+    const coarse = coarseClick(downType, e.pointerType,
+      window.matchMedia?.('(pointer: coarse)').matches);
+    downType = '';
+    const names = svg.querySelectorAll('text.rowlbl');
+    const i = maps.ladder?.laneAt(toViewBox(svg, e),
+      { coarse, nameBox: n => names[n]?.getBBox() });
+    if (i === null || i === undefined) return;
+    state.set = i;
+    track('pick-gearset');
+    commit();
   });
 }
 
@@ -396,8 +422,7 @@ const RENDER = {
   power: () => { maps.power = powerTorque.render(svgOf('power'), car, hover.power); },
   fd: renderFinalDrive,
   ladder: () => {
-    maps.ladder = ladder.render(svgOf('ladder'), car, state,
-      i => { state.set = i; track('pick-gearset'); commit(); }, hover.ladder);
+    maps.ladder = ladder.render(svgOf('ladder'), car, state, hover.ladder);
   },
   shift: () => {
     maps.shift = shiftPoints.render(svgOf('shift'), car, state, hover.shift, shiftReadoutEdge());

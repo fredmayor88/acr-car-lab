@@ -12,3 +12,13 @@ export const movesHover = e => e.pointerType !== 'touch' && !e.buttons;
 
 /** A pointerleave redraws only when there is a readout to take away. */
 export const leaveRedraws = current => current !== null && current !== undefined;
+
+/**
+ * Whether a click came from a coarse pointer. The pointerdown that started it is the most
+ * reliable witness (a WebKit tap can arrive as a mouse-typed click); then the click's own
+ * type; with neither, whether the device's primary pointer is coarse.
+ */
+export function coarseClick(downType, clickType, mediaCoarse) {
+  const type = downType || clickType;
+  return type ? type !== 'mouse' : !!mediaCoarse;
+}

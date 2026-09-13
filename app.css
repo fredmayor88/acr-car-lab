@@ -113,6 +113,12 @@ svg{display:block;width:100%;height:auto}
 .val{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--fg)}
 .pip{font:9px "SF Mono",Menlo,Consolas,monospace;fill:var(--on-data);font-weight:700}
 .hit{cursor:pointer}
+/* The ladder's lane-name column is a tap target for fingers only; a mouse picks on the name
+   itself, as it always has, so the column stays out of its way. The chart carries the click
+   listener, so iOS would flash it on every tap without the transparent highlight. */
+#svg-ladder,#svg-ladder .lanehit{-webkit-tap-highlight-color:transparent}
+.lanehit{pointer-events:none}
+@media (pointer:coarse){.lanehit{pointer-events:all;cursor:pointer}}
 
 /* Shift points' rev floor and ceiling, over the top right of the chart */
 #sec-shift .panel{position:relative}

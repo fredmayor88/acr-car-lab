@@ -65,7 +65,24 @@ const L = 214, R = 1020, T = 56, step = 62;
  */
 export const laneNameHit = i => ({ x: 0, y: T + i * step, width: L - 8, height: step });
 
-export function render(svg, car, state, onPickSet, hover = null) {
+const inside = (p, b) =>
+  p.x >= b.x && p.x < b.x + b.width && p.y >= b.y && p.y < b.y + b.height;
+
+/**
+ * The lane a click at p (viewBox units) picks, or null. A coarse pointer (a finger) picks
+ * anywhere in the lane's name column, laneNameHit(i). A fine one (mouse, trackpad) picks
+ * only on the name itself: nameBox(i) is that name's box, as the browser measures it.
+ * Clicks are read off the chart's <svg>, which is never redrawn, so a redraw between a
+ * finger going down and its click cannot lose the tap.
+ */
+export function laneAtPoint(p, count, { coarse, nameBox }) {
+  const i = Math.floor((p.y - T) / step);
+  if (!(i >= 0 && i < count)) return null;
+  const box = coarse ? laneNameHit(i) : nameBox?.(i);
+  return box && inside(p, box) ? i : null;
+}
+
+export function render(svg, car, state, hover = null) {
   clear(svg);
   const l = layout(car, state);
   const xs = v => L + (v / l.vmax) * (R - L);
@@ -109,10 +126,9 @@ export function render(svg, car, state, onPickSet, hover = null) {
       text(svg, L - 22, y + 19, 'selected', 'lbl',
            { 'text-anchor': 'end', fill: C.accentText });
     }
-    // invisible, over the name, so it takes the click; see laneNameHit
-    const hit = el(svg, 'rect', { ...laneNameHit(i), fill: 'transparent',
-                                  'pointer-events': 'all', class: 'hit' });
-    hit.addEventListener('click', () => onPickSet(i));
+    // Invisible, and no listener of its own: the <svg> has it (see laneAtPoint). On a
+    // coarse pointer app.css lets it take the pointer, so the name column reads as tappable.
+    el(svg, 'rect', { ...laneNameHit(i), fill: 'transparent', class: 'lanehit' });
   });
 
   if (hover) {
@@ -134,7 +150,8 @@ export function render(svg, car, state, onPickSet, hover = null) {
   text(svg, (L + R) / 2, bottom + 42,
        `speed at the ${car.engine.redline} rpm rev limit — km/h`, 'lbl',
        { 'text-anchor': 'middle' });
-  return { xToSpeed: x => Math.max(0, (x - L) / (R - L) * l.vmax),
+  return { laneAt: (p, how) => laneAtPoint(p, l.lanes.length, how),
+           xToSpeed: x => Math.max(0, (x - L) / (R - L) * l.vmax),
            yToLane: y => Math.max(0, Math.min(l.lanes.length - 1,
                                               Math.floor((y - T) / step))) };
 }

@@ -151,3 +151,32 @@ test('lane name hit boxes: tile the label column lane by lane, cover the name, s
     assert.ok(b.height * 330 / 1100 >= 18, 'at least 18px tall on a 400px screen');
   }
 });
+
+test('laneAtPoint, coarse: anywhere in a lane name column picks that lane; the plot and the margins pick nothing', async () => {
+  const { laneAtPoint } = await import('../js/charts/ladder.js');
+  const T = 56, step = 62, L = 214;
+  const how = { coarse: true };
+  assert.equal(laneAtPoint({ x: 100, y: T + step / 2 }, 3, how), 0);
+  assert.equal(laneAtPoint({ x: 2, y: T + 2 * step + 1 }, 3, how), 2, 'far left edge, top of lane 3');
+  assert.equal(laneAtPoint({ x: L - 9, y: T + step - 0.5 }, 3, how), 0, 'last unit of the column');
+  assert.equal(laneAtPoint({ x: L - 8, y: T + step / 2 }, 3, how), null, 'the column stops 8 short of the plot');
+  assert.equal(laneAtPoint({ x: 600, y: T + step / 2 }, 3, how), null, 'a click in the plot');
+  assert.equal(laneAtPoint({ x: 100, y: T - 1 }, 3, how), null, 'above the first lane');
+  assert.equal(laneAtPoint({ x: 100, y: T + 3 * step }, 3, how), null, 'below the last lane');
+  assert.equal(laneAtPoint({ x: 100, y: T + 9 * step + 5 }, 10, how), 9, 'a tenth lane on the 306 Maxi');
+});
+
+test('laneAtPoint, fine: only on the name box itself, never beside a short name', async () => {
+  const { laneAtPoint } = await import('../js/charts/ladder.js');
+  const T = 56, step = 62;
+  // "Gear set 2   (5-speed)", end-anchored at x 192, about 120 units wide
+  const nameBox = i => ({ x: 72, y: T + i * step + step / 2 - 7, width: 120, height: 13 });
+  const y = T + step + step / 2;
+  const how = { coarse: false, nameBox };
+  assert.equal(laneAtPoint({ x: 130, y }, 3, how), 1, 'on the name');
+  assert.equal(laneAtPoint({ x: 40, y }, 3, how), null, 'left of a short name');
+  assert.equal(laneAtPoint({ x: 200, y }, 3, how), null, 'between the name and the plot');
+  assert.equal(laneAtPoint({ x: 130, y: y + 12 }, 3, how), null, 'under the name, on the selected tag row');
+  assert.equal(laneAtPoint({ x: 130, y }, 3, { coarse: false, nameBox: () => undefined }), null,
+    'no name node measured, nothing picked');
+});
