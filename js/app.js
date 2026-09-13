@@ -4,7 +4,7 @@
 
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
-import { parseHash, toHash } from './state.js';
+import { floorBounds, parseFloor, parseHash, stepFloor, toHash } from './state.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import * as powerTorque from './charts/powerTorque.js';
@@ -35,10 +35,7 @@ const SECTIONS = [
   { id: 'fd', title: 'Final drive', cap: '' },
   { id: 'ladder', title: 'Where each gear tops out',
     cap: 'One lane per gear set, all of them at once. Click a lane name to select that gear set.' },
-  { id: 'shift', title: 'Shift points',
-    cap: 'The selected gear set, one row per gear. Each bar covers the speeds where that gear '
-       + `is usable, from ${REV_FLOOR} rpm to the rev limit. Where bars overlap you have a `
-       + 'choice of gear. Hover for the revs either side of a shift.' },
+  { id: 'shift', title: 'Shift points', cap: shiftPoints.shiftCaption(REV_FLOOR) },
   { id: 'revs', title: 'Speed against revs', cap: 'Pick the gear sets to draw.' },
 ];
 
@@ -88,6 +85,7 @@ function tarmacNote() {
 function buildShell() {
   root.querySelector('.loading')?.remove();
 
+  const floor = buildFloorControl();
   const surfaces = SURFACES.filter(s => s.key in car.tyres);
   const combos = car.final_drive ? finalDriveCombos(car.final_drive) : [];
 
@@ -139,6 +137,7 @@ function buildShell() {
     const panel = h('div', { class: s.id === 'revs' ? 'panel row' : 'panel' });
     panel.appendChild(svg);
     if (s.id === 'revs') panel.appendChild(buildSetList());
+    if (s.id === 'shift') panel.appendChild(floor.box);
     root.appendChild(h('section', { id: 'sec-' + s.id },
       h('h2', {}, s.title), h('p', { class: 'cap' }, s.cap), panel));
   }
@@ -150,7 +149,54 @@ function buildShell() {
   wireHover('shift', (map, p) => ({ gear: map.yToGear(p.y), speed: map.xToSpeed(p.x) }));
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
 
-  return { surfaceSel, fdSel, setSel, factor };
+  return { surfaceSel, fdSel, setSel, factor, floor };
+}
+
+/** Shift points' rev floor: [−] [typed rpm] [+], over the top right of the chart. */
+function buildFloorControl() {
+  const set = v => {
+    if (v !== state.floor) {
+      state.floor = v;
+      track('edit-rev-floor');
+      commit();
+    }
+    input.value = String(state.floor);
+  };
+  const typed = () => {
+    const v = parseFloor(input.value, car);
+    if (v === null) input.value = String(state.floor);
+    else set(v);
+  };
+  const input = h('input', { id: 'rev-floor', class: 'floorin', type: 'text',
+    inputmode: 'numeric', autocomplete: 'off', value: String(state.floor),
+    onchange: typed,
+    onkeydown: e => { if (e.key === 'Enter') typed(); } });
+  const step = (direction, name, glyph) => h('button', {
+    class: 'floorstep', type: 'button', 'aria-label': name,
+    onclick: () => set(stepFloor(state.floor, direction, car)),
+  }, glyph);
+  const minus = step(-1, 'Lower rev floor by 100 rpm', '−');
+  const plus = step(1, 'Raise rev floor by 100 rpm', '+');
+  const box = h('div', { class: 'floorbox' },
+    h('label', { for: 'rev-floor' }, 'Rev floor'), minus, input, plus,
+    h('span', { class: 'unit' }, 'rpm'));
+  return { box, input, minus, plus };
+}
+
+/**
+ * Where the Shift points readout has to stop, in viewBox units: just left of the rev floor
+ * control when that sits over the chart. On a narrow screen it sits above the chart instead.
+ */
+function shiftReadoutEdge() {
+  const full = 1096;
+  const box = controls?.floor.box;
+  const svg = svgOf('shift');
+  if (!box) return full;
+  const b = box.getBoundingClientRect();
+  const s = svg.getBoundingClientRect();
+  if (!s.width || b.bottom <= s.top || b.top >= s.bottom) return full;
+  const vb = svg.viewBox.baseVal;
+  return Math.min(full, (b.left - s.left) / s.width * (vb.width || s.width) - 8);
 }
 
 function buildSetList() {
@@ -270,7 +316,9 @@ const RENDER = {
     maps.ladder = ladder.render(svgOf('ladder'), car, state,
       i => { state.set = i; track('pick-gearset'); commit(); }, hover.ladder);
   },
-  shift: () => { maps.shift = shiftPoints.render(svgOf('shift'), car, state, hover.shift); },
+  shift: () => {
+    maps.shift = shiftPoints.render(svgOf('shift'), car, state, hover.shift, shiftReadoutEdge());
+  },
   revs: () => {
     maps.revs = speedRevs.render(svgOf('revs'), car, state, hover.revs, setColours());
   },
@@ -297,6 +345,11 @@ function syncControls() {
   if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
+  const { min, max } = floorBounds(car);
+  controls.floor.input.value = String(state.floor);
+  controls.floor.minus.disabled = state.floor <= min;
+  controls.floor.plus.disabled = state.floor >= max;
+  document.querySelector('#sec-shift .cap').textContent = shiftPoints.shiftCaption(state.floor);
   document.querySelectorAll('.setlist .opt').forEach(node => {
     const i = Number(node.dataset.set);
     const on = state.draw.includes(i);

@@ -106,6 +106,18 @@ svg{display:block;width:100%;height:auto}
 .pip{font:9px "SF Mono",Menlo,Consolas,monospace;fill:var(--on-data);font-weight:700}
 .hit{cursor:pointer}
 
+/* Shift points' rev floor, over the top right of the chart */
+#sec-shift .panel{position:relative}
+.floorbox{position:absolute;top:10px;right:18px;display:flex;align-items:center;gap:5px}
+.floorbox label{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted-text);font-weight:600;margin-right:5px}
+.floorbox .unit{font-size:11.5px;color:var(--muted-text);margin-left:2px}
+.floorstep,.floorin{font:13px/1 "SF Mono",Menlo,Consolas,monospace;height:26px;
+  border:1px solid var(--line);border-radius:2px;background:var(--field);color:var(--fg)}
+.floorstep{width:26px;padding:0;cursor:pointer}
+.floorstep:disabled{cursor:default;opacity:.4}
+.floorin{width:60px;padding:0 6px;text-align:center}
+
 .setlist{width:158px;flex:0 0 158px;padding-top:6px}
 .setlist h4{font-size:10px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--muted-text);margin:0 0 8px;font-weight:600}
@@ -141,4 +153,5 @@ svg{display:block;width:100%;height:auto}
   .wrap{padding:0 16px 60px}
   .panel.row{flex-direction:column}
   .setlist{width:100%;flex:1 1 auto}
+  .floorbox{position:static;justify-content:flex-end;margin-bottom:10px}
 }
