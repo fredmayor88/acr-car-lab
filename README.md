@@ -11,18 +11,35 @@ fitted, not read — see below.
 
 ## How the numbers are made
 
-Speed comes from gearing alone — no drag, no slip:
+Speed comes from gearing alone — no drag, no slip. Drive passes through three reductions on
+its way from the engine to the wheels:
 
 ```
+engine → primary gear → gearbox gear → final drive → wheels
+```
+
+Multiply them and you get the total ratio, which turns revs into speed:
+
+```
+total_ratio   = primary * gear * final_drive
 circumference = 2 * pi * free_tyre_radius * rolling_radius_factor
 km/h          = rpm * circumference * 0.06 / total_ratio
-total_ratio   = gear * primary * below
-below         = final_drive.rest * differential   (or the car's fixed final drive, if it has no selector)
 ```
 
-`primary` is the gear set's own primary, except on the Lancia Stratos, where it also has a
-primary selector — pick one there and it replaces the set's primary instead of stacking on
-top of it.
+**Primary gear.** A fixed gear pair in front of the gearbox that scales every gear in the set
+by the same amount. Each gear set in the game files carries its own. On most cars it is
+`25//25`, a ratio of 1, but on the Mini, Fiat 124, Fiat 131 and Fulvia it changes from one
+gear set to the next. The Lancia Stratos is the only car with a separate Primary Gear
+adjustment in setup; the one you pick there replaces the gear set's primary.
+
+**Final drive.** Everything after the gearbox, as one number:
+
+- On most cars it is the differential ratio you pick in setup.
+- On the Citroen Xsara WRC and Lancia Delta Integrale, setup adjusts the centre
+  differential, so the fixed axle reduction behind it is multiplied in as well. That fixed
+  part is stored as `final_drive.rest` in the data; on the other adjustable cars it is 1.
+- The Hyundai i20, Skoda Fabia, VW Polo R5 and Peugeot 208 Rally4 have no final drive
+  adjustment. Their final drive is a single fixed number, stored as `fixed_final_drive`.
 
 `rolling_radius_factor` defaults to `0.9562`. A loaded tyre rolls on a smaller radius than
 the stored free one; the factor was fitted against measured in-game top speeds for the
