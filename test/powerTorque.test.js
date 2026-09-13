@@ -74,3 +74,46 @@ test('revLimitLabel: over the top left of its line alone, bottom right of it bes
   // limit label goes bottom right of the rev limit line, where no line or curve reaches
   assert.deepEqual(revLimitLabel(800, 46, 292, true), { x: 807, y: 284, anchor: 'start' });
 });
+
+// --- rev limit and curve end ------------------------------------------------------------
+
+test('the axis runs to the end of the curve when the rev limit is short of it', async () => {
+  const { rpmAxisMax } = await import('../js/charts/powerTorque.js');
+  assert.equal(rpmAxisMax(car), 9250);
+  const measured = { engine: { ...car.engine, redline: 8450 } };
+  assert.equal(rpmAxisMax(measured), 9250, 'the curve still ends at 8750');
+  const raised = { engine: { ...car.engine, redline: 9600 } };
+  assert.equal(rpmAxisMax(raised), 10250);
+});
+
+test('the rev limit marker sits at the rev limit, not the curve end', () => {
+  const measured = { engine: { ...car.engine, redline: 8450 } };
+  const l = layout(measured);
+  assert.equal(l.redline, 8450);
+  assert.equal(l.points[l.points.length - 1][0], 8750);
+});
+
+test('a borrowed curve gets a caption line naming its owner without the year', async () => {
+  const { borrowedCurveNote } = await import('../js/charts/powerTorque.js');
+  const p206 = { slug: 'peugeot-206-wrc-1999', engine: { curve_source: 'CitroenXsaraWRC',
+    curve_from: { slug: 'citroen-xsara-wrc-2003', name: 'Citroen Xsara WRC 2003' } } };
+  assert.equal(borrowedCurveNote(p206),
+    'This car uses the Citroen Xsara WRC engine curve in the game files.');
+  assert.equal(borrowedCurveNote({ slug: 'x', engine: { curve_from: null } }), '');
+  assert.equal(borrowedCurveNote({ slug: 'x', engine: {} }), '');
+});
+
+test('revLimitLabel: a crowded label takes the bottom right of its line, like a lowered one', async () => {
+  const { revLimitLabel } = await import('../js/charts/powerTorque.js');
+  assert.deepEqual(revLimitLabel(800, 46, 292, false, true), { x: 807, y: 284, anchor: 'start' });
+  assert.deepEqual(revLimitLabel(800, 46, 292, false, false), revLimitLabel(800, 46, 292, false));
+});
+
+test('boxesOverlap: touching within the padding counts, clear boxes do not', async () => {
+  const { boxesOverlap } = await import('../js/charts/powerTorque.js');
+  const a = { x: 0, y: 0, width: 10, height: 10 };
+  assert.equal(boxesOverlap(a, { x: 5, y: 5, width: 10, height: 10 }), true);
+  assert.equal(boxesOverlap(a, { x: 12, y: 0, width: 10, height: 10 }), false);
+  assert.equal(boxesOverlap(a, { x: 12, y: 0, width: 10, height: 10 }, 4), true);
+  assert.equal(boxesOverlap(a, { x: 0, y: 20, width: 10, height: 10 }, 4), false);
+});

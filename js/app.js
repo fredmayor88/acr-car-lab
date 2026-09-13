@@ -2,13 +2,14 @@
 // and re-renders everything on any state change. All arithmetic lives in the modules;
 // this file only moves state around.
 
-import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
+import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos, withRevLimit }
   from './gearing.js';
-import { floorFocusAfterStep, parseCeil, parseFloor, parseHash, revControlViews, rpmInputKey,
-  stepCeil, stepFloor, toHash } from './state.js';
+import { REV_LIMIT_MAX, REV_LIMIT_MIN, applyRevLimit, floorFocusAfterStep, parseCeil, parseFloor,
+  parseHash, parseRevLimit, revControlViews, rpmInputKey, stepCeil, stepFloor, toHash }
+  from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
-import { ISSUES, PROMO, dataLine } from './footer.js';
+import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import { coarseClick, leaveRedraws, movesHover } from './hover.js';
@@ -27,6 +28,11 @@ const SITE = new URL('../', import.meta.url);
 // `car` and `state` are only ever assigned together, from parseHash, which always hands
 // back a valid final-drive index. belowGearbox throws on a car that needs a combo and has
 // none, so there is never a moment where one is set and the other is stale.
+//
+// `data` is the car as loaded. `car` is the same car with the rev limit in force (state.rl),
+// which is what every chart and caption reads; the URL hash and the reset link compare
+// against `data`, where the car's own limit is.
+let data = null;
 let car = null;
 let state = null;
 let index = {};
@@ -70,15 +76,22 @@ const h = (tag, attrs = {}, ...kids) => {
 
 const svgOf = id => document.getElementById('svg-' + id);
 
+/** The line under the name. The rev limit span is kept, so an edited limit repaints it. */
 function subtitle() {
   const counts = car.gear_sets.map(s => s.gears.length);
   const lo = Math.min(...counts);
   const hi = Math.max(...counts);
   const n = car.gear_sets.length;
-  return h('p', { class: 'sub' },
+  const limit = h('span', { class: 'sublimit' }, String(car.engine.redline));
+  return { limit, node: h('p', { class: 'sub' },
     h('span', {}, lo === hi ? String(lo) : `${lo}–${hi}`), ' speed · ',
     h('span', {}, String(n)), n === 1 ? ' gear set · ' : ' gear sets · ',
-    'rev limit ', h('span', {}, String(car.engine.redline)), ' rpm');
+    'rev limit ', limit, ' rpm') };
+}
+
+/** A state change that is not a control's own: the rev limit and the ceiling under it. */
+function setRevLimit(rl) {
+  state = applyRevLimit(state, rl, data);
 }
 
 /** Only true where the data says so: the two tarmac tyres have the same free radius. */
@@ -134,8 +147,8 @@ function buildShell() {
     // the hash is written on every commit(); writing it again here makes the link line match
     // the settings above it even if something changed state without committing
     copyButton('Copy settings', 'copy-settings', () => {
-      history.replaceState(null, '', toHash(state, car));
-      return settingsText(car, state, location.href);
+      history.replaceState(null, '', toHash(state, data));
+      return settingsText(data, state, location.href);
     }));
 
   // On a wide screen the head is hidden and the controls box lays out as if it were not
@@ -170,7 +183,8 @@ function buildShell() {
     toggle.focus();
   });
 
-  root.appendChild(subtitle());
+  const sub = subtitle();
+  root.appendChild(sub.node);
   root.appendChild(bar);
   root.appendChild(tarmacNote());
 
@@ -181,10 +195,13 @@ function buildShell() {
     panel.appendChild(svg);
     if (s.id === 'revs') panel.appendChild(buildSetList());
     if (s.id === 'shift') panel.appendChild(revs.box);
+    // the 206 WRC runs on another car's curve, and its power section says whose
+    const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
     root.appendChild(h('section', { id: 'sec-' + s.id },
-      h('h2', {}, s.title), h('p', { class: 'cap' }, s.cap), panel));
+      h('h2', {}, s.title), h('p', { class: 'cap' }, s.cap),
+      ...(borrowed ? [h('p', { class: 'cap borrowed' }, borrowed)] : []), panel));
   }
-  const { foot, factor } = buildFooter();
+  const { foot, factor, revLimit } = buildFooter();
   root.appendChild(foot);
 
   wireHover('power', (map, p) => map.xToRpm(p.x));
@@ -193,7 +210,8 @@ function buildShell() {
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
   wireLanePick();
 
-  return { surfaceSel, fdSel, setSel, factor, revs, summary, ceils: [revs.ceil, barCeil] };
+  return { surfaceSel, fdSel, setSel, factor, revLimit, revs, summary, subLimit: sub.limit,
+    ceils: [revs.ceil, barCeil] };
 }
 
 /** The bar toggle's glyph: a chevron in the button's text colour, turned over when open. */
@@ -352,6 +370,20 @@ function buildFooter() {
         e.target.value = String(state.k);
       }
     } });
+  // the car's rev limit, editable the same way as the factor: typed, with a reset link
+  const revLimit = h('input', { id: 'rev-limit', type: 'number', step: '50',
+    min: String(REV_LIMIT_MIN), max: String(REV_LIMIT_MAX), value: String(state.rl),
+    inputmode: 'numeric', autocomplete: 'off', 'aria-label': 'Rev limit in rpm',
+    onchange: e => {
+      const v = parseRevLimit(e.target.value);
+      if (v === null) {
+        e.target.value = String(state.rl);
+      } else if (v !== state.rl) {
+        setRevLimit(v);
+        track('edit-rev-limit');
+        commit();
+      }
+    } });
   const ul = h('ul');
   for (const line of ['Speeds are gearing alone. No drag, no slip.',
                       'Compound does not change gearing. Compounds share a carcass.']) {
@@ -366,10 +398,16 @@ function buildFooter() {
           state.k = car.defaults.loaded_radius_factor;
           commit();
         } }, 'reset')),
-      h('p', { class: 'fnote' },
-        'A loaded tyre rolls on a smaller radius than the stored one. This factor was '
-        + 'fitted against measured in-game top speeds for the Stratos across 15 gears, '
-        + 'and is applied to every car and surface. Edit it and every chart redraws.')),
+      h('p', { class: 'fnote' }, FACTOR_NOTE)),
+    h('div', {},
+      h('h3', {}, 'Rev limit'),
+      h('div', { class: 'kbox' }, revLimit, h('span', { class: 'unit' }, 'rpm'),
+        h('a', { href: '#', onclick: e => {
+          e.preventDefault();
+          setRevLimit(data.engine.redline);
+          commit();
+        } }, 'reset')),
+      h('p', { class: 'fnote' }, revLimitNote(data.engine.redline_source))),
     h('div', {},
       h('h3', {}, 'Known limits'),
       h('div', { class: 'limits' }, ul)),
@@ -380,7 +418,7 @@ function buildFooter() {
       h('a', { href: PROMO.href, onclick: () => track('click-setup-engineer') }, PROMO.link),
       PROMO.after, ISSUES.before,
       h('a', { href: ISSUES.href, onclick: () => track('click-issues') }, ISSUES.link)));
-  return { foot, factor };
+  return { foot, factor, revLimit };
 }
 
 /**
@@ -484,8 +522,9 @@ function clearHover() {
 }
 
 function commit() {
+  car = withRevLimit(data, state.rl);
   clearHover();
-  history.replaceState(null, '', toHash(state, car));
+  history.replaceState(null, '', toHash(state, data));
   syncControls();
   draw();
 }
@@ -495,6 +534,8 @@ function syncControls() {
   if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
+  controls.revLimit.value = String(state.rl);
+  controls.subLimit.textContent = String(car.engine.redline);
   syncSummary();
   const views = revControlViews(car, state);
   paintRpm(controls.revs.floor, views.floor);
@@ -513,7 +554,7 @@ function syncControls() {
 
 async function main() {
   try {
-    [car, index] = await Promise.all([
+    [data, index] = await Promise.all([
       fetch(new URL(`data/${slug}.json`, SITE)).then(r => r.json()),
       // only the footer's data line comes from here, so a missing index must not sink the page
       fetch(new URL('data/index.json', SITE)).then(r => r.json()).catch(() => ({})),
@@ -523,7 +564,8 @@ async function main() {
     if (loading) loading.textContent = 'Could not load the data for this car.';
     throw err;
   }
-  state = parseHash(location.hash, car);
+  state = parseHash(location.hash, data);
+  car = withRevLimit(data, state.rl);
   controls = buildShell();
   commit();
   onThemeChange(() => {
@@ -531,7 +573,8 @@ async function main() {
     RENDER.revs();
   });
   window.addEventListener('hashchange', () => {
-    state = parseHash(location.hash, car);
+    state = parseHash(location.hash, data);
+    car = withRevLimit(data, state.rl);
     clearHover();
     syncControls();
     draw();

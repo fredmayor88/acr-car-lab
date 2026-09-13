@@ -34,7 +34,8 @@ test('exactly one gear set is drawn by default', () => {
 });
 
 test('a full hash round-trips', () => {
-  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97, floor: 3500, ceil: 8000 };
+  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97, floor: 3500, rl: 8750,
+    ceil: 8000 };
   assert.deepEqual(parseHash(toHash(s, car), car), s);
 });
 
@@ -94,14 +95,14 @@ test('the stock combo matches the fitted primary, not just the option', () => {
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
 
-test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 215 km/h', () => {
+test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 214 km/h', () => {
   const stratos = load('lancia-stratos');
   const state = defaultState(stratos);
   const stock = finalDriveCombos(stratos.final_drive)[state.fd];
   assert.equal(stock.primary.name, '33//31*31//30');
   assert.equal(stock.option.name, '65//19');
   const row = layout(stratos, state).rows.find(r => r.selected);
-  assert.equal(Math.round(row.kmh), 215);
+  assert.equal(Math.round(row.kmh), 214);
 });
 
 test('every car opens on a combo carrying its stock option and fitted primary', () => {
@@ -119,7 +120,14 @@ test('every car opens on a combo carrying its stock option and fitted primary', 
     const stock = combos[state.fd];
     assert.equal(stock.option.name, c.final_drive.stock_option, slug);
     if (stock.primary) {
-      assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
+      const selectable = c.final_drive.primaries.map(p => p.name);
+      if (selectable.includes(c.gear_sets[0].primary.name)) {
+        assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
+      } else {
+        // the 206 WRC: its gear sets carry 20//25, which is not one of its selectable
+        // primaries, so the page opens on the first selectable one
+        assert.equal(stock.primary.name, selectable[0], slug);
+      }
     }
     // and it is the row the chart highlights
     assert.equal(layout(c, state).rows.filter(r => r.selected).length, 1, slug);
@@ -308,4 +316,88 @@ test('rpmInputKey: Enter commits, Escape cancels, anything else is left to the i
   assert.equal(rpmInputKey('Enter'), 'commit');
   assert.equal(rpmInputKey('Escape'), 'cancel');
   for (const k of ['a', '5', 'Tab', 'Backspace', undefined]) assert.equal(rpmInputKey(k), null);
+});
+
+// --- the editable rev limit -------------------------------------------------------------
+
+test("the rev limit defaults to the car's own and stays out of the hash at that value", async () => {
+  const { revLimitOf } = await import('../js/state.js');
+  assert.equal(defaultState(car).rl, 8750);
+  assert.equal(revLimitOf(car, defaultState(car)), 8750);
+  assert.doesNotMatch(toHash(defaultState(car), car), /rl=/);
+});
+
+test('an edited rev limit round-trips through the hash as rl, with the ceiling following it', async () => {
+  const { applyRevLimit } = await import('../js/state.js');
+  const s = applyRevLimit(defaultState(car), 8000, car);
+  assert.equal(s.rl, 8000);
+  assert.equal(s.ceil, 8000);
+  assert.match(toHash(s, car), /rl=8000/);
+  // the ceiling at the limit is the default, so it is left out
+  assert.doesNotMatch(toHash(s, car), /ceil=/);
+  assert.deepEqual(parseHash(toHash(s, car), car), s);
+});
+
+test('parseRevLimit: a whole rpm from 2000 to 15000, anything else is null', async () => {
+  const { parseRevLimit, REV_LIMIT_MIN, REV_LIMIT_MAX } = await import('../js/state.js');
+  assert.equal(REV_LIMIT_MIN, 2000);
+  assert.equal(REV_LIMIT_MAX, 15000);
+  assert.equal(parseRevLimit('2000'), 2000);
+  assert.equal(parseRevLimit(' 15000 '), 15000);
+  assert.equal(parseRevLimit('8450'), 8450);
+  for (const raw of ['1999', '15001', '0', '-8000', '8450.5', '8e3', 'abc', '', null, undefined]) {
+    assert.equal(parseRevLimit(raw), null, String(raw));
+  }
+});
+
+test("an invalid rl in a link falls back to the car's own limit", () => {
+  for (const raw of ['1999', '15001', 'abc', '', '7000.5']) {
+    const s = parseHash(`#rl=${raw}`, car);
+    assert.equal(s.rl, 8750, raw);
+    assert.equal(s.ceil, 8750, raw);
+  }
+});
+
+test("a linked ceiling is checked against the linked rev limit, not the car's own", () => {
+  assert.equal(parseHash('#rl=7000&ceil=6500', car).ceil, 6500);
+  assert.equal(parseHash('#rl=7000&ceil=8000', car).ceil, 7000);
+  assert.equal(parseHash('#ceil=8000&rl=7000', car).ceil, 7000);
+  // a rev limit above the car's own is allowed, and the ceiling may reach it
+  assert.equal(parseHash('#rl=9500&ceil=9200', car).ceil, 9200);
+  assert.equal(parseHash('#rl=9500', car).ceil, 9500);
+});
+
+test('applyRevLimit: a limit dropped under a lowered ceiling clamps it; a higher one leaves it', async () => {
+  const { applyRevLimit } = await import('../js/state.js');
+  const lowered = { ...defaultState(car), ceil: 7000 };
+  assert.equal(applyRevLimit(lowered, 6500, car).ceil, 6500);
+  assert.equal(applyRevLimit(lowered, 7500, car).ceil, 7000);
+  assert.equal(applyRevLimit(lowered, 9000, car).ceil, 7000);
+  // a ceiling at the limit is not lowered, so it moves with the limit both ways
+  assert.equal(applyRevLimit(defaultState(car), 9000, car).ceil, 9000);
+  assert.equal(applyRevLimit(defaultState(car), 6000, car).ceil, 6000);
+  // the ceiling clamped to the limit is left out of the hash
+  assert.doesNotMatch(toHash(applyRevLimit(lowered, 6500, car), car), /ceil=/);
+});
+
+test('applyRevLimit keeps the floor 100 under the ceiling, and leaves it alone otherwise', async () => {
+  const { applyRevLimit } = await import('../js/state.js');
+  assert.equal(applyRevLimit(defaultState(car), 2500, car).floor, 2400);
+  assert.equal(applyRevLimit(defaultState(car), 6000, car).floor, 3000);
+  const s = { ...defaultState(car), floor: 6000, ceil: 7000 };
+  assert.equal(applyRevLimit(s, 6050, car).floor, 5950);
+});
+
+test("resetting to the car's own limit restores the default state", async () => {
+  const { applyRevLimit } = await import('../js/state.js');
+  const edited = applyRevLimit(defaultState(car), 7000, car);
+  assert.deepEqual(applyRevLimit(edited, 8750, car), defaultState(car));
+});
+
+test('app.js tracks rev limit edits as edit-rev-limit and reads the limit through withRevLimit', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.equal((src.match(/'edit-rev-limit'/g) || []).length, 1);
+  assert.match(src, /car = withRevLimit\(data, state\.rl\)/);
+  assert.match(src, /toHash\(state, data\)/);
+  assert.doesNotMatch(src, /toHash\(state, car\)/);
 });

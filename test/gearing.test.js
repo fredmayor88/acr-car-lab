@@ -40,16 +40,16 @@ const R = 0.2960;
 const CIRC = circumference(R, DEFAULT_FACTOR);
 
 test('circumference applies the loaded-radius factor to the free radius', () => {
-  near(CIRC, 2 * Math.PI * R * 0.9562, 1e-9);
+  near(CIRC, 2 * Math.PI * R * 0.9858, 1e-9);
 });
 
 test('the factor is what makes the control real — a different factor moves the number', () => {
   assert.notEqual(circumference(R, 0.99), CIRC);
 });
 
-test('top gear at the rev limit on the stock final drive is 215 km/h', () => {
+test('top gear at the measured 8450 rpm rev limit on the stock final drive is 214 km/h', () => {
   const total = totalRatio(1.154, 1.100, 1.0 * 3.4211);
-  near(kmh(8750, total, CIRC), 215, 1);
+  near(kmh(8450, total, CIRC), 214, 1);
 });
 
 test('rpmAt inverts kmh', () => {
@@ -60,9 +60,9 @@ test('rpmAt inverts kmh', () => {
 
 test('gearTops gives each gear its speed at the rev limit', () => {
   const gears = [{ name: '', value: 2.8 }, { name: '', value: 1.154 }];
-  const tops = gearTops(gears, 1.100 * 3.4211, CIRC, 8750);
-  near(tops[0], 89, 1);
-  near(tops[1], 215, 1);
+  const tops = gearTops(gears, 1.100 * 3.4211, CIRC, 8450);
+  near(tops[0], 88, 1);
+  near(tops[1], 214, 1);
 });
 
 test('gearAtSpeed picks the lowest gear that has not topped out', () => {
@@ -78,7 +78,7 @@ test('gearAtSpeed clamps above the top gear rather than returning -1', () => {
 });
 
 test('constants match the spec', () => {
-  assert.equal(DEFAULT_FACTOR, 0.9562);
+  assert.equal(DEFAULT_FACTOR, 0.9858);
   assert.equal(REV_FLOOR, 3000);
   assert.deepEqual(SURFACES.map(s => s.key),
     ['Tarmac_Dry', 'Tarmac_Wet', 'Gravel', 'Sweden', 'Montecarlo']);
@@ -158,13 +158,13 @@ test('Stratos: with no combo chosen, the gear set primary applies', () => {
   assert.equal(effectivePrimary(stratos, 0, null).value, 1.1);
 });
 
-test('Stratos gear set 1 on the stock final drive is 89/121/153/188/215 km/h', () => {
+test('Stratos gear set 1 on the stock final drive is 88/120/153/187/214 km/h', () => {
   const stock = finalDriveCombos(stratos.final_drive)
     .find(c => c.primary.name === '33//31*31//30' && c.option.name === '65//19');
   const tops = gearTops(stratos.gear_sets[0].gears,
                         overallRatio(stratos, 0, stock), dry(stratos),
                         stratos.engine.redline);
-  [89, 121, 153, 188, 215].forEach((expected, i) => near(tops[i], expected, 1));
+  [88, 120, 153, 187, 214].forEach((expected, i) => near(tops[i], expected, 1));
 });
 
 test('shortest gearing is the largest overall ratio', () => {
@@ -231,10 +231,10 @@ test('no car in data/ can produce a non-finite speed through the public path', (
   }
 });
 
-test('Fabia gear set 1 is 59.9/84.5/115.0/152.0/188.9 km/h on dry tarmac', () => {
+test('Fabia gear set 1 is 59.8/84.4/114.7/151.7/188.4 km/h on dry tarmac', () => {
   const tops = gearTops(fabia.gear_sets[0].gears, overallRatio(fabia, 0, null),
                         dry(fabia), fabia.engine.redline);
-  [59.9, 84.5, 115.0, 152.0, 188.9].forEach((expected, i) => near(tops[i], expected, 0.2));
+  [59.8, 84.4, 114.7, 151.7, 188.4].forEach((expected, i) => near(tops[i], expected, 0.2));
 });
 
 test('Fabia: the gear set primary still applies even with no final drive object', () => {
@@ -244,7 +244,7 @@ test('Fabia: the gear set primary still applies even with no final drive object'
 // --- the whole fleet ---------------------------------------------------------------
 
 test('every car in data/ produces finite top speeds for every gear set', () => {
-  assert.ok(index.cars.length >= 17, `index.json lists only ${index.cars.length} cars`);
+  assert.ok(index.cars.length >= 18, `index.json lists only ${index.cars.length} cars`);
   for (const { slug } of index.cars) {
     const c = car(slug);
     const combos = finalDriveCombos(c.final_drive);
@@ -269,4 +269,45 @@ test('ceilingOf: the state ceiling, or the rev limit when there is none', async 
   assert.equal(ceilingOf(car, { ceil: 8750 }), 8750);
   assert.equal(ceilingOf(car, {}), 8750);
   assert.equal(ceilingOf(car, undefined), 8750);
+});
+
+// --- the rev limit and the factor, as published ------------------------------------------
+
+test('every car carries the fitted factor the site defaults to', () => {
+  for (const { slug } of index.cars) {
+    assert.equal(car(slug).defaults.loaded_radius_factor, DEFAULT_FACTOR, slug);
+  }
+});
+
+test('every car has a whole-rpm rev limit in range, with a source the page knows', () => {
+  for (const { slug } of index.cars) {
+    const e = car(slug).engine;
+    assert.ok(Number.isInteger(e.redline) && e.redline >= 2000 && e.redline <= 15000, slug);
+    assert.ok(['measured', 'estimated', 'measured-stale'].includes(e.redline_source), slug);
+  }
+});
+
+test('the 206 WRC is published on the Xsara WRC curve, with its own gearing', () => {
+  const p206 = car('peugeot-206-wrc-1999');
+  const xsara = car('citroen-xsara-wrc-2003');
+  assert.ok(index.cars.some(c => c.slug === 'peugeot-206-wrc-1999'));
+  assert.equal(index.cars.length, 18);
+  assert.deepEqual(p206.engine.curve, xsara.engine.curve);
+  assert.equal(p206.engine.curve_source, 'CitroenXsaraWRC');
+  assert.equal(p206.engine.curve_from.slug, 'citroen-xsara-wrc-2003');
+  assert.equal(xsara.engine.curve_from, null);
+  assert.equal(p206.gear_sets.length, 4);
+  assert.equal(p206.engine.redline, 7400);
+});
+
+test('withRevLimit swaps the limit without touching the data', async () => {
+  const { withRevLimit } = await import('../js/gearing.js');
+  const data = { slug: 'x', engine: { redline: 8450, curve: [[0, 0, 0]] }, gear_sets: [] };
+  assert.equal(withRevLimit(data, 8450), data);
+  assert.equal(withRevLimit(data, undefined), data);
+  const edited = withRevLimit(data, 7000);
+  assert.equal(edited.engine.redline, 7000);
+  assert.equal(edited.engine.curve, data.engine.curve);
+  assert.equal(edited.gear_sets, data.gear_sets);
+  assert.equal(data.engine.redline, 8450);
 });

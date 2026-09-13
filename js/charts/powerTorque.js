@@ -17,17 +17,38 @@ export const ceilingMarker = (redline, ceil) =>
  * Where the "rev limit" label goes. Alone it sits over the top left of its line, as it always
  * has. Beside a lowered ceiling the two lines can be a few rpm apart, and the ceiling line
  * would cut the label, so it drops to the bottom right of its own line: the ceiling's label is
- * bottom left of the ceiling line, and nothing is drawn past the rev limit down there.
+ * bottom left of the ceiling line, and the curves are high up past the rev limit. `crowded`
+ * does the same when a peak's value label sits where the label would: with the limit inside
+ * the curve, peak power can be a few hundred rpm either side of it.
  */
-export const revLimitLabel = (x, T, B, lowered) => (lowered
+export const revLimitLabel = (x, T, B, lowered, crowded = false) => (lowered || crowded
   ? { x: x + 7, y: B - 8, anchor: 'start' }
   : { x: x - 7, y: T + 12, anchor: 'end' });
+
+/** Whether two boxes ({ x, y, width, height }) overlap, with `pad` of clearance. */
+export const boxesOverlap = (a, b, pad = 0) =>
+  a.x < b.x + b.width + pad && b.x < a.x + a.width + pad
+  && a.y < b.y + b.height + pad && b.y < a.y + a.height + pad;
 
 export function drawCeilingMarker(svg, x, T, B) {
   el(svg, 'line', { x1: x, x2: x, y1: T, y2: B, stroke: C.muted, 'stroke-opacity': 0.9,
                     'stroke-width': 1.2, 'stroke-dasharray': '2 3' });
   text(svg, x - 7, B - 8, 'rev ceiling', 'lbl', { 'text-anchor': 'end' });
 }
+
+/**
+ * The caption line for a car whose curve belongs to another car in the game files (the 206 WRC
+ * runs on the Xsara WRC's), or '' for a car's own curve. The model year is left off the name.
+ */
+export const borrowedCurveNote = car => {
+  const from = car.engine.curve_from;
+  if (!from || from.slug === car.slug) return '';
+  return `This car uses the ${from.name.replace(/\s+\d{4}$/, '')} engine curve in the game files.`;
+};
+
+/** The x axis reaches past both the rev limit and the end of the curve, whichever is later. */
+export const rpmAxisMax = car =>
+  Math.ceil(Math.max(car.engine.redline, ...car.engine.curve.map(r => r[0])) / 1000) * 1000 + 250;
 
 export function layout(car, ceil = car.engine.redline) {
   const curve = car.engine.curve;
@@ -64,7 +85,8 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
   svg.setAttribute('viewBox', '0 0 1100 340');
   const l = layout(car, ceil);
   const L = 64, R = 1030, T = 46, B = 292;
-  const rpmMax = Math.ceil(l.redline / 1000) * 1000 + 250;
+  // the curve is drawn whole, so the axis runs to its end even past the rev limit
+  const rpmMax = rpmAxisMax(car);
   const nmMax = Math.ceil(l.maxNm / 70) * 70;
   const kwMax = Math.ceil(l.maxKw / 70) * 70;
   const xs = r => L + (r / rpmMax) * (R - L);
@@ -87,7 +109,8 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
                     stroke: C.fg, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
                     'stroke-dasharray': '4 4' });
   const limitAt = revLimitLabel(xs(l.redline), T, B, Boolean(l.ceilMarker));
-  text(svg, limitAt.x, limitAt.y, 'rev limit', 'lbl', { 'text-anchor': limitAt.anchor });
+  const limitLabel = text(svg, limitAt.x, limitAt.y, 'rev limit', 'lbl',
+                          { 'text-anchor': limitAt.anchor });
   if (l.ceilMarker) drawCeilingMarker(svg, xs(l.ceilMarker.rpm), T, B);
 
   let dt = '', dp = '';
@@ -101,13 +124,22 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
   const mark = (x, y, label, colour, textColour) => {
     el(svg, 'circle', { cx: x, cy: y, r: 4.6, fill: colour, stroke: C.halo,
                         'stroke-width': 1.7 });
-    text(svg, x, y - 12, label, 'val',
-         { 'text-anchor': 'middle', fill: textColour, 'font-weight': '600' });
+    return text(svg, x, y - 12, label, 'val',
+                { 'text-anchor': 'middle', fill: textColour, 'font-weight': '600' });
   };
-  mark(xs(l.peakTorque.rpm), yt(l.peakTorque.nm),
-       `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.data, C.data);
-  mark(xs(l.peakPower.rpm), yp(l.peakPower.kw),
-       `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.accent, C.accentText);
+  const peakLabels = [
+    mark(xs(l.peakTorque.rpm), yt(l.peakTorque.nm),
+         `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.data, C.data),
+    mark(xs(l.peakPower.rpm), yp(l.peakPower.kw),
+         `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.accent, C.accentText),
+  ];
+  // measured once drawn: a peak label over the rev limit label moves the latter down
+  if (!l.ceilMarker && peakLabels.some(p => boxesOverlap(p.getBBox(), limitLabel.getBBox(), 4))) {
+    const moved = revLimitLabel(xs(l.redline), T, B, false, true);
+    limitLabel.setAttribute('x', moved.x);
+    limitLabel.setAttribute('y', moved.y);
+    limitLabel.setAttribute('text-anchor', moved.anchor);
+  }
 
   text(svg, L - 9, T - 16, 'Nm', 'lbl', { 'text-anchor': 'end', fill: C.data });
   text(svg, R + 9, T - 16, 'kW', 'lbl', { fill: C.accentText });
@@ -127,7 +159,8 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
     // and zero is the bottom of the plot, so bottom-left is the one corner every car's
     // torque curve is guaranteed to pass through at low rpm — it hid the curve. The
     // top-left corner requires high torque at very low rpm, which no car's curve does;
-    // checked against all 17 cars in data/, including the two closest-margin curves
+    // checked against all 17 curves in data/ (the 206 WRC shares the Xsara's), including
+    // the two closest-margin curves
     // (Citroen Xsara WRC, Audi Quattro Gr4 — both turbo, both torque-heavy low down):
     // the tooltip box's y-range never reaches the curve's y at the rpm the box's
     // x-range spans. See task-6-report.md for the per-car numbers.

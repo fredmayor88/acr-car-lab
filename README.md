@@ -2,12 +2,12 @@
 
 **→ https://fredmayor88.github.io/acr-car-lab/**
 
-Interactive gearing and power charts for 17 cars in Assetto Corsa Rally. One page per
+Interactive gearing and power charts for 18 cars in Assetto Corsa Rally. One page per
 car: the power and torque curve, every selectable final drive, where each gear tops out,
 shift points, and speed against revs.
 
-Every gearing number is read from the game's own files. The rolling radius factor is
-fitted, not read — see below.
+Every gearing number is read from the game's own files. The rev limits are measured in game
+and the rolling radius factor is fitted, not read — see below.
 
 ## How the numbers are made
 
@@ -29,7 +29,7 @@ km/h          = rpm * circumference * 0.06 / total_ratio
 **Primary gear.** A fixed gear pair in front of the gearbox that scales every gear in the set
 by the same amount. Each gear set in the game files carries its own. On most cars it is
 `25//25`, a ratio of 1, but on the Mini, Fiat 124, Fiat 131 and Fulvia it changes from one
-gear set to the next. The Lancia Stratos is the only car with a separate Primary Gear
+gear set to the next. The Lancia Stratos and the Peugeot 206 WRC have a separate Primary Gear
 adjustment in setup; the one you pick there replaces the gear set's primary.
 
 **Final drive.** Everything after the gearbox, as one number:
@@ -41,10 +41,20 @@ adjustment in setup; the one you pick there replaces the gear set's primary.
 - The Hyundai i20, Skoda Fabia, VW Polo R5 and Peugeot 208 Rally4 have no final drive
   adjustment. Their final drive is a single fixed number, stored as `fixed_final_drive`.
 
-`rolling_radius_factor` defaults to `0.9562`. A loaded tyre rolls on a smaller radius than
-the stored free one; the factor was fitted against measured in-game top speeds for the
-Lancia Stratos across 15 gears, and is applied to every car and every surface. It is
-editable at the foot of each car page.
+`rolling_radius_factor` defaults to `0.9858`. A loaded tyre rolls on a smaller radius than
+the stored free one; the factor was fitted against measured in-game top speeds on four cars
+(Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037), each read at that car's
+measured rev limit, and is applied to every car and every surface. It is editable at the
+foot of each car page.
+
+**Rev limit.** Every top speed is read at the rev limit. The rev limits come from in-game
+telemetry measurements, not from the end of the torque curve, which runs past the limiter on
+most cars. A car that has not been measured yet gets an estimate from the game files, and its
+page says so. The rev limit is editable at the foot of each car page too; the power and
+torque chart still draws the whole curve.
+
+**Peugeot 206 WRC.** The game files have no torque curve of its own: its car data points at
+the Citroen Xsara WRC's, so that is the curve its page draws. Its gearing is its own.
 
 ## Updating after a game patch
 
@@ -96,8 +106,9 @@ The site holds no numbers in its code, so a patch only changes `data/`.
      Prints nothing if nothing shrank. Any output names the car and the missing surface —
      that means a tyre asset stopped resolving.
    - Spot-check one top speed in game. The Stratos on gear set 1, top gear, stock final
-     drive, dry tarmac should read 215 km/h. If it has drifted, the rolling radius factor
-     needs refitting rather than the code changing.
+     drive, dry tarmac should read 214 km/h. If it has drifted, the rolling radius factor
+     needs refitting rather than the code changing. The export warns when a car's engine
+     data changed since its rev limit was measured (`measured-stale`): re-measure that car.
 
 4. Commit here:
 

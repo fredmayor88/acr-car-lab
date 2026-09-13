@@ -11,7 +11,7 @@ const stateFor = (car, over = {}) => ({
   k: car.defaults.loaded_radius_factor, ...over,
 });
 
-// Shape 1 — selectable primaries (the Stratos is the only car in the game with them).
+// Shape 1 — selectable primaries (the Stratos; the 206 WRC is the only other car with them).
 const stratos = load('lancia-stratos');
 // Shape 2 — an empty `primaries` list: the primary comes from the gear set.
 const mini = load('mini-cooper-s-1964');
@@ -50,12 +50,12 @@ test('the picked primary replaces the gear set primary instead of stacking on it
   assert.ok(Math.abs(top.value - 1.375 * (65 / 17)) < 1e-9);
 });
 
-test('the stock Stratos combination reads 215 km/h and 140% of the shortest', () => {
+test('the stock Stratos combination reads 214 km/h and 140% of the shortest', () => {
   const state = stateFor(stratos, { set: 0 });
   const rows = layout(stratos, state).rows;
   const stock = rows.find(r => r.primary.name === '33//31*31//30'
                             && r.option.name === '65//19');
-  assert.equal(Math.round(stock.kmh), 215);
+  assert.equal(Math.round(stock.kmh), 214);
   assert.equal(Math.round(stock.pct), 140);
 });
 
@@ -80,7 +80,7 @@ test('shape-2 speeds are pinned: the Fiat 131 shortest combo on its three gear s
   const fiat = load('fiat-131-abarth-1976');
   const speeds = fiat.gear_sets.map((_, set) =>
     Number(layout(fiat, stateFor(fiat, { set })).rows[0].kmh.toFixed(1)));
-  assert.deepEqual(speeds, [173.2, 139.0, 159.7]);
+  assert.deepEqual(speeds, [168.0, 134.9, 155.0]);
 });
 
 test('the selected row is flagged once, wherever it sorts', () => {
@@ -114,7 +114,7 @@ test('every car in data/ lays out without throwing, on every gear set', () => {
   const slugs = readdirSync(new URL('../data/', import.meta.url))
     .filter(f => f.endsWith('.json') && f !== 'index.json')
     .map(f => f.slice(0, -5));
-  assert.ok(slugs.length >= 17);
+  assert.ok(slugs.length >= 18);
   for (const slug of slugs) {
     const car = load(slug);
     for (let set = 0; set < car.gear_sets.length; set++) {
@@ -137,10 +137,10 @@ test('a lowered ceiling reads km/h at the ceiling; ratios and percentages do not
   low.rows.forEach((r, i) => {
     assert.equal(r.pct, full.rows[i].pct);
     assert.equal(r.value, full.rows[i].value);
-    assert.ok(Math.abs(r.kmh - full.rows[i].kmh * 7000 / 8750) < 1e-9);
+    assert.ok(Math.abs(r.kmh - full.rows[i].kmh * 7000 / stratos.engine.redline) < 1e-9);
   });
   const stock = low.rows.find(r => r.primary.name === '33//31*31//30' && r.option.name === '65//19');
-  assert.equal(Math.round(stock.kmh), 172);
+  assert.equal(Math.round(stock.kmh), 177);
 });
 
 test('the caption names the rev limit at the default and the ceiling when it is lowered', async () => {
@@ -148,7 +148,7 @@ test('the caption names the rev limit at the default and the ceiling when it is 
   assert.equal(caption(stratos, stateFor(stratos)),
     'Every selectable combination. 100% is the shortest. Speed is top gear of gear set 1 '
     + 'at the rev limit. Click a row to use that final drive.');
-  assert.equal(caption(stratos, stateFor(stratos, { ceil: 8750 })), caption(stratos, stateFor(stratos)));
+  assert.equal(caption(stratos, stateFor(stratos, { ceil: 8450 })), caption(stratos, stateFor(stratos)));
   assert.equal(caption(stratos, stateFor(stratos, { set: 1, ceil: 7000 })),
     'Every selectable combination. 100% is the shortest. Speed is top gear of gear set 2 '
     + 'at the 7000 rpm rev ceiling. Click a row to use that final drive.');

@@ -2,11 +2,38 @@
 // what someone was looking at, so every control's value lives here and nowhere else.
 // Values arriving from a URL get the same validation as typed input.
 
-import { DEFAULT_FACTOR, REV_FLOOR, SURFACES, finalDriveCombos } from './gearing.js';
+import { DEFAULT_FACTOR, REV_FLOOR, SURFACES, finalDriveCombos, withRevLimit } from './gearing.js';
 
 const K_MIN = 0.80;
 const K_MAX = 1.10;
 const FLOOR_STEP = 100;
+
+// The editable rev limit at the page foot. Wide enough for any real engine, narrow enough that
+// a typo cannot draw a chart with nothing on it.
+export const REV_LIMIT_MIN = 2000;
+export const REV_LIMIT_MAX = 15000;
+
+/** A typed or linked rev limit as an integer, or null when it is not a valid one. */
+export function parseRevLimit(raw) {
+  const n = wholeRpm(raw);
+  return n !== null && n >= REV_LIMIT_MIN && n <= REV_LIMIT_MAX ? n : null;
+}
+
+/** The rev limit in force: the edited one, or the car's own from the data. */
+export const revLimitOf = (car, state) => state?.rl ?? car.engine.redline;
+
+/**
+ * A new rev limit and what it does to the rev ceiling and floor. A ceiling that was at the old
+ * limit (not lowered) follows the limit wherever it goes; a lowered one stays put unless the
+ * new limit is below it, where it clamps to the limit. The floor keeps its usual interlock:
+ * at most 100 under the ceiling.
+ */
+export function applyRevLimit(state, rl, car) {
+  const old = revLimitOf(car, state);
+  const ceil = state.ceil >= old || state.ceil > rl ? rl : state.ceil;
+  const floor = Math.min(state.floor, ceil - FLOOR_STEP);
+  return { ...state, rl, ceil, floor: Math.max(0, floor) };
+}
 
 /**
  * The rev floor on Shift points: any whole rpm from 0 to one step under the ceiling, which
@@ -30,7 +57,7 @@ export function stepFloor(floor, direction, car, ceil = car.engine.redline) {
 
 /**
  * The rev ceiling on Shift points: one step over the floor (and never under one step) up
- * to the rev limit. The limit need not sit on the 100 rpm grid (the Stratos is 8750), so
+ * to the rev limit. The limit need not sit on the 100 rpm grid (the Stratos is 8450), so
  * it is the exact default and a clamped step up reaches it.
  */
 export const ceilBounds = (car, floor = 0) =>
@@ -119,6 +146,7 @@ export function defaultState(car) {
     draw: [0],
     k: car.defaults?.loaded_radius_factor ?? DEFAULT_FACTOR,
     floor: REV_FLOOR,
+    rl: car.engine.redline,
     ceil: car.engine.redline,
   };
 }
@@ -153,15 +181,20 @@ export function parseHash(hash, car) {
   const k = Number.parseFloat(q.get('k'));
   if (Number.isFinite(k) && k >= K_MIN && k <= K_MAX) out.k = k;
 
-  // the ceiling first, so the floor can be checked against the ceiling it will sit under
-  const ceil = parseCeil(q.get('ceil'), car);
+  // the rev limit first, then the ceiling under it, then the floor under the ceiling
+  const rl = parseRevLimit(q.get('rl'));
+  if (rl !== null) out.rl = rl;
+  const limited = withRevLimit(car, out.rl);
+  out.ceil = out.rl;
+  const ceil = parseCeil(q.get('ceil'), limited);
   if (ceil !== null) out.ceil = ceil;
-  const floor = parseFloor(q.get('floor'), car, out.ceil);
+  const floor = parseFloor(q.get('floor'), limited, out.ceil);
   out.floor = floor !== null ? floor : Math.min(REV_FLOOR, out.ceil - FLOOR_STEP);
 
   return out;
 }
 
+/** `car` is the car as loaded, so an edited rev limit is told apart from the car's own. */
 export function toHash(state, car) {
   const q = new URLSearchParams();
   q.set('s', state.surface);
@@ -170,7 +203,9 @@ export function toHash(state, car) {
   q.set('draw', state.draw.join(','));
   q.set('k', String(state.k));
   if (state.floor !== REV_FLOOR) q.set('floor', String(state.floor));
-  const ceil = state.ceil ?? car.engine.redline;
-  if (ceil !== car.engine.redline) q.set('ceil', String(ceil));
+  const rl = revLimitOf(car, state);
+  if (rl !== car.engine.redline) q.set('rl', String(rl));
+  const ceil = state.ceil ?? rl;
+  if (ceil !== rl) q.set('ceil', String(ceil));
   return '#' + q.toString();
 }

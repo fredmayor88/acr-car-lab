@@ -9,13 +9,15 @@
 // `primary` is the gearbox primary/transfer step. It comes from ONE of two places and
 // never both:
 //   - the gear set itself (`gear_sets[i].primary`) — every car has this;
-//   - a selectable primary from `final_drive.primaries` — only the Stratos, where the
-//     picked primary REPLACES the set's primary. They are alternatives, not factors.
+//   - a selectable primary from `final_drive.primaries` — the Stratos and the 206 WRC, where
+//     the picked primary REPLACES the set's primary. They are alternatives, not factors.
 //
 // `below` is everything under the gearbox: `final_drive.rest * option.value` when there
 // is a selectable final drive, otherwise the car's `fixed_final_drive`.
 
-export const DEFAULT_FACTOR = 0.9562;
+// Fitted in acr-setup-engineer (tools/gearing-charts/calibration.json) against measured top
+// speeds on four cars at their measured rev limits. Every car's data carries the same value.
+export const DEFAULT_FACTOR = 0.9858;
 export const REV_FLOOR = 3000;
 
 // Frozen: these are shared across every chart module on the page, and one in-place
@@ -47,6 +49,15 @@ export const SET_COLOURS_DARK = Object.freeze(
  * otherwise the rev limit. The over-limit downshift warning still uses the real limit.
  */
 export const ceilingOf = (car, state) => state?.ceil ?? car.engine.redline;
+
+/**
+ * The car with its rev limit set to `rpm`: every chart, caption and warning reads the limit
+ * from `car.engine.redline`, so an edited limit is one substitution here. The same object
+ * back when nothing changes; the data object is never mutated.
+ */
+export const withRevLimit = (car, rpm) => (rpm == null || rpm === car.engine.redline
+  ? car
+  : { ...car, engine: { ...car.engine, redline: rpm } });
 
 /** A loaded tyre rolls on a smaller radius than the stored free one. */
 export const circumference = (freeRadius, factor) => 2 * Math.PI * freeRadius * factor;

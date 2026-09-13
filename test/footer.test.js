@@ -59,3 +59,21 @@ test('car pages send no car-<slug> event on load: GoatCounter already counts the
   const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /track\(\s*['"`]car-/);
 });
+
+test('the rev limit note says where the limit came from, then how to change it', async () => {
+  const { revLimitNote } = await import('../js/footer.js');
+  assert.equal(revLimitNote('measured'),
+    'Measured in game with telemetry. If your limiter differs, edit it here.');
+  assert.equal(revLimitNote('estimated'),
+    'Estimated from the game files, not yet measured. If your limiter differs, edit it here.');
+  assert.equal(revLimitNote('measured-stale'),
+    'Measured on an earlier game version. If your limiter differs, edit it here.');
+  assert.equal(revLimitNote(undefined), 'If your limiter differs, edit it here.');
+});
+
+test('the factor note names the four cars it was fitted on, not the old Stratos-only fit', async () => {
+  const { FACTOR_NOTE } = await import('../js/footer.js');
+  assert.match(FACTOR_NOTE,
+    /measured in-game top speeds on four cars \(Stratos, 306 Maxi, Xsara WRC, 037\)/);
+  assert.doesNotMatch(FACTOR_NOTE, /15 gears/);
+});
