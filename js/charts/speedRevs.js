@@ -12,7 +12,7 @@
 
 import { SET_COLOURS, ceilingOf, circumference, kmh } from '../gearing.js';
 import { fdValue } from './ladder.js';
-import { ceilingMarker, drawCeilingMarker } from './powerTorque.js';
+import { ceilingMarker, drawCeilingMarker, revLimitLabel } from './powerTorque.js';
 import { C, el, text, tip, tipWidth, clear } from '../svg.js';
 
 /** Plot frame in viewBox units. The km/h title sits above the plot, clear of the ticks. */
@@ -21,14 +21,26 @@ export const FRAME = Object.freeze({ L: 64, R: 876, T: 38, B: 346, H: 416, title
 const MIN_WIDTH = 940;
 const COLUMN_STEP = 26;
 const LABEL_ROOM = 22;          // widest gear number plus a margin
+const LABEL_WIDTH = 14;         // a two-character gear number at 10.5px monospace
+const LINE_CLEAR = 4;           // space kept either side of a line a number must not touch
 
 /**
  * One gear-number column per drawn set, right of where the lines end (the rev limit, or the
- * ceiling when it is lower). The viewBox widens
- * to fit them rather than letting the last columns run off the edge.
+ * ceiling when it is lower). The viewBox widens to fit them rather than letting the last
+ * columns run off the edge. `avoidX` is a vertical line the numbers must not sit on (the rev
+ * limit, when the lines stop short of it at a ceiling): a column that would touch it moves
+ * just past it, and the columns after it keep their spacing from there.
  */
-export function labelColumns(redlineX, count) {
-  const xs = Array.from({ length: count }, (_, i) => redlineX + 11 + i * COLUMN_STEP);
+export function labelColumns(endX, count, avoidX = null) {
+  const xs = [];
+  let x = endX + 11;
+  for (let i = 0; i < count; i++) {
+    if (avoidX !== null && x + LABEL_WIDTH + LINE_CLEAR >= avoidX && x <= avoidX + LINE_CLEAR) {
+      x = avoidX + LINE_CLEAR + 1;
+    }
+    xs.push(x);
+    x += COLUMN_STEP;
+  }
   return { xs, width: Math.max(MIN_WIDTH, Math.ceil(xs[count - 1] + LABEL_ROOM)) };
 }
 
@@ -79,7 +91,9 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
   const rpmMax = Math.ceil(car.engine.redline / 1000) * 1000 + 300;
   const xs = r => L + (r / rpmMax) * (R - L);
   const ys = v => B - (v / l.vmax) * (B - T);
-  const cols = labelColumns(xs(l.ceil), state.draw.length);
+  const marker = ceilingMarker(car.engine.redline, l.ceil);
+  const cols = labelColumns(xs(l.ceil), state.draw.length,
+                            marker ? xs(car.engine.redline) : null);
   svg.setAttribute('viewBox', `0 0 ${cols.width} ${FRAME.H}`);
 
   for (let v = 0; v <= l.vmax; v += 40) {
@@ -93,9 +107,8 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
   el(svg, 'line', { x1: xs(car.engine.redline), x2: xs(car.engine.redline), y1: T, y2: B,
                     stroke: C.fg, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
                     'stroke-dasharray': '4 4' });
-  text(svg, xs(car.engine.redline) - 7, T + 12, 'rev limit', 'lbl',
-       { 'text-anchor': 'end' });
-  const marker = ceilingMarker(car.engine.redline, l.ceil);
+  const limitAt = revLimitLabel(xs(car.engine.redline), T, B, Boolean(marker));
+  text(svg, limitAt.x, limitAt.y, 'rev limit', 'lbl', { 'text-anchor': limitAt.anchor });
   if (marker) drawCeilingMarker(svg, xs(marker.rpm), T, B);
 
   l.lines.forEach(line => {

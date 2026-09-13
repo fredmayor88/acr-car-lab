@@ -62,5 +62,15 @@ test('a lowered ceiling gets a marker at its rpm, and the curves do not change',
   assert.deepEqual(low.ceilMarker, { rpm: 7000, label: 'rev ceiling' });
   assert.deepEqual(low.points, layout(car).points);
   assert.equal(low.redline, 8750);
-  assert.deepEqual(readout(car, 5000), readout(car, 5000));
+  const { ceilMarker: _a, ...lowRest } = low;
+  const { ceilMarker: _b, ...fullRest } = layout(car);
+  assert.deepEqual(lowRest, fullRest, 'peaks, maxima and the redline are untouched');
+});
+
+test('revLimitLabel: over the top left of its line alone, bottom right of it beside a ceiling', async () => {
+  const { revLimitLabel } = await import('../js/charts/powerTorque.js');
+  assert.deepEqual(revLimitLabel(800, 46, 292, false), { x: 793, y: 58, anchor: 'end' });
+  // with a ceiling marker, the ceiling label takes bottom left of its own line, so the rev
+  // limit label goes bottom right of the rev limit line, where no line or curve reaches
+  assert.deepEqual(revLimitLabel(800, 46, 292, true), { x: 807, y: 284, anchor: 'start' });
 });

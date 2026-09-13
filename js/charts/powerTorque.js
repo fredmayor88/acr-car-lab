@@ -13,6 +13,16 @@ export const ceilingMarker = (redline, ceil) =>
  * The dashed ceiling line, and its label low down on the plot: every curve that reaches the
  * ceiling is high up there, and the rev limit's own label takes the top.
  */
+/**
+ * Where the "rev limit" label goes. Alone it sits over the top left of its line, as it always
+ * has. Beside a lowered ceiling the two lines can be a few rpm apart, and the ceiling line
+ * would cut the label, so it drops to the bottom right of its own line: the ceiling's label is
+ * bottom left of the ceiling line, and nothing is drawn past the rev limit down there.
+ */
+export const revLimitLabel = (x, T, B, lowered) => (lowered
+  ? { x: x + 7, y: B - 8, anchor: 'start' }
+  : { x: x - 7, y: T + 12, anchor: 'end' });
+
 export function drawCeilingMarker(svg, x, T, B) {
   el(svg, 'line', { x1: x, x2: x, y1: T, y2: B, stroke: C.muted, 'stroke-opacity': 0.9,
                     'stroke-width': 1.2, 'stroke-dasharray': '2 3' });
@@ -76,7 +86,8 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
   el(svg, 'line', { x1: xs(l.redline), x2: xs(l.redline), y1: T, y2: B,
                     stroke: C.fg, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
                     'stroke-dasharray': '4 4' });
-  text(svg, xs(l.redline) - 7, T + 12, 'rev limit', 'lbl', { 'text-anchor': 'end' });
+  const limitAt = revLimitLabel(xs(l.redline), T, B, Boolean(l.ceilMarker));
+  text(svg, limitAt.x, limitAt.y, 'rev limit', 'lbl', { 'text-anchor': limitAt.anchor });
   if (l.ceilMarker) drawCeilingMarker(svg, xs(l.ceilMarker.rpm), T, B);
 
   let dt = '', dp = '';

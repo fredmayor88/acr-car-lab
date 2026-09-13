@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FRAME, labelColumns, layout, nearestLine, tipTop } from '../js/charts/speedRevs.js';
+import { FRAME, labelColumns, layout, nearestLine, render, tipTop } from '../js/charts/speedRevs.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
 // REPLACES each gear set's own primary. Gear set 1 top gear pins to the game's real
@@ -192,4 +192,70 @@ test('hoverRpm never passes the ceiling', async () => {
   assert.equal(hoverRpm(9999, 7000), 7000);
   assert.equal(hoverRpm(-5, 7000), 0);
   assert.equal(hoverRpm(4200, 7000), 4200);
+});
+
+// --- label columns clear of the rev limit line ----------------------------------------------
+
+test('a label column that would sit on the rev limit line jumps past it, and the rest follow', () => {
+  // with no line to avoid, columns are where they always were
+  assert.deepEqual(labelColumns(700, 3), labelColumns(700, 3, null));
+  const cols = labelColumns(700, 10, 760);
+  // a two-character number starts at x and is under 14 wide: it must not touch x = 760 +/- 4
+  cols.xs.forEach(x => assert.ok(x + 14 < 756 || x > 764, `column at ${x} overlaps the line`));
+  for (let i = 1; i < cols.xs.length; i++) assert.ok(cols.xs[i] - cols.xs[i - 1] >= 26);
+  assert.ok(cols.xs[9] + 14 <= cols.width);
+  // a line well clear of every column changes nothing
+  assert.deepEqual(labelColumns(700, 3, 400).xs, labelColumns(700, 3).xs);
+});
+
+// --- render, through a minimal DOM stub -----------------------------------------------------
+
+function stubDocument() {
+  const make = tag => ({
+    tag, attrs: {}, style: {}, children: [], textContent: '',
+    setAttribute(k, v) { this.attrs[k] = String(v); },
+    getAttribute(k) { return this.attrs[k]; },
+    appendChild(n) { this.children.push(n); return n; },
+    removeChild(n) { this.children.splice(this.children.indexOf(n), 1); return n; },
+    get firstChild() { return this.children[0] ?? null; },
+  });
+  globalThis.document = { createElementNS: (_, tag) => make(tag) };
+  return make('svg');
+}
+
+const drawn = svg => ({
+  lines: svg.children.filter(n => n.tag === 'line'),
+  texts: svg.children.filter(n => n.tag === 'text'),
+});
+
+test('render at a lowered ceiling: lines end at xs(ceil), columns start there, both markers drawn', () => {
+  const svg = stubDocument();
+  const st = { ...state, ceil: 7000 };
+  render(svg, car, st, null, ['#111']);
+  const { L, R } = FRAME;
+  const rpmMax = Math.ceil(8750 / 1000) * 1000 + 300;
+  const xs = r => L + (r / rpmMax) * (R - L);
+  const { lines, texts } = drawn(svg);
+  const gearLines = lines.filter(n => n.style.stroke === '#111');
+  assert.equal(gearLines.length, 5);
+  gearLines.forEach(n => assert.equal(Number(n.attrs.x2), xs(7000)));
+  const numbers = texts.filter(n => n.style.fill === '#111');
+  numbers.forEach(n => assert.equal(Number(n.attrs.x), xs(7000) + 11));
+  const dashed = lines.filter(n => n.attrs['stroke-dasharray']);
+  assert.deepEqual(dashed.map(n => Number(n.attrs.x1)).sort((a, b) => a - b), [xs(7000), xs(8750)]);
+  assert.ok(texts.some(n => n.textContent === 'rev ceiling'));
+  assert.ok(texts.some(n => n.textContent === 'rev limit'));
+  delete globalThis.document;
+});
+
+test('render at the default ceiling: lines end at the rev limit and there is no ceiling marker', () => {
+  const svg = stubDocument();
+  render(svg, car, state, null, ['#111']);
+  const { L, R } = FRAME;
+  const xs = r => L + (r / 9300) * (R - L);
+  const { lines, texts } = drawn(svg);
+  lines.filter(n => n.style.stroke === '#111').forEach(n => assert.equal(Number(n.attrs.x2), xs(8750)));
+  assert.equal(lines.filter(n => n.attrs['stroke-dasharray']).length, 1);
+  assert.ok(!texts.some(n => n.textContent === 'rev ceiling'));
+  delete globalThis.document;
 });
