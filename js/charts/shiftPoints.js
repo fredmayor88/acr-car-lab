@@ -112,7 +112,7 @@ export function render(svg, car, state, hover = null) {
               + (warn ? '   over limit' : '');
       const cw = t.length * 6.4 + 18;
       el(svg, 'circle', { cx: xs(speed), cy: y, r: 4.4,
-                          fill: warn ? C.warn : C.ink, stroke: C.halo,
+                          fill: warn ? C.warn : C.ink, stroke: warn ? C.warnRing : C.halo,
                           'stroke-width': 1.6 });
       const cx = chipX(xs(speed), cw);
       el(svg, 'rect', { x: cx, y: y - 10.5, width: cw, height: 21,

@@ -90,7 +90,8 @@ test('app.css sets text in the text roles, never in the mark colours', () => {
 });
 
 test('dark chart marks clear 3:1 on a panel', () => {
-  for (const role of ['--data', '--accent', '--ink', '--warn-edge']) {
+  // --warn-edge rings the over-limit chip, --warn-ring its dot: brand red alone is 1.8:1
+  for (const role of ['--data', '--accent', '--ink', '--warn-edge', '--warn-ring']) {
     assert.ok(contrast(osDark[role], osDark['--surface']) >= 3,
       `${role} ${osDark[role]}: ${contrast(osDark[role], osDark['--surface']).toFixed(2)}`);
   }

@@ -15,6 +15,8 @@
   --tip-bg:#212529; --tip-fg:#F5F2EB;
   /* 50/50 mix of --warn and white: brand red is unreadable as text on the dark tooltip */
   --tip-warn:#CE9D97; --on-warn:#F5F2EB; --warn-edge:transparent;
+  /* ring on the over-limit dot: the halo in light, warm white in dark where red is 1.8:1 */
+  --warn-ring:#F5F2EB;
   color-scheme:light;
 }
 
@@ -33,7 +35,7 @@
     --accent-edge:rgba(37,196,226,.4); --accent-wash:rgba(37,196,226,.08);
     --halo:#30353A; --on-data:#212529; --ink:#F5F2EB;
     --tip-bg:#F5F2EB; --tip-fg:#212529;
-    --tip-warn:#9C3B2E; --on-warn:#F5F2EB; --warn-edge:#F5F2EB;
+    --tip-warn:#9C3B2E; --on-warn:#F5F2EB; --warn-edge:#F5F2EB; --warn-ring:#F5F2EB;
   }
 }
 :root[data-theme="dark"]{
@@ -46,7 +48,7 @@
   --accent-edge:rgba(37,196,226,.4); --accent-wash:rgba(37,196,226,.08);
   --halo:#30353A; --on-data:#212529; --ink:#F5F2EB;
   --tip-bg:#F5F2EB; --tip-fg:#212529;
-  --tip-warn:#9C3B2E; --on-warn:#F5F2EB; --warn-edge:#F5F2EB;
+  --tip-warn:#9C3B2E; --on-warn:#F5F2EB; --warn-edge:#F5F2EB; --warn-ring:#F5F2EB;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);

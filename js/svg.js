@@ -14,7 +14,7 @@ export const C = Object.freeze({
   mutedText: 'var(--muted-text)', accentText: 'var(--accent-text)',
   warn: 'var(--warn)', halo: 'var(--halo)', ink: 'var(--ink)',
   tipBg: 'var(--tip-bg)', tipFg: 'var(--tip-fg)', tipWarn: 'var(--tip-warn)',
-  onWarn: 'var(--on-warn)', warnEdge: 'var(--warn-edge)',
+  onWarn: 'var(--on-warn)', warnEdge: 'var(--warn-edge)', warnRing: 'var(--warn-ring)',
 });
 
 // Presentation attributes do not accept var(), and a class-level `fill` beats one anyway,
