@@ -142,6 +142,9 @@ svg{display:block;width:100%;height:auto}
 .limits{font-size:12px;color:var(--muted-text);margin:0;max-width:390px}
 .limits ul{margin:0;padding-left:16px}
 .limits li{margin-bottom:3px}
+.promo{flex-basis:100%;font-size:12px;color:var(--muted-text);margin:0}
+.promo a{color:var(--accent-text);text-decoration:none}
+.promo a:hover{text-decoration:underline}
 .notadjustable{font-size:13px;color:var(--muted-text);margin:0;padding:10px 2px}
 
 .carlist{list-style:none;margin:0;padding:0;display:grid;gap:2px;

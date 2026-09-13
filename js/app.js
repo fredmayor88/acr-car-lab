@@ -6,6 +6,7 @@ import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
 import { floorBounds, parseFloor, parseHash, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
+import { PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import * as powerTorque from './charts/powerTorque.js';
@@ -22,7 +23,7 @@ const slug = root.dataset.car;
 // none, so there is never a moment where one is set and the other is stale.
 let car = null;
 let state = null;
-let generated = null;
+let index = {};
 let controls = null;
 const hover = { power: null, ladder: null, shift: null, revs: null };
 // each chart's render() hands back the pixel-to-value mappings its hover needs.
@@ -262,8 +263,10 @@ function buildFooter() {
       h('div', { class: 'limits' }, ul)),
     h('div', {},
       h('h3', {}, 'Data'),
-      h('p', { class: 'limits' },
-        'Read from the game files.' + (generated ? ` Generated ${generated}.` : ''))));
+      h('p', { class: 'limits' }, dataLine(index))),
+    h('p', { class: 'promo' }, PROMO.before,
+      h('a', { href: PROMO.href, onclick: () => track('click-setup-engineer') }, PROMO.link),
+      PROMO.after));
   return { foot, factor };
 }
 
@@ -369,11 +372,10 @@ function syncControls() {
 }
 
 async function main() {
-  let index;
   try {
     [car, index] = await Promise.all([
       fetch(`../data/${slug}.json`).then(r => r.json()),
-      // only the footer date comes from here, so a missing index must not sink the page
+      // only the footer's data line comes from here, so a missing index must not sink the page
       fetch('../data/index.json').then(r => r.json()).catch(() => ({})),
     ]);
   } catch (err) {
@@ -381,7 +383,6 @@ async function main() {
     if (loading) loading.textContent = 'Could not load the data for this car.';
     throw err;
   }
-  generated = index.generated;
   state = parseHash(location.hash, car);
   controls = buildShell();
   track('car-' + slug);
