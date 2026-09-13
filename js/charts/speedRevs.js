@@ -65,7 +65,8 @@ export function nearestLine(lines, redline, rpm, speed) {
   return best;
 }
 
-export function render(svg, car, state, hover = null) {
+/** `colours` is the gear-set list for the theme showing; app.js picks it. */
+export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
   clear(svg);
   const l = layout(car, state);
   const { L, R, T, B } = FRAME;
@@ -90,7 +91,7 @@ export function render(svg, car, state, hover = null) {
        { 'text-anchor': 'end' });
 
   l.lines.forEach(line => {
-    const colour = SET_COLOURS[line.set % SET_COLOURS.length];
+    const colour = colours[line.set % colours.length];
     el(svg, 'line', { x1: xs(0), x2: xs(car.engine.redline), y1: ys(0),
                       y2: ys(line.topSpeed), stroke: colour, 'stroke-width': 2.1,
                       'stroke-opacity': 0.85 });
@@ -103,7 +104,7 @@ export function render(svg, car, state, hover = null) {
     const line = l.lines.find(x => x.set === hover.set && x.gear === hover.gear);
     if (line) {
       const v = kmh(hover.rpm, line.total, l.circ);
-      const colour = SET_COLOURS[line.set % SET_COLOURS.length];
+      const colour = colours[line.set % colours.length];
       el(svg, 'circle', { cx: xs(hover.rpm), cy: ys(v), r: 5, fill: colour,
                           stroke: C.halo, 'stroke-width': 1.7 });
       const lines = [`${car.gear_sets[line.set].label}  ·  gear ${line.gear + 1}`,

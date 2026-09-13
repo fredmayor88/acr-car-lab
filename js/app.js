@@ -2,8 +2,10 @@
 // and re-renders everything on any state change. All arithmetic lives in the modules;
 // this file only moves state around.
 
-import { REV_FLOOR, SET_COLOURS, SURFACES, finalDriveCombos } from './gearing.js';
+import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
+  from './gearing.js';
 import { parseHash, toHash } from './state.js';
+import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import * as powerTorque from './charts/powerTorque.js';
 import * as finalDrive from './charts/finalDrive.js';
@@ -43,7 +45,10 @@ const SECTIONS = [
 const K_MIN = 0.8;
 const K_MAX = 1.1;
 
-const colourFor = i => SET_COLOURS[i % SET_COLOURS.length];
+// Everything else in the charts is a CSS variable and repaints itself on a theme change.
+// The gear-set colours are an indexed list, so they are picked here and redrawn.
+const setColours = () => (currentTheme() === 'dark' ? SET_COLOURS_DARK : SET_COLOURS);
+const colourFor = i => { const c = setColours(); return c[i % c.length]; };
 
 const h = (tag, attrs = {}, ...kids) => {
   const node = document.createElement(tag);
@@ -266,7 +271,9 @@ const RENDER = {
       i => { state.set = i; track('pick-gearset'); commit(); }, hover.ladder);
   },
   shift: () => { maps.shift = shiftPoints.render(svgOf('shift'), car, state, hover.shift); },
-  revs: () => { maps.revs = speedRevs.render(svgOf('revs'), car, state, hover.revs); },
+  revs: () => {
+    maps.revs = speedRevs.render(svgOf('revs'), car, state, hover.revs, setColours());
+  },
 };
 
 function draw() {
@@ -318,6 +325,10 @@ async function main() {
   controls = buildShell();
   track('car-' + slug);
   commit();
+  onThemeChange(() => {
+    syncControls();
+    RENDER.revs();
+  });
   window.addEventListener('hashchange', () => {
     state = parseHash(location.hash, car);
     clearHover();
