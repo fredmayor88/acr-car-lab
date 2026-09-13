@@ -49,6 +49,20 @@ export function stepCeil(ceil, direction, car, floor = 0) {
   return Math.min(max, Math.max(min, ceil + direction * FLOOR_STEP));
 }
 
+/** What an rpm control shows: its value, and each button disabled at its own bound. */
+export const rpmControlView = (value, { min, max }) =>
+  ({ value: String(value), minusDisabled: value <= min, plusDisabled: value >= max });
+
+/**
+ * The rev floor's and ceiling's views, from one state. The ceiling has two controls (Shift
+ * points and the control bar); both are painted from the one `ceil` view, so they cannot
+ * disagree.
+ */
+export const revControlViews = (car, state) => ({
+  floor: rpmControlView(state.floor, floorBounds(car, state.ceil)),
+  ceil: rpmControlView(state.ceil, ceilBounds(car, state.floor)),
+});
+
 function wholeRpm(raw) {
   return typeof raw === 'string' && /^\s*\d+\s*$/.test(raw) ? Number(raw) : null;
 }

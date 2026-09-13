@@ -4,7 +4,7 @@
 
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
-import { ceilBounds, floorBounds, floorFocusAfterStep, parseCeil, parseFloor, parseHash,
+import { floorFocusAfterStep, parseCeil, parseFloor, parseHash, revControlViews,
   stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
@@ -142,6 +142,9 @@ function buildShell() {
     ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Final drive'), fdSel));
   }
   ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Gear set'), setSel));
+  // the same rev ceiling as Shift points', a second control on the one state.ceil
+  const barCeil = buildRpmControl(ceilSpec('bar-rev-ceiling'), { stacked: true });
+  ctls.appendChild(barCeil.box);
   ctls.appendChild(copies);
 
   const summary = h('p', { class: 'barsum' });
@@ -185,7 +188,7 @@ function buildShell() {
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
   wireLanePick();
 
-  return { surfaceSel, fdSel, setSel, factor, revs, summary };
+  return { surfaceSel, fdSel, setSel, factor, revs, summary, ceils: [revs.ceil, barCeil] };
 }
 
 /** The bar toggle's glyph: a chevron in the button's text colour, turned over when open. */
@@ -224,17 +227,27 @@ function buildRevControls() {
     parse: raw => parseFloor(raw, car, state.ceil),
     step: d => stepFloor(state.floor, d, car, state.ceil),
   });
-  const ceil = buildRpmControl({
-    id: 'rev-ceiling', label: 'Rev ceiling', noun: 'rev ceiling', event: 'edit-rev-ceiling',
-    get: () => state.ceil, put: v => { state.ceil = v; },
-    parse: raw => parseCeil(raw, car, state.floor),
-    step: d => stepCeil(state.ceil, d, car, state.floor),
-  });
+  const ceil = buildRpmControl(ceilSpec('rev-ceiling'));
   const box = h('div', { class: 'revboxes' }, floor.box, ceil.box);
   return { box, floor, ceil };
 }
 
-function buildRpmControl({ id, label, noun, event, get, put, parse, step }) {
+/**
+ * The rev ceiling, for either of its two controls (Shift points and the control bar). Both
+ * read and write state.ceil, so there is one ceiling and syncControls keeps both showing it.
+ */
+const ceilSpec = id => ({
+  id, label: 'Rev ceiling', noun: 'rev ceiling', event: 'edit-rev-ceiling',
+  get: () => state.ceil, put: v => { state.ceil = v; },
+  parse: raw => parseCeil(raw, car, state.floor),
+  step: d => stepCeil(state.ceil, d, car, state.floor),
+});
+
+/**
+ * [−] [typed rpm] [+]. `stacked` puts the label above the row, the way the control bar's
+ * other controls are labelled; otherwise it sits inline, as over the Shift points chart.
+ */
+function buildRpmControl({ id, label, noun, event, get, put, parse, step }, { stacked } = {}) {
   const set = v => {
     if (v !== get()) {
       put(v);
@@ -262,11 +275,19 @@ function buildRpmControl({ id, label, noun, event, get, put, parse, step }) {
   }, glyph);
   const minus = button(-1, `Lower ${noun} by 100 rpm`, '−');
   const plus = button(1, `Raise ${noun} by 100 rpm`, '+');
-  const box = h('div', { class: 'floorbox' },
-    h('label', { for: id }, label), minus, input, plus,
-    h('span', { class: 'unit' }, 'rpm'));
+  const unit = h('span', { class: 'unit' }, 'rpm');
+  const box = stacked
+    ? h('div', { class: 'ctl' }, h('label', { for: id }, label),
+        h('div', { class: 'floorbox' }, minus, input, plus, unit))
+    : h('div', { class: 'floorbox' }, h('label', { for: id }, label), minus, input, plus, unit);
   return { box, input, minus, plus };
 }
+
+const paintRpm = (control, view) => {
+  control.input.value = view.value;
+  control.minus.disabled = view.minusDisabled;
+  control.plus.disabled = view.plusDisabled;
+};
 
 /**
  * Where the Shift points readout has to stop, in viewBox units: just left of the rev
@@ -461,15 +482,9 @@ function syncControls() {
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
   syncSummary();
-  const { floor, ceil } = controls.revs;
-  const fb = floorBounds(car, state.ceil);
-  floor.input.value = String(state.floor);
-  floor.minus.disabled = state.floor <= fb.min;
-  floor.plus.disabled = state.floor >= fb.max;
-  const cb = ceilBounds(car, state.floor);
-  ceil.input.value = String(state.ceil);
-  ceil.minus.disabled = state.ceil <= cb.min;
-  ceil.plus.disabled = state.ceil >= cb.max;
+  const views = revControlViews(car, state);
+  paintRpm(controls.revs.floor, views.floor);
+  for (const c of controls.ceils) paintRpm(c, views.ceil);
   document.querySelector('#sec-shift .cap').textContent =
     shiftPoints.shiftCaption(state.floor, state.ceil, car.engine.redline);
   document.querySelectorAll('.setlist .opt').forEach(node => {

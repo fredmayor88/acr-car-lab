@@ -271,3 +271,35 @@ test('the floor buttons clamp to 100 under the ceiling', () => {
   assert.equal(stepFloor(6800, 1, car, 7000), 6900);
   assert.equal(stepFloor(6900, 1, car, 7000), 6900);
 });
+
+// --- one rev ceiling, two controls ------------------------------------------------------
+
+test('rpmControlView: the value, and each button disabled at its own bound', async () => {
+  const { rpmControlView } = await import('../js/state.js');
+  assert.deepEqual(rpmControlView(7000, { min: 3100, max: 8750 }),
+    { value: '7000', minusDisabled: false, plusDisabled: false });
+  assert.deepEqual(rpmControlView(3100, { min: 3100, max: 8750 }),
+    { value: '3100', minusDisabled: true, plusDisabled: false });
+  assert.deepEqual(rpmControlView(8750, { min: 3100, max: 8750 }),
+    { value: '8750', minusDisabled: false, plusDisabled: true });
+});
+
+test('revControlViews: the floor and the ceiling views come from the one state', async () => {
+  const { revControlViews } = await import('../js/state.js');
+  const v = revControlViews(car, { ...defaultState(car), floor: 6000, ceil: 6100 });
+  assert.deepEqual(v.ceil, { value: '6100', minusDisabled: true, plusDisabled: false });
+  assert.deepEqual(v.floor, { value: '6000', minusDisabled: false, plusDisabled: true });
+  assert.deepEqual(revControlViews(car, defaultState(car)).ceil,
+    { value: '8750', minusDisabled: false, plusDisabled: true });
+});
+
+test('app.js: both rev ceiling controls are built from one spec and synced from one view', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  // one spec writes state.ceil and tracks the one event; both controls are made from it
+  assert.equal((src.match(/state\.ceil = v/g) || []).length, 1);
+  assert.equal((src.match(/'edit-rev-ceiling'/g) || []).length, 1);
+  assert.match(src, /buildRpmControl\(ceilSpec\('rev-ceiling'\)[,)]/);
+  assert.match(src, /buildRpmControl\(ceilSpec\('bar-rev-ceiling'\)[,)]/);
+  // every sync paints the same ceiling view onto every ceiling control
+  assert.match(src, /for \(const c of controls\.ceils\) paintRpm\(c, views\.ceil\)/);
+});
