@@ -398,7 +398,71 @@
    }
   ],
   "stock_option": "37//26",
-  "rest": 2.7857142857142856
+  "rest": 2.7817460317460316,
+  "settings": [
+   {
+    "key": "cdr",
+    "adjustment": "Center Differential Ratio",
+    "steps": [
+     {
+      "name": "39//24",
+      "value": 1.625
+     },
+     {
+      "name": "39//25",
+      "value": 1.56
+     },
+     {
+      "name": "38//25",
+      "value": 1.52
+     },
+     {
+      "name": "38//26",
+      "value": 1.4615384615384615
+     },
+     {
+      "name": "37//26",
+      "value": 1.4230769230769231
+     },
+     {
+      "name": "36//26",
+      "value": 1.3846153846153846
+     },
+     {
+      "name": "35//26",
+      "value": 1.3461538461538463
+     },
+     {
+      "name": "35//27",
+      "value": 1.2962962962962963
+     },
+     {
+      "name": "34//27",
+      "value": 1.2592592592592593
+     },
+     {
+      "name": "35//28",
+      "value": 1.25
+     }
+    ],
+    "stock": "37//26"
+   }
+  ],
+  "formula": {
+   "pre": [
+    "cdr"
+   ],
+   "front": [],
+   "rear": [],
+   "fixed_pre": 1.0,
+   "fixed_front": 2.7777777777777777,
+   "fixed_rear": 2.7857142857142856,
+   "centre_differential": true,
+   "measured": true
+  },
+  "rows": [
+   "cdr"
+  ]
  },
  "fixed_final_drive": null,
  "tyres": {
@@ -424,6 +488,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9858
+  "loaded_radius_factor": 0.9904
  }
 }

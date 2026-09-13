@@ -224,7 +224,7 @@
   }
  ],
  "final_drive": {
-  "adjustment": "Differential Ratio Rear",
+  "adjustment": "Differential Ratio Front + Differential Ratio Rear",
   "primaries": [],
   "options": [
    {
@@ -277,7 +277,137 @@
    }
   ],
   "stock_option": "37//10",
-  "rest": 1.0
+  "rest": 1.0,
+  "settings": [
+   {
+    "key": "dfr",
+    "adjustment": "Differential Ratio Front",
+    "steps": [
+     {
+      "name": "39//8",
+      "value": 4.875
+     },
+     {
+      "name": "43//9",
+      "value": 4.777777777777778
+     },
+     {
+      "name": "37//8",
+      "value": 4.625
+     },
+     {
+      "name": "41//9",
+      "value": 4.555555555555555
+     },
+     {
+      "name": "35//8",
+      "value": 4.375
+     },
+     {
+      "name": "43//10",
+      "value": 4.3
+     },
+     {
+      "name": "37//9",
+      "value": 4.111111111111111
+     },
+     {
+      "name": "35//9",
+      "value": 3.888888888888889
+     },
+     {
+      "name": "37//10",
+      "value": 3.7
+     },
+     {
+      "name": "32//9",
+      "value": 3.5555555555555554
+     },
+     {
+      "name": "31//9",
+      "value": 3.4444444444444446
+     },
+     {
+      "name": "29//9",
+      "value": 3.2222222222222223
+     }
+    ],
+    "stock": "37//10"
+   },
+   {
+    "key": "drr",
+    "adjustment": "Differential Ratio Rear",
+    "steps": [
+     {
+      "name": "39//8",
+      "value": 4.875
+     },
+     {
+      "name": "43//9",
+      "value": 4.777777777777778
+     },
+     {
+      "name": "37//8",
+      "value": 4.625
+     },
+     {
+      "name": "41//9",
+      "value": 4.555555555555555
+     },
+     {
+      "name": "35//8",
+      "value": 4.375
+     },
+     {
+      "name": "43//10",
+      "value": 4.3
+     },
+     {
+      "name": "37//9",
+      "value": 4.111111111111111
+     },
+     {
+      "name": "35//9",
+      "value": 3.888888888888889
+     },
+     {
+      "name": "37//10",
+      "value": 3.7
+     },
+     {
+      "name": "32//9",
+      "value": 3.5555555555555554
+     },
+     {
+      "name": "31//9",
+      "value": 3.4444444444444446
+     },
+     {
+      "name": "29//9",
+      "value": 3.2222222222222223
+     }
+    ],
+    "stock": "37//10"
+   }
+  ],
+  "formula": {
+   "pre": [],
+   "front": [
+    "dfr"
+   ],
+   "rear": [
+    "drr"
+   ],
+   "fixed_pre": 1.0,
+   "fixed_front": 1.0,
+   "fixed_rear": 1.0,
+   "centre_differential": false,
+   "measured": false
+  },
+  "rows": [
+   "dfr",
+   "drr"
+  ]
  },
  "fixed_final_drive": null,
  "tyres": {
@@ -303,6 +433,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9858
+  "loaded_radius_factor": 0.9904
  }
 }
