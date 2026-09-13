@@ -64,6 +64,9 @@ header{border-bottom:1px solid var(--line);margin-bottom:26px}
 .theme{font-family:inherit;font-size:12.5px;line-height:1.2;color:var(--muted-text);background:none;
   border:1px solid var(--line);border-radius:2px;padding:1px 8px;cursor:pointer;margin-left:auto}
 .crumb + .theme{margin-left:0}
+/* sun or moon, drawn in the label's colour; sits inside the line box so the toggle stays
+   no taller than the brand line */
+.theme .icon{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:4px}
 /* the label names the theme a click switches to, and is right before any script runs */
 .theme .to-light{display:none}
 @media (prefers-color-scheme:dark){

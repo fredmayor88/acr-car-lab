@@ -133,6 +133,15 @@ test('the no-flash head script in every page reads the key theme.js writes', () 
   }
 });
 
+test('the toggle icon stays inline and label-sized, not a full-width chart svg', () => {
+  // app.css makes every svg a full-width block for the charts; the icon has to opt out or
+  // it lands on its own line and the toggle outgrows the brand line
+  const icon = block('.theme .icon');
+  assert.equal(icon.display, 'inline-block');
+  assert.equal(icon.width, '12px');
+  assert.equal(icon.height, '12px');
+});
+
 test('the toggle is named for what a click does, and the name holds the visible word', () => {
   assert.equal(toggleLabel('light'), 'Switch to dark theme');
   assert.equal(toggleLabel('dark'), 'Switch to light theme');
