@@ -7,7 +7,7 @@ import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
 import { floorBounds, floorFocusAfterStep, parseFloor, parseHash, stepFloor, toHash }
   from './state.js';
 import { settingsText } from './settingsText.js';
-import { PROMO, dataLine } from './footer.js';
+import { ISSUES, PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import * as powerTorque from './charts/powerTorque.js';
@@ -270,7 +270,8 @@ function buildFooter() {
       h('p', { class: 'limits' }, dataLine(index))),
     h('p', { class: 'promo' }, PROMO.before,
       h('a', { href: PROMO.href, onclick: () => track('click-setup-engineer') }, PROMO.link),
-      PROMO.after));
+      PROMO.after, ISSUES.before,
+      h('a', { href: ISSUES.href, onclick: () => track('click-issues') }, ISSUES.link)));
   return { foot, factor };
 }
 

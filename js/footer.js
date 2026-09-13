@@ -14,3 +14,10 @@ export const PROMO = Object.freeze({
   after: ' — a free Claude skill that tunes a car to how you drive and saves it to your Notion.',
   href: 'https://github.com/fredmayor88/acr-setup-engineer',
 });
+
+/** Closes the promo line: where to report a wrong number or ask for something. */
+export const ISSUES = Object.freeze({
+  before: ' · ',
+  link: 'Issues and feedback',
+  href: 'https://github.com/fredmayor88/acr-car-lab/issues',
+});
