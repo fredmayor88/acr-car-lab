@@ -145,14 +145,22 @@ function buildShell() {
   ctls.appendChild(copies);
 
   const summary = h('p', { class: 'barsum' });
+  const setOpen = open => {
+    // closing hides the controls, and focus inside them would drop to the page
+    if (!open && ctls.contains(document.activeElement)) toggle.focus();
+    bar.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Hide controls' : 'Show controls');
+  };
   const toggle = h('button', { class: 'bartoggle', type: 'button',
     'aria-controls': 'bar-controls', 'aria-expanded': 'false', 'aria-label': 'Show controls',
-    onclick: () => {
-      const open = bar.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(open));
-      toggle.setAttribute('aria-label', open ? 'Hide controls' : 'Show controls');
-    } }, chevron());
+    onclick: () => setOpen(!bar.classList.contains('open')) }, chevron());
   const bar = h('div', { class: 'bar' }, h('div', { class: 'barhead' }, summary, toggle), ctls);
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || !bar.classList.contains('open')) return;
+    setOpen(false);
+    toggle.focus();
+  });
 
   root.appendChild(subtitle());
   root.appendChild(bar);

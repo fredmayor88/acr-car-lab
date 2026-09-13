@@ -188,7 +188,9 @@ svg{display:block;width:100%;height:auto}
   .barsum .sep{margin-left:7px;color:var(--muted-text)}
   .bartoggle{flex:0 0 auto;display:grid;place-items:center;width:34px;height:30px;padding:0;
     border:1px solid var(--line);border-radius:2px;background:var(--field);
-    color:var(--muted-text);cursor:pointer}
+    color:var(--muted-text);cursor:pointer;position:relative}
+  /* drawn 34x30, taps as 48x48: the invisible extension reaches past the head padding */
+  .bartoggle::after{content:"";position:absolute;inset:-9px -7px}
   .bartoggle .icon{display:block;width:12px;height:12px}
   .bar.open .bartoggle{color:var(--accent-text);border-color:var(--accent-edge)}
   .bar.open .bartoggle .icon{transform:rotate(180deg)}
