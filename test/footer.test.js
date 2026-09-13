@@ -39,3 +39,9 @@ test('the picker footer says the same as the car page footer', () => {
   assert.ok(html.includes(line), 'picker promo line');
   assert.doesNotMatch(html, /target=/);
 });
+
+test('car pages track clicks on the issues link as click-issues', () => {
+  // app.js builds the footer in the DOM, so this checks the wiring in its source
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.match(src, /h\('a', \{ href: ISSUES\.href, onclick: \(\) => track\('click-issues'\) \}, ISSUES\.link\)/);
+});
