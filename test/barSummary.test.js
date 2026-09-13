@@ -65,3 +65,15 @@ test('parts say which control each one stands for', () => {
   const polo = load('volkswagen-polo-gti-r5-2018');
   assert.deepEqual(barSummaryParts(polo, defaultState(polo)).map(p => p.key), ['surface', 'set']);
 });
+
+test('a lowered rev ceiling is appended; at the rev limit it is left out', () => {
+  const car = load('lancia-stratos');
+  const base = barSummary(car, defaultState(car));
+  assert.equal(barSummary(car, { ...defaultState(car), ceil: 8750 }), base);
+  assert.equal(barSummary(car, { ...defaultState(car), ceil: 7000 }), base + '  ·  ceiling 7000 rpm');
+  assert.deepEqual(barSummaryParts(car, { ...defaultState(car), ceil: 7000 }).map(p => p.key),
+    ['surface', 'fd', 'set', 'ceil']);
+  const polo = load('volkswagen-polo-gti-r5-2018');
+  assert.deepEqual(barSummaryParts(polo, { ...defaultState(polo), ceil: 6000 }).at(-1),
+    { key: 'ceil', text: 'ceiling 6000 rpm' });
+});

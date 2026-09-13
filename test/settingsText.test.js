@@ -69,10 +69,40 @@ test('the rolling radius factor line appears only when it differs from the defau
   assert.equal(lines[lines.length - 1], 'Rolling radius factor: 0.97');
 });
 
-test('the rev floor and ceiling are not gearing settings and stay out of the text', () => {
+test('the rev floor is not a gearing setting and stays out of the text', () => {
   const car = load('lancia-stratos');
   assert.equal(settingsText(car, { ...defaultState(car), floor: 5000 }),
                settingsText(car, defaultState(car)));
-  assert.equal(settingsText(car, { ...defaultState(car), floor: 4000, ceil: 7000 }),
+  assert.equal(settingsText(car, { ...defaultState(car), ceil: 8750 }),
                settingsText(car, defaultState(car)));
+});
+
+test('Stratos at a 7000 rpm ceiling: top speeds and the heading rpm are the ceiling', () => {
+  const car = load('lancia-stratos');
+  assert.equal(settingsText(car, { ...defaultState(car), floor: 4000, ceil: 7000 }), [
+    'Lancia Stratos HF 1976',
+    'Gear set: Gear set 1 (5-speed)',
+    'Primary Gear: 33//31*31//30',
+    'Differential Ratio Rear: 65//19',
+    'Gears: 42//15 · 39//19 · 34//21 · 33//25 · 30//26',
+    'Top speed per gear (Dry tarmac, 7000 rpm): 71 · 97 · 123 · 150 · 172 km/h',
+  ].join('\n'));
+});
+
+test('Mini and Fabia at a 7000 rpm ceiling', () => {
+  const mini = load('mini-cooper-s-1964');
+  assert.equal(settingsText(mini, { ...defaultState(mini), ceil: 7000 }).split('\n')[4],
+    'Top speed per gear (Dry tarmac, 7000 rpm): 61 · 88 · 126 · 156 km/h');
+  const fabia = load('skoda-fabia-rs-rally2-2022');
+  assert.equal(settingsText(fabia, { ...defaultState(fabia), ceil: 7000 }).split('\n')[4],
+    'Top speed per gear (Dry tarmac, 7000 rpm): 54 · 76 · 104 · 137 · 171 km/h');
+});
+
+test('the text agrees with the Shift points bars at a lowered ceiling too', () => {
+  for (const slug of ['lancia-stratos', 'mini-cooper-s-1964', 'skoda-fabia-rs-rally2-2022']) {
+    const car = load(slug);
+    const state = { ...defaultState(car), set: car.gear_sets.length - 1, ceil: 6300 };
+    const tops = layout(car, state).bars.map(b => b.to.toFixed(0)).join(' · ');
+    assert.ok(settingsText(car, state).includes(`6300 rpm): ${tops} km/h`), slug);
+  }
 });
