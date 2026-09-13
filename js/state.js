@@ -3,7 +3,7 @@
 // Values arriving from a URL get the same validation as typed input.
 
 import { DEFAULT_FACTOR, REV_FLOOR, SURFACES, finalDriveCombos, hasRatioSettings, matchingRow,
-  rowRatios, stockRatios, withRevLimit } from './gearing.js';
+  primaryIndex, rowRatios, stockRatios, withRevLimit } from './gearing.js';
 
 const K_MIN = 0.80;
 const K_MAX = 1.10;
@@ -163,9 +163,6 @@ export function defaultState(car) {
 
 const rowCount = car => car.final_drive.options.length;
 
-/** The selected primary's index in `final_drive.primaries` (0 on a car without a selector). */
-export const primaryIndex = (car, state) => Math.floor(state.fd / rowCount(car));
-
 /** `fd` for a primary index and the ratios: that primary on the matching row, else the stock row. */
 function fdFor(car, primary, ratios) {
   const fd = car.final_drive;
@@ -190,13 +187,6 @@ export function setRatio(car, state, key, index) {
 /** A new Primary Gear (index into `final_drive.primaries`); the ratios held. */
 export const setPrimary = (car, state, primary) =>
   ({ ...state, fd: fdFor(car, primary, state.ratios) });
-
-/** The Final drive chart row the state is on, or -1 when the row settings disagree. */
-export function selectedRow(car, state) {
-  if (!hasRatioSettings(car)) return state.fd;
-  const row = matchingRow(car.final_drive, state.ratios);
-  return row < 0 ? -1 : primaryIndex(car, state) * rowCount(car) + row;
-}
 
 const stepIndexOr = (raw, steps) => {
   const n = raw !== null && /^\s*\d+\s*$/.test(raw) ? Number(raw) : -1;

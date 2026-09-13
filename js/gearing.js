@@ -124,6 +124,20 @@ export function matchingRow(fd, ratios) {
 }
 
 /**
+ * The selected primary's index in `final_drive.primaries` on an averaged-axle car: `state.fd`
+ * names a combo, primaries x rows (0 on a car without a selector).
+ */
+export const primaryIndex = (car, state) =>
+  Math.floor(state.fd / car.final_drive.options.length);
+
+/** The Final drive chart row (combo index) the state is on, or -1 when the row settings disagree. */
+export function selectedRow(car, state) {
+  if (!hasRatioSettings(car)) return state.fd;
+  const row = matchingRow(car.final_drive, state.ratios);
+  return row < 0 ? -1 : primaryIndex(car, state) * car.final_drive.options.length + row;
+}
+
+/**
  * Every selectable final-drive combination as `{ primary, option, below }`.
  *
  * The primary is NOT folded into `below` — it is an alternative to the gear set's own

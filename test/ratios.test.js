@@ -5,9 +5,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DEFAULT_FACTOR, averagedBelow, circumference, finalDriveCombos, gearTops,
-  hasRatioSettings, matchingRow, rowRatios, stockRatios } from '../js/gearing.js';
-import { defaultState, parseHash, pickRow, primaryIndex, selectedRow, setPrimary, setRatio,
-  toHash } from '../js/state.js';
+  hasRatioSettings, matchingRow, primaryIndex, rowRatios, selectedRow, stockRatios }
+  from '../js/gearing.js';
+import { defaultState, parseHash, pickRow, setPrimary, setRatio, toHash } from '../js/state.js';
 import { axleWarning, finalDriveReadout, formulaNote, layout } from '../js/charts/finalDrive.js';
 import { fdValue } from '../js/charts/ladder.js';
 import { settingsText } from '../js/settingsText.js';
@@ -277,5 +277,12 @@ test('every measured gear 2+ of the eight settings runs is within 3% on the page
       if (i === 0 || exclude.includes(i + 1)) return;
       assert.ok(Math.abs(tops[i] - m) / m < 0.03, `${slug} set ${set + 1} gear ${i + 1}: ${tops[i]} vs ${m}`);
     });
+  }
+});
+
+test('chart modules import no page state: selectedRow and primaryIndex live in gearing.js', () => {
+  for (const f of readdirSync(new URL('../js/charts/', import.meta.url))) {
+    const src = readFileSync(new URL(`../js/charts/${f}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /from '\.\.\/state\.js'/, f);
   }
 });

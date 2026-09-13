@@ -16,8 +16,7 @@
 // which is what `state.fd` and the URL hash mean. They are not the same number.
 
 import { averagedBelow, ceilingOf, circumference, finalDriveCombos, hasRatioSettings, kmh,
-  matchingRow, overallRatio, ratioSteps } from '../gearing.js';
-import { selectedRow } from '../state.js';
+  matchingRow, overallRatio, ratioSteps, selectedRow } from '../gearing.js';
 import { C, el, text, clear } from '../svg.js';
 
 /**

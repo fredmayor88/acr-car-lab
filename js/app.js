@@ -3,9 +3,9 @@
 // this file only moves state around.
 
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos, hasRatioSettings,
-  withRevLimit } from './gearing.js';
+  primaryIndex, withRevLimit } from './gearing.js';
 import { REV_LIMIT_MAX, REV_LIMIT_MIN, applyRevLimit, floorFocusAfterStep, parseCeil, parseFloor,
-  parseHash, parseRevLimit, pickRow, primaryIndex, revControlViews, rpmInputKey, setPrimary,
+  parseHash, parseRevLimit, pickRow, revControlViews, rpmInputKey, setPrimary,
   setRatio, stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
@@ -109,6 +109,8 @@ function buildShell() {
   const revs = buildRevControls();
   const surfaces = SURFACES.filter(s => s.key in car.tyres);
   const combos = car.final_drive ? finalDriveCombos(car.final_drive) : [];
+  // an averaged-axle car has a select per ratio setting instead of the combined one
+  const ratios = hasRatioSettings(car) ? buildRatioControls() : null;
 
   const surfaceSel = h('select', { onchange: e => {
     state.surface = e.target.value;
@@ -116,7 +118,7 @@ function buildShell() {
     commit();
   } }, ...surfaces.map(s => h('option', { value: s.key }, s.label)));
 
-  const fdSel = h('select', { onchange: e => {
+  const fdSel = ratios ? null : h('select', { onchange: e => {
     state.fd = Number(e.target.value);
     track('change-final-drive');
     commit();
@@ -156,7 +158,6 @@ function buildShell() {
   // one the bar collapses to the head: a summary line and a button that opens the controls.
   const ctls = h('div', { class: 'barctls', id: 'bar-controls' },
     h('div', { class: 'ctl' }, h('label', {}, 'Surface'), surfaceSel));
-  const ratios = hasRatioSettings(car) ? buildRatioControls() : null;
   if (!ratios && combos.length) {
     ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Final drive'), fdSel));
   }
@@ -242,7 +243,7 @@ function buildRatioControls() {
   if (fd.primaries.length) {
     primary = h('select', { id: 'bar-primary', class: 'ratio', onchange: e => {
       state = setPrimary(data, state, Number(e.target.value));
-      track('change-final-drive');
+      track('edit-final-drive-setting');
       commit();
     } }, ...fd.primaries.map((p, i) => h('option', { value: String(i) }, p.name)));
     boxes.push(h('div', { class: 'ctl' }, h('label', { for: 'bar-primary' }, 'Primary Gear'),
@@ -592,7 +593,7 @@ function syncControls() {
     if (primary) primary.value = String(primaryIndex(car, state));
     for (const { key, sel } of selects) sel.value = String(state.ratios[key]);
     readout.textContent = finalDrive.finalDriveReadout(car, state);
-  } else if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
+  } else if (controls.fdSel?.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
   controls.revLimit.value = String(state.rl);
