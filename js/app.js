@@ -7,6 +7,7 @@ import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
 import { ceilBounds, floorBounds, floorFocusAfterStep, parseCeil, parseFloor, parseHash,
   stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
+import { barSummaryParts, setLabel } from './barSummary.js';
 import { ISSUES, PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
@@ -112,8 +113,7 @@ function buildShell() {
     state.set = Number(e.target.value);
     track('pick-gearset');
     commit();
-  } }, ...car.gear_sets.map((s, i) =>
-    h('option', { value: String(i) }, `${s.label}  (${s.gears.length}-speed)`)));
+  } }, ...car.gear_sets.map((s, i) => h('option', { value: String(i) }, setLabel(s))));
 
   const copyButton = (label, event, content) => {
     const button = h('button', { class: 'copy', type: 'button', onclick: async () => {
@@ -133,13 +133,26 @@ function buildShell() {
     copyButton('Copy link', 'copy-link', () => location.href),
     copyButton('Copy settings', 'copy-settings', () => settingsText(car, state)));
 
-  const bar = h('div', { class: 'bar' },
+  // On a wide screen the head is hidden and the controls box lays out as if it were not
+  // there (display: contents), so the bar is the row of controls it always was. On a narrow
+  // one the bar collapses to the head: a summary line and a button that opens the controls.
+  const ctls = h('div', { class: 'barctls', id: 'bar-controls' },
     h('div', { class: 'ctl' }, h('label', {}, 'Surface'), surfaceSel));
   if (combos.length) {
-    bar.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Final drive'), fdSel));
+    ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Final drive'), fdSel));
   }
-  bar.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Gear set'), setSel));
-  bar.appendChild(copies);
+  ctls.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Gear set'), setSel));
+  ctls.appendChild(copies);
+
+  const summary = h('p', { class: 'barsum' });
+  const toggle = h('button', { class: 'bartoggle', type: 'button',
+    'aria-controls': 'bar-controls', 'aria-expanded': 'false', 'aria-label': 'Show controls',
+    onclick: () => {
+      const open = bar.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Hide controls' : 'Show controls');
+    } }, chevron());
+  const bar = h('div', { class: 'bar' }, h('div', { class: 'barhead' }, summary, toggle), ctls);
 
   root.appendChild(subtitle());
   root.appendChild(bar);
@@ -163,7 +176,32 @@ function buildShell() {
   wireHover('shift', (map, p) => ({ gear: map.yToGear(p.y), speed: map.xToSpeed(p.x) }));
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
 
-  return { surfaceSel, fdSel, setSel, factor, revs };
+  return { surfaceSel, fdSel, setSel, factor, revs, summary };
+}
+
+/** The bar toggle's glyph: a chevron in the button's text colour, turned over when open. */
+function chevron() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  for (const [k, v] of Object.entries({ class: 'icon', viewBox: '0 0 12 12', width: '12',
+    height: '12', 'aria-hidden': 'true', focusable: 'false', fill: 'none',
+    stroke: 'currentColor', 'stroke-width': '1.4', 'stroke-linecap': 'round',
+    'stroke-linejoin': 'round' })) svg.setAttribute(k, v);
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', 'M2.5 4.5 6 8l3.5-3.5');
+  svg.appendChild(path);
+  return svg;
+}
+
+/**
+ * Surface · final drive · gear set. One unbreakable span per part, each but the last ending
+ * in its separator, so a line that does not fit wraps between parts and never mid-label.
+ */
+function syncSummary() {
+  const parts = barSummaryParts(car, state);
+  controls.summary.replaceChildren(...parts.map((part, i) =>
+    h('span', { class: 'part ' + part.key }, part.text,
+      ...(i < parts.length - 1 ? [h('span', { class: 'sep', 'aria-hidden': 'true' }, '·')] : []))));
 }
 
 /**
@@ -390,6 +428,7 @@ function syncControls() {
   if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
+  syncSummary();
   const { floor, ceil } = controls.revs;
   const fb = floorBounds(car, state.ceil);
   floor.input.value = String(state.floor);

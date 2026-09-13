@@ -93,6 +93,10 @@ select{font:13.5px/1 "SF Mono",Menlo,Consolas,monospace;padding:7px 10px;
   border:1px solid var(--accent-edge);background:var(--accent-wash);
   padding:8px 14px;border-radius:2px;cursor:pointer}
 .barnote{font-size:11.5px;color:var(--muted-text);margin:0 0 32px;padding-left:2px}
+/* the collapsed bar's summary and toggle exist for narrow screens only; on a wide one the
+   controls box is laid out as though it were not there */
+.barhead{display:none}
+.barctls{display:contents}
 
 section{margin-bottom:42px}
 h2{font-size:17px;margin:0 0 2px;color:var(--fg-strong);letter-spacing:-.01em}
@@ -164,4 +168,28 @@ svg{display:block;width:100%;height:auto}
   .setlist{width:100%;flex:1 1 auto}
   .revboxes{position:static;flex-direction:column;align-items:flex-end;gap:8px;
     margin-bottom:10px}
+
+  /* The bar collapses to one line: what is selected, and a button that opens the controls.
+     Open, they hang below the line over the page rather than pushing it down, so opening
+     and closing never moves what you were reading. The ground under the surface wash keeps
+     the charts from showing through. */
+  .bar{display:block;padding:0;
+    background:linear-gradient(var(--surface),var(--surface)),var(--bg)}
+  .barhead{display:flex;align-items:center;gap:10px;padding:5px 5px 5px 12px}
+  .barsum{flex:1;min-width:0;margin:0;display:flex;flex-wrap:wrap;column-gap:7px;
+    font:12px/1.35 "SF Mono",Menlo,Consolas,monospace;color:var(--fg)}
+  .barsum .part{white-space:nowrap}
+  .barsum .sep{margin-left:7px;color:var(--muted-text)}
+  .bartoggle{flex:0 0 auto;display:grid;place-items:center;width:34px;height:30px;padding:0;
+    border:1px solid var(--line);border-radius:2px;background:var(--field);
+    color:var(--muted-text);cursor:pointer}
+  .bartoggle .icon{display:block;width:12px;height:12px}
+  .bar.open .bartoggle{color:var(--accent-text);border-color:var(--accent-edge)}
+  .bar.open .bartoggle .icon{transform:rotate(180deg)}
+  .bar .barctls{display:none}
+  .bar.open .barctls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 26px;
+    position:absolute;top:100%;left:-1px;right:-1px;padding:12px 12px 14px;
+    background:linear-gradient(var(--surface),var(--surface)),var(--bg);
+    border:1px solid var(--line);border-top:0;border-radius:0 0 3px 3px}
+  .bar.open{border-radius:3px 3px 0 0}
 }
