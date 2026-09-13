@@ -45,3 +45,12 @@ test('car pages track clicks on the issues link as click-issues', () => {
   const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
   assert.match(src, /h\('a', \{ href: ISSUES\.href, onclick: \(\) => track\('click-issues'\) \}, ISSUES\.link\)/);
 });
+
+test('car pages track rev ceiling edits as edit-rev-ceiling, with named step buttons', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.match(src, /'edit-rev-ceiling'/);
+  // the step buttons are named from the noun: "Lower rev ceiling by 100 rpm" and "Raise …"
+  assert.match(src, /noun: 'rev ceiling'/);
+  assert.match(src, /`Lower \$\{noun\} by 100 rpm`/);
+  assert.match(src, /`Raise \$\{noun\} by 100 rpm`/);
+});

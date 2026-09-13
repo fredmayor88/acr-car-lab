@@ -4,8 +4,8 @@
 
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
-import { floorBounds, floorFocusAfterStep, parseFloor, parseHash, stepFloor, toHash }
-  from './state.js';
+import { ceilBounds, floorBounds, floorFocusAfterStep, parseCeil, parseFloor, parseHash,
+  stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { ISSUES, PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
@@ -91,7 +91,7 @@ function tarmacNote() {
 function buildShell() {
   root.querySelector('.loading')?.remove();
 
-  const floor = buildFloorControl();
+  const revs = buildRevControls();
   const surfaces = SURFACES.filter(s => s.key in car.tyres);
   const combos = car.final_drive ? finalDriveCombos(car.final_drive) : [];
 
@@ -150,7 +150,7 @@ function buildShell() {
     const panel = h('div', { class: s.id === 'revs' ? 'panel row' : 'panel' });
     panel.appendChild(svg);
     if (s.id === 'revs') panel.appendChild(buildSetList());
-    if (s.id === 'shift') panel.appendChild(floor.box);
+    if (s.id === 'shift') panel.appendChild(revs.box);
     root.appendChild(h('section', { id: 'sec-' + s.id },
       h('h2', {}, s.title), h('p', { class: 'cap' }, s.cap), panel));
   }
@@ -162,51 +162,72 @@ function buildShell() {
   wireHover('shift', (map, p) => ({ gear: map.yToGear(p.y), speed: map.xToSpeed(p.x) }));
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
 
-  return { surfaceSel, fdSel, setSel, factor, floor };
+  return { surfaceSel, fdSel, setSel, factor, revs };
 }
 
-/** Shift points' rev floor: [−] [typed rpm] [+], over the top right of the chart. */
-function buildFloorControl() {
+/**
+ * Shift points' rev floor and ceiling, side by side over the top right of the chart. Each
+ * is [−] [typed rpm] [+]; each one's bounds depend on the other's value.
+ */
+function buildRevControls() {
+  const floor = buildRpmControl({
+    id: 'rev-floor', label: 'Rev floor', noun: 'rev floor', event: 'edit-rev-floor',
+    get: () => state.floor, put: v => { state.floor = v; },
+    parse: raw => parseFloor(raw, car, state.ceil),
+    step: d => stepFloor(state.floor, d, car, state.ceil),
+  });
+  const ceil = buildRpmControl({
+    id: 'rev-ceiling', label: 'Rev ceiling', noun: 'rev ceiling', event: 'edit-rev-ceiling',
+    get: () => state.ceil, put: v => { state.ceil = v; },
+    parse: raw => parseCeil(raw, car, state.floor),
+    step: d => stepCeil(state.ceil, d, car, state.floor),
+  });
+  const box = h('div', { class: 'revboxes' }, floor.box, ceil.box);
+  return { box, floor, ceil };
+}
+
+function buildRpmControl({ id, label, noun, event, get, put, parse, step }) {
   const set = v => {
-    if (v !== state.floor) {
-      state.floor = v;
-      track('edit-rev-floor');
+    if (v !== get()) {
+      put(v);
+      track(event);
       commit();
     }
-    input.value = String(state.floor);
+    input.value = String(get());
   };
   const typed = () => {
-    const v = parseFloor(input.value, car);
-    if (v === null) input.value = String(state.floor);
+    const v = parse(input.value);
+    if (v === null) input.value = String(get());
     else set(v);
   };
-  const input = h('input', { id: 'rev-floor', class: 'floorin', type: 'text',
-    inputmode: 'numeric', autocomplete: 'off', value: String(state.floor),
+  const input = h('input', { id, class: 'floorin', type: 'text',
+    inputmode: 'numeric', autocomplete: 'off', value: String(get()),
     onchange: typed,
     onkeydown: e => { if (e.key === 'Enter') typed(); } });
-  const step = (direction, name, glyph) => h('button', {
+  const button = (direction, name, glyph) => h('button', {
     class: 'floorstep', type: 'button', 'aria-label': name,
     onclick: e => {
-      set(stepFloor(state.floor, direction, car));
+      set(step(direction));
       // a click from Enter/Space has detail 0; a mouse click or tap counts its clicks
       floorFocusAfterStep(e.currentTarget, { minus, plus, input }, e.detail === 0)?.focus();
     },
   }, glyph);
-  const minus = step(-1, 'Lower rev floor by 100 rpm', '−');
-  const plus = step(1, 'Raise rev floor by 100 rpm', '+');
+  const minus = button(-1, `Lower ${noun} by 100 rpm`, '−');
+  const plus = button(1, `Raise ${noun} by 100 rpm`, '+');
   const box = h('div', { class: 'floorbox' },
-    h('label', { for: 'rev-floor' }, 'Rev floor'), minus, input, plus,
+    h('label', { for: id }, label), minus, input, plus,
     h('span', { class: 'unit' }, 'rpm'));
   return { box, input, minus, plus };
 }
 
 /**
- * Where the Shift points readout has to stop, in viewBox units: just left of the rev floor
- * control when that sits over the chart. On a narrow screen it sits above the chart instead.
+ * Where the Shift points readout has to stop, in viewBox units: just left of the rev
+ * floor and ceiling controls when they sit over the chart. On a narrow screen they sit
+ * above the chart instead.
  */
 function shiftReadoutEdge() {
   const full = 1096;
-  const box = controls?.floor.box;
+  const box = controls?.revs.box;
   const svg = svgOf('shift');
   if (!box) return full;
   const b = box.getBoundingClientRect();
@@ -365,11 +386,17 @@ function syncControls() {
   if (controls.fdSel.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
-  const { min, max } = floorBounds(car);
-  controls.floor.input.value = String(state.floor);
-  controls.floor.minus.disabled = state.floor <= min;
-  controls.floor.plus.disabled = state.floor >= max;
-  document.querySelector('#sec-shift .cap').textContent = shiftPoints.shiftCaption(state.floor);
+  const { floor, ceil } = controls.revs;
+  const fb = floorBounds(car, state.ceil);
+  floor.input.value = String(state.floor);
+  floor.minus.disabled = state.floor <= fb.min;
+  floor.plus.disabled = state.floor >= fb.max;
+  const cb = ceilBounds(car, state.floor);
+  ceil.input.value = String(state.ceil);
+  ceil.minus.disabled = state.ceil <= cb.min;
+  ceil.plus.disabled = state.ceil >= cb.max;
+  document.querySelector('#sec-shift .cap').textContent =
+    shiftPoints.shiftCaption(state.floor, state.ceil, car.engine.redline);
   document.querySelectorAll('.setlist .opt').forEach(node => {
     const i = Number(node.dataset.set);
     const on = state.draw.includes(i);

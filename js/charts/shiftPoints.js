@@ -1,7 +1,7 @@
 // Chart 4 — the selected gear set, one row per gear.
 // Bars run from a usable-revs floor to a ceiling (the limiter unless lowered), so they
-// OVERLAP: the same road speed is reachable in more than one gear, and that overlap is what the chart exists to show.
-// A tiled version where each gear owned its own band was tried and rejected — it draws a
+// OVERLAP: the same road speed is reachable in more than one gear, and that overlap is
+// what the chart exists to show. A tiled version where each gear owned its own band was tried and rejected — it draws a
 // tidy staircase that hides the choice.
 
 import { REV_FLOOR, circumference, gearTops, kmh, rpmAt } from '../gearing.js';

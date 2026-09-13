@@ -69,8 +69,10 @@ test('the rolling radius factor line appears only when it differs from the defau
   assert.equal(lines[lines.length - 1], 'Rolling radius factor: 0.97');
 });
 
-test('the rev floor is not a gearing setting and stays out of the text', () => {
+test('the rev floor and ceiling are not gearing settings and stay out of the text', () => {
   const car = load('lancia-stratos');
   assert.equal(settingsText(car, { ...defaultState(car), floor: 5000 }),
+               settingsText(car, defaultState(car)));
+  assert.equal(settingsText(car, { ...defaultState(car), floor: 4000, ceil: 7000 }),
                settingsText(car, defaultState(car)));
 });
