@@ -18,7 +18,7 @@ const car = {
     stock_option: 'y', rest: 1,
   },
   tyres: { Tarmac_Dry: {}, Gravel: {} },
-  defaults: { loaded_radius_factor: 0.9562 },
+  defaults: { loaded_radius_factor: 0.9858 },
 };
 
 test('the default state is dry tarmac, first gear set, first set drawn', () => {
@@ -26,7 +26,7 @@ test('the default state is dry tarmac, first gear set, first set drawn', () => {
   assert.equal(s.surface, 'Tarmac_Dry');
   assert.equal(s.set, 0);
   assert.deepEqual(s.draw, [0]);
-  assert.equal(s.k, 0.9562);
+  assert.equal(s.k, 0.9858);
 });
 
 test('exactly one gear set is drawn by default', () => {
@@ -68,9 +68,9 @@ test('drawn sets are de-duplicated and sorted', () => {
 });
 
 test('the factor is clamped to a sane range', () => {
-  assert.equal(parseHash('#k=0', car).k, 0.9562);
-  assert.equal(parseHash('#k=-3', car).k, 0.9562);
-  assert.equal(parseHash('#k=99', car).k, 0.9562);
+  assert.equal(parseHash('#k=0', car).k, 0.9858);
+  assert.equal(parseHash('#k=-3', car).k, 0.9858);
+  assert.equal(parseHash('#k=99', car).k, 0.9858);
   assert.equal(parseHash('#k=1.02', car).k, 1.02);
 });
 
@@ -120,13 +120,14 @@ test('every car opens on a combo carrying its stock option and fitted primary', 
     const stock = combos[state.fd];
     assert.equal(stock.option.name, c.final_drive.stock_option, slug);
     if (stock.primary) {
-      const selectable = c.final_drive.primaries.map(p => p.name);
-      if (selectable.includes(c.gear_sets[0].primary.name)) {
-        assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
-      } else {
-        // the 206 WRC: its gear sets carry 20//25, which is not one of its selectable
+      if (slug === 'peugeot-206-wrc-1999') {
+        // the one exception: its gear sets carry 20//25, which is not one of its selectable
         // primaries, so the page opens on the first selectable one
+        const selectable = c.final_drive.primaries.map(p => p.name);
+        assert.ok(!selectable.includes(c.gear_sets[0].primary.name), slug);
         assert.equal(stock.primary.name, selectable[0], slug);
+      } else {
+        assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
       }
     }
     // and it is the row the chart highlights

@@ -8,7 +8,7 @@ import { layout } from '../js/charts/shiftPoints.js';
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
 
-const STRATOS_URL = 'https://example.test/lancia-stratos/gears/#s=Tarmac_Dry&fd=5&set=0&draw=0&k=0.9562';
+const STRATOS_URL = 'https://example.test/lancia-stratos/gears/#s=Tarmac_Dry&fd=5&set=0&draw=0&k=0.9858';
 
 test('Stratos, stock: the exact text, with the primary, 214 km/h in top gear and the link', () => {
   const car = load('lancia-stratos');

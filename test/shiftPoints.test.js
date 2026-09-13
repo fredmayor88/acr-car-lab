@@ -2,14 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chipX, floorValueX, layout, readoutX, shiftCaption, shiftReadout }
   from '../js/charts/shiftPoints.js';
-import { circumference, kmh } from '../js/gearing.js';
+import { DEFAULT_FACTOR, circumference, kmh } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, each gear set also carries its own
 // primary (unused here since the combo's primary replaces it) — same fixture shape as
-// test/ladder.test.js, so the pinned numbers (first gear tops out at 89 km/h) hold.
+// test/ladder.test.js, so the pinned numbers (first gear tops out at 88 km/h) hold.
 const car = {
   slug: 'test-stratos',
-  engine: { redline: 8750 },
+  engine: { redline: 8450 },
   gear_sets: [
     { label: 'Gear set 1', primary: { name: 'p', value: 1.1 },
       gears: [2.8, 2.053, 1.619, 1.32, 1.154].map(v => ({ name: '', value: v })) },
@@ -24,9 +24,9 @@ const car = {
   },
   fixed_final_drive: null,
   tyres: { Tarmac_Dry: { asset: 'PirelliT03', free_radius: 0.296 } },
-  defaults: { loaded_radius_factor: 0.9562 },
+  defaults: { loaded_radius_factor: DEFAULT_FACTOR },
 };
-const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: 0.9562 };
+const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: DEFAULT_FACTOR };
 
 test('only the selected gear set is drawn', () => {
   assert.equal(layout(car, state).bars.length, 5);
@@ -42,7 +42,7 @@ test('bars overlap — the same speed is reachable in more than one gear', () =>
 
 test('every bar ends at its top speed and starts at the rev floor', () => {
   const bars = layout(car, state).bars;
-  assert.equal(Math.round(bars[0].to), 89);
+  assert.equal(Math.round(bars[0].to), 88);
   assert.ok(bars[0].from > 0);
   assert.ok(bars[0].from < bars[0].to);
 });
@@ -188,9 +188,9 @@ test('the caption names the current rev floor', () => {
 });
 
 test('the caption names a lowered ceiling, and says rev limit when it is the limit', () => {
-  assert.match(shiftCaption(3000, 8750, 8750), /from 3000 rpm to the rev limit\./);
-  assert.match(shiftCaption(3000, 7000, 8750), /from 3000 rpm to 7000 rpm\./);
-  assert.match(shiftCaption(5000, 8000, 8750), /from 5000 rpm to 8000 rpm\./);
+  assert.match(shiftCaption(3000, 8450, 8450), /from 3000 rpm to the rev limit\./);
+  assert.match(shiftCaption(3000, 7000, 8450), /from 3000 rpm to 7000 rpm\./);
+  assert.match(shiftCaption(5000, 8000, 8450), /from 5000 rpm to 8000 rpm\./);
 });
 
 // --- the configurable rev ceiling -----------------------------------------------------
@@ -199,10 +199,10 @@ test('bars end at the configured ceiling; the floor end does not move', () => {
   const atLimit = layout(car, state).bars;
   const at7000 = layout(car, { ...state, ceil: 7000 }).bars;
   atLimit.forEach((bar, i) => {
-    assert.ok(Math.abs(at7000[i].to / bar.to - 7000 / 8750) < 1e-9, `gear ${i}`);
+    assert.ok(Math.abs(at7000[i].to / bar.to - 7000 / 8450) < 1e-9, `gear ${i}`);
     assert.equal(at7000[i].from, bar.from);
   });
-  assert.deepEqual(layout(car, state).bars, layout(car, { ...state, ceil: 8750 }).bars);
+  assert.deepEqual(layout(car, state).bars, layout(car, { ...state, ceil: 8450 }).bars);
 });
 
 test('the axis keeps its scale when the ceiling drops, so the bars visibly shorten', () => {
@@ -218,25 +218,25 @@ test('the readout clamps to the configured ceiling', () => {
 
 test('the over-limit warning keys off the rev limit, not the ceiling', () => {
   const s = { ...state, ceil: 7000 };
-  const circ = circumference(0.296, 0.9562);
+  const circ = circumference(0.296, DEFAULT_FACTOR);
   const overall = 1.1 * 3.4211;
   // fourth gear at a speed where third runs 8000 rpm: above the ceiling, under the limit
   const speed = kmh(8000, 1.619 * overall, circ);
   const r = shiftReadout(car, s, 3, speed);
-  assert.ok(r.down.rpm > 7000 && r.down.rpm < 8750);
+  assert.ok(r.down.rpm > 7000 && r.down.rpm < 8450);
   assert.equal(r.overRev, false);
-  // and a downshift past 8750 is still flagged with the ceiling lowered: third at 7000
-  // rpm puts second at ~8877
+  // and a downshift past 8450 is still flagged with the ceiling lowered: third at 7000
+  // rpm puts second at ~8876
   const hot = shiftReadout(car, s, 2, 132);
   assert.ok(Math.abs(hot.rpm - 7000) < 1e-6);
-  assert.ok(hot.down.rpm > 8750);
+  assert.ok(hot.down.rpm > 8450);
   assert.equal(hot.overRev, true);
 });
 
 // --- the speed at the rev floor, left of each bar -------------------------------------
 
 test('each bar starts at the speed at the floor in that gear, and moves with the floor', () => {
-  const circ = circumference(0.296, 0.9562);
+  const circ = circumference(0.296, DEFAULT_FACTOR);
   const overall = 1.1 * 3.4211;
   const gears = car.gear_sets[0].gears;
   for (const floor of [3000, 5000]) {
