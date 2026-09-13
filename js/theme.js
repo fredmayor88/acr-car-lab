@@ -18,13 +18,23 @@ export function currentTheme() {
   return forced === 'dark' || forced === 'light' ? forced : osTheme();
 }
 
+/**
+ * The toggle's accessible name: the action, where the visible word is only the target.
+ * It contains that visible word, so speech input can still say "click Dark".
+ */
+export const toggleLabel = theme =>
+  (theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+
 const listeners = new Set();
 let shown = null;
+
+const button = () => document.querySelector('.theme');
 
 function notify() {
   const theme = currentTheme();
   if (theme === shown) return;
   shown = theme;
+  button()?.setAttribute('aria-label', toggleLabel(theme));
   for (const fn of listeners) fn(theme);
 }
 
@@ -52,8 +62,9 @@ export function setTheme(theme) {
 
 if (typeof document !== 'undefined') {
   shown = currentTheme();
+  button()?.setAttribute('aria-label', toggleLabel(shown));
   // Only changes what shows when nothing is forced; a forced theme ignores the OS.
   osQuery().addEventListener('change', notify);
-  document.querySelector('.theme')?.addEventListener('click', () =>
+  button()?.addEventListener('click', () =>
     setTheme(currentTheme() === 'dark' ? 'light' : 'dark'));
 }

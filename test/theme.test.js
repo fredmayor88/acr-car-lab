@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { SET_COLOURS, SET_COLOURS_DARK } from '../js/gearing.js';
-import { STORAGE_KEY } from '../js/theme.js';
+import { STORAGE_KEY, toggleLabel } from '../js/theme.js';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const css = read('app.css').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -131,4 +131,12 @@ test('the no-flash head script in every page reads the key theme.js writes', () 
     assert.ok(head.indexOf(STORAGE_KEY) < head.indexOf('stylesheet'), `${page}: script after css`);
     assert.match(html, /<button class="theme" type="button">/, page);
   }
+});
+
+test('the toggle is named for what a click does, and the name holds the visible word', () => {
+  assert.equal(toggleLabel('light'), 'Switch to dark theme');
+  assert.equal(toggleLabel('dark'), 'Switch to light theme');
+  // the visible label is the target theme (app.css shows "Dark" in light, "Light" in dark)
+  assert.match(toggleLabel('light'), /dark/i);
+  assert.match(toggleLabel('dark'), /light/i);
 });
