@@ -37,8 +37,7 @@ test('Mini: no primary selector, so no Primary Gear line, and a front differenti
   const lines = settingsText(car, state).split('\n');
   assert.equal(lines[0], 'Mini Cooper S 1964');
   assert.ok(!lines.some(l => l.startsWith('Primary Gear')));
-  const fd = car.final_drive;
-  assert.equal(lines[2], `Differential Ratio Front: ${fd.stock_option}`);
+  assert.equal(lines[2], 'Differential Ratio Front: 63//16');
   assert.equal(lines[3], 'Gears: ' + car.gear_sets[0].gears.map(g => g.name).join(' · '));
   assert.match(lines[4], /^Top speed per gear \(Dry tarmac, 7750 rpm\): \d+( · \d+){3} km\/h$/);
   assert.equal(lines.length, 5);

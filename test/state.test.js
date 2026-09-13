@@ -127,43 +127,41 @@ test('every car opens on a combo carrying its stock option and fitted primary', 
 
 // --- the Shift points rev floor -------------------------------------------------------
 
-const revCar = { ...car, engine: { redline: 8750 } };
-
 test('the rev floor defaults to 3000 and stays out of the hash at that value', () => {
-  assert.equal(defaultState(revCar).floor, 3000);
-  assert.doesNotMatch(toHash(defaultState(revCar), revCar), /floor=/);
+  assert.equal(defaultState(car).floor, 3000);
+  assert.doesNotMatch(toHash(defaultState(car), car), /floor=/);
 });
 
 test('a non-default rev floor round-trips through the hash', () => {
-  const s = { ...defaultState(revCar), floor: 4200 };
-  assert.match(toHash(s, revCar), /floor=4200/);
-  assert.deepEqual(parseHash(toHash(s, revCar), revCar), s);
-  assert.equal(parseHash('#floor=0', revCar).floor, 0);
-  assert.equal(parseHash('#floor=8650', revCar).floor, 8650);
+  const s = { ...defaultState(car), floor: 4200 };
+  assert.match(toHash(s, car), /floor=4200/);
+  assert.deepEqual(parseHash(toHash(s, car), car), s);
+  assert.equal(parseHash('#floor=0', car).floor, 0);
+  assert.equal(parseHash('#floor=8650', car).floor, 8650);
 });
 
 test('an out-of-range or garbage rev floor falls back to the default', () => {
   for (const raw of ['8651', '8750', '99999', '-100', '3000.5', '35abc', 'banana', '', '1e3']) {
-    assert.equal(parseHash(`#floor=${raw}`, revCar).floor, 3000, raw);
+    assert.equal(parseHash(`#floor=${raw}`, car).floor, 3000, raw);
   }
 });
 
 test('a typed rev floor accepts any whole number from 0 to 100 under the limit', () => {
-  assert.equal(parseFloor('3050', revCar), 3050);
-  assert.equal(parseFloor(' 0 ', revCar), 0);
-  assert.equal(parseFloor('8650', revCar), 8650);
+  assert.equal(parseFloor('3050', car), 3050);
+  assert.equal(parseFloor(' 0 ', car), 0);
+  assert.equal(parseFloor('8650', car), 8650);
   for (const raw of ['8651', '-1', '2.5', 'abc', '', '1e3', null]) {
-    assert.equal(parseFloor(raw, revCar), null, String(raw));
+    assert.equal(parseFloor(raw, car), null, String(raw));
   }
 });
 
 test('the buttons step the rev floor by 100 from where it is and clamp at the bounds', () => {
-  assert.equal(stepFloor(3000, 1, revCar), 3100);
-  assert.equal(stepFloor(3000, -1, revCar), 2900);
-  assert.equal(stepFloor(3050, 1, revCar), 3150);
-  assert.equal(stepFloor(50, -1, revCar), 0);
-  assert.equal(stepFloor(0, -1, revCar), 0);
-  assert.equal(stepFloor(8600, 1, revCar), 8650);
-  assert.equal(stepFloor(8650, 1, revCar), 8650);
-  assert.deepEqual(floorBounds(revCar), { min: 0, max: 8650 });
+  assert.equal(stepFloor(3000, 1, car), 3100);
+  assert.equal(stepFloor(3000, -1, car), 2900);
+  assert.equal(stepFloor(3050, 1, car), 3150);
+  assert.equal(stepFloor(50, -1, car), 0);
+  assert.equal(stepFloor(0, -1, car), 0);
+  assert.equal(stepFloor(8600, 1, car), 8650);
+  assert.equal(stepFloor(8650, 1, car), 8650);
+  assert.deepEqual(floorBounds(car), { min: 0, max: 8650 });
 });
