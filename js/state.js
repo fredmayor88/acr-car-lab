@@ -63,6 +63,13 @@ export const revControlViews = (car, state) => ({
   ceil: rpmControlView(state.ceil, ceilBounds(car, state.floor)),
 });
 
+/**
+ * What a key does in an rpm input. Enter commits the typed value; Escape cancels it, so the
+ * input goes back to the current value before anything (a blur, a closing panel) can commit it.
+ */
+export const rpmInputKey = key =>
+  key === 'Enter' ? 'commit' : key === 'Escape' ? 'cancel' : null;
+
 function wholeRpm(raw) {
   return typeof raw === 'string' && /^\s*\d+\s*$/.test(raw) ? Number(raw) : null;
 }

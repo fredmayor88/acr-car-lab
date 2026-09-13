@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { ceilBounds, defaultState, floorBounds, floorFocusAfterStep, parseCeil, parseFloor,
+import { rpmInputKey, ceilBounds, defaultState, floorBounds, floorFocusAfterStep, parseCeil, parseFloor,
   parseHash, stepCeil, stepFloor, toHash }
   from '../js/state.js';
 import { finalDriveCombos } from '../js/gearing.js';
@@ -302,4 +302,10 @@ test('app.js: both rev ceiling controls are built from one spec and synced from 
   assert.match(src, /buildRpmControl\(ceilSpec\('bar-rev-ceiling'\)[,)]/);
   // every sync paints the same ceiling view onto every ceiling control
   assert.match(src, /for \(const c of controls\.ceils\) paintRpm\(c, views\.ceil\)/);
+});
+
+test('rpmInputKey: Enter commits, Escape cancels, anything else is left to the input', () => {
+  assert.equal(rpmInputKey('Enter'), 'commit');
+  assert.equal(rpmInputKey('Escape'), 'cancel');
+  for (const k of ['a', '5', 'Tab', 'Backspace', undefined]) assert.equal(rpmInputKey(k), null);
 });

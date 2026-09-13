@@ -4,7 +4,7 @@
 
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
-import { floorFocusAfterStep, parseCeil, parseFloor, parseHash, revControlViews,
+import { floorFocusAfterStep, parseCeil, parseFloor, parseHash, revControlViews, rpmInputKey,
   stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
@@ -269,7 +269,16 @@ function buildRpmControl({ id, label, noun, event, get, put, parse, step }, { st
   const input = h('input', { id, class: 'floorin', type: 'text',
     inputmode: 'numeric', autocomplete: 'off', value: String(get()),
     onchange: typed,
-    onkeydown: e => { if (e.key === 'Enter') typed(); } });
+    // a blur commits too: after Enter, retyping the value the input had when focused and
+    // leaving fires no change event, so the typed value would sit there uncommitted
+    onblur: typed,
+    onkeydown: e => {
+      const action = rpmInputKey(e.key);
+      if (action === 'commit') typed();
+      // revert first: the blur that follows (or the bar closing on Escape) fires change,
+      // which then finds nothing typed to commit
+      if (action === 'cancel') { input.value = String(get()); input.blur(); }
+    } });
   const button = (direction, name, glyph) => h('button', {
     class: 'floorstep', type: 'button', 'aria-label': name,
     onclick: e => {
