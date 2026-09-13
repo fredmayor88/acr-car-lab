@@ -135,6 +135,20 @@ svg{display:block;width:100%;height:auto}
 /* the control bar's rev ceiling: labelled above like the selects, and as tall as them */
 .ctl .floorbox .floorstep,.ctl .floorbox .floorin{height:33px}
 .ctl .floorbox .floorstep{width:30px}
+/* Under the 1180px where the page stops widening, the bar's row is tighter than the controls
+   at their full size. Tighten the gaps, let the selects size to their options and trim the
+   ceiling control, so the bar never takes more rows than it did before the ceiling joined
+   it. The Stratos, with the widest final-drive labels, is the tight case. */
+@media (min-width:721px) and (max-width:1179px){
+  .bar{gap:14px}
+  .bar select{min-width:120px;padding:7px 4px}
+  .copies{gap:6px}
+  .copy{padding:8px 10px}
+  .ctl .floorbox{gap:3px}
+  .ctl .floorbox .floorstep{width:26px}
+  .ctl .floorbox .floorin{width:44px;padding:0 2px}
+  .ctl .floorbox .unit{display:none}
+}
 
 .setlist{width:158px;flex:0 0 158px;padding-top:6px}
 .setlist h4{font-size:10px;letter-spacing:.13em;text-transform:uppercase;
