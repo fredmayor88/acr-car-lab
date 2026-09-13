@@ -1,6 +1,6 @@
 // Chart 4 — the selected gear set, one row per gear.
-// Bars run from a usable-revs floor to the limiter, so they OVERLAP: the same road speed
-// is reachable in more than one gear, and that overlap is what the chart exists to show.
+// Bars run from a usable-revs floor to a ceiling (the limiter unless lowered), so they
+// OVERLAP: the same road speed is reachable in more than one gear, and that overlap is what the chart exists to show.
 // A tiled version where each gear owned its own band was tried and rejected — it draws a
 // tidy staircase that hides the choice.
 
@@ -13,6 +13,9 @@ const circOf = (car, state) =>
 
 // The floor comes from state; a state from before it was configurable gets the old constant.
 const floorOf = state => state.floor ?? REV_FLOOR;
+// Likewise the ceiling, which is the rev limit until someone lowers it. Only the bars and
+// the readout clamp use it: the axis and the over-limit warning stay on the real limit.
+const ceilOf = (car, state) => state.ceil ?? car.engine.redline;
 
 const totals = (car, state) =>
   car.gear_sets[state.set].gears.map(g => g.value * fdValue(car, state));
@@ -23,7 +26,8 @@ export function layout(car, state) {
   const tops = gearTops(car.gear_sets[state.set].gears, fdValue(car, state), circ,
                         car.engine.redline);
   return {
-    bars: tot.map((t, i) => ({ gear: i, from: kmh(floorOf(state), t, circ), to: tops[i] })),
+    bars: tot.map((t, i) => ({ gear: i, from: kmh(floorOf(state), t, circ),
+                               to: kmh(ceilOf(car, state), t, circ) })),
     tops,
     vmax: tops[tops.length - 1] * 1.06,
   };
@@ -38,9 +42,9 @@ export function shiftReadout(car, state, gear, speed) {
   const circ = circOf(car, state);
   const tot = totals(car, state);
   // The axis runs past every bar, so the cursor can sit where this gear cannot be:
-  // clamp to its own bar, rev floor to limiter, or the readout invents revs.
+  // clamp to its own bar, rev floor to ceiling, or the readout invents revs.
   speed = Math.min(Math.max(speed, kmh(floorOf(state), tot[gear], circ)),
-                   kmh(car.engine.redline, tot[gear], circ));
+                   kmh(ceilOf(car, state), tot[gear], circ));
   const revsIn = i => rpmAt(speed, tot[i], circ);
   const up = gear + 1 < tot.length ? { gear: gear + 1, rpm: revsIn(gear + 1) } : null;
   const down = gear > 0 ? { gear: gear - 1, rpm: revsIn(gear - 1) } : null;
@@ -54,10 +58,23 @@ export function shiftReadout(car, state, gear, speed) {
   };
 }
 
-export const shiftCaption = floor =>
+/** `ceil` equal to `redline`, or not given, reads as the rev limit. */
+export const shiftCaption = (floor, ceil, redline) =>
   'The selected gear set, one row per gear. Each bar covers the speeds where that gear '
-  + `is usable, from ${floor} rpm to the rev limit. Where bars overlap you have a `
-  + 'choice of gear. Hover for the revs either side of a shift.';
+  + `is usable, from ${floor} rpm to `
+  + (ceil == null || ceil === redline ? 'the rev limit' : `${ceil} rpm`)
+  + '. Where bars overlap you have a choice of gear. Hover for the revs either side of '
+  + 'a shift.';
+
+/**
+ * Right edge (text-anchor end) of the speed-at-floor value left of a bar: 12 short of the
+ * bar start, the gap the top value keeps on the other end. Null when the text would cross
+ * `plotLeft`, the plot edge the "Gear N" labels sit outside of, e.g. a floor of 0.
+ */
+export function floorValueX(fromX, label, plotLeft = 132) {
+  const x = fromX - 12;
+  return x - label.length * 6.4 >= plotLeft ? x : null;
+}
 
 /**
  * Left edge of the readout above the plot: centred on the cursor, kept inside the chart
@@ -100,6 +117,12 @@ export function render(svg, car, state, hover = null, readoutEdge = 1096) {
            'font-weight': on ? '600' : '400' });
     text(svg, xs(bar.to) + 12, y + 3.6, bar.to.toFixed(0), 'val',
          { 'fill-opacity': on ? 1 : 0.6 });
+    const fromLabel = bar.from.toFixed(0);
+    const fx = floorValueX(xs(bar.from), fromLabel, L);
+    if (fx !== null) {
+      text(svg, fx, y + 3.6, fromLabel, 'val',
+           { 'text-anchor': 'end', 'fill-opacity': on ? 1 : 0.6 });
+    }
   });
 
   text(svg, 16, T - 44, car.gear_sets[state.set].label, 'lbl', { fill: C.accentText });

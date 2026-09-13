@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chipX, layout, readoutX, shiftCaption, shiftReadout }
+import { chipX, floorValueX, layout, readoutX, shiftCaption, shiftReadout }
   from '../js/charts/shiftPoints.js';
+import { circumference, kmh } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, each gear set also carries its own
 // primary (unused here since the combo's primary replaces it) — same fixture shape as
@@ -184,6 +185,79 @@ test('the readout clamps to the configured rev floor', () => {
 test('the caption names the current rev floor', () => {
   assert.match(shiftCaption(3000), /from 3000 rpm to the rev limit/);
   assert.match(shiftCaption(4500), /from 4500 rpm to the rev limit/);
+});
+
+test('the caption names a lowered ceiling, and says rev limit when it is the limit', () => {
+  assert.match(shiftCaption(3000, 8750, 8750), /from 3000 rpm to the rev limit\./);
+  assert.match(shiftCaption(3000, 7000, 8750), /from 3000 rpm to 7000 rpm\./);
+  assert.match(shiftCaption(5000, 8000, 8750), /from 5000 rpm to 8000 rpm\./);
+});
+
+// --- the configurable rev ceiling -----------------------------------------------------
+
+test('bars end at the configured ceiling; the floor end does not move', () => {
+  const atLimit = layout(car, state).bars;
+  const at7000 = layout(car, { ...state, ceil: 7000 }).bars;
+  atLimit.forEach((bar, i) => {
+    assert.ok(Math.abs(at7000[i].to / bar.to - 7000 / 8750) < 1e-9, `gear ${i}`);
+    assert.equal(at7000[i].from, bar.from);
+  });
+  assert.deepEqual(layout(car, state).bars, layout(car, { ...state, ceil: 8750 }).bars);
+});
+
+test('the axis keeps its scale when the ceiling drops, so the bars visibly shorten', () => {
+  assert.equal(layout(car, { ...state, ceil: 5000 }).vmax, layout(car, state).vmax);
+});
+
+test('the readout clamps to the configured ceiling', () => {
+  const s = { ...state, ceil: 7000 };
+  const r = shiftReadout(car, s, 0, 300);
+  assert.ok(Math.abs(r.speed - layout(car, s).bars[0].to) < 1e-9);
+  assert.ok(Math.abs(r.rpm - 7000) < 1e-6);
+});
+
+test('the over-limit warning keys off the rev limit, not the ceiling', () => {
+  const s = { ...state, ceil: 7000 };
+  const circ = circumference(0.296, 0.9562);
+  const overall = 1.1 * 3.4211;
+  // fourth gear at a speed where third runs 8000 rpm: above the ceiling, under the limit
+  const speed = kmh(8000, 1.619 * overall, circ);
+  const r = shiftReadout(car, s, 3, speed);
+  assert.ok(r.down.rpm > 7000 && r.down.rpm < 8750);
+  assert.equal(r.overRev, false);
+  // and a downshift past 8750 is still flagged with the ceiling lowered: third at 7000
+  // rpm puts second at ~8877
+  const hot = shiftReadout(car, s, 2, 132);
+  assert.ok(Math.abs(hot.rpm - 7000) < 1e-6);
+  assert.ok(hot.down.rpm > 8750);
+  assert.equal(hot.overRev, true);
+});
+
+// --- the speed at the rev floor, left of each bar -------------------------------------
+
+test('each bar starts at the speed at the floor in that gear, and moves with the floor', () => {
+  const circ = circumference(0.296, 0.9562);
+  const overall = 1.1 * 3.4211;
+  const gears = car.gear_sets[0].gears;
+  for (const floor of [3000, 5000]) {
+    layout(car, { ...state, floor }).bars.forEach((bar, i) => {
+      assert.ok(Math.abs(bar.from - kmh(floor, gears[i].value * overall, circ)) < 1e-9);
+    });
+  }
+  assert.ok(layout(car, { ...state, floor: 5000 }).bars[0].from
+            > layout(car, state).bars[0].from);
+});
+
+test('the floor value ends 12 left of the bar start, mirroring the top value', () => {
+  assert.equal(floorValueX(300, '31'), 288);
+});
+
+test('the floor value hides rather than cross the plot edge or the gear labels', () => {
+  assert.equal(floorValueX(132, '0'), null, 'a floor of 0 starts the bar on the axis');
+  assert.equal(floorValueX(150, '12'), null);
+  const x = floorValueX(160, '12');
+  assert.ok(x === null || x - 2 * 6.4 >= 132);
+  assert.equal(floorValueX(160, '1', 132), 148);
 });
 
 // --- the readout above the plot keeps clear of the rev floor control -------------------
