@@ -4,7 +4,9 @@
 
 Interactive gearing and power charts for 18 cars in Assetto Corsa Rally. One page per
 car: the power and torque curve, every selectable final drive, where each gear tops out,
-shift points, and speed against revs.
+shift points, and speed against revs. Each car also has a drivetrain page (`<slug>/drivetrain/`):
+its layout, the settings that change the gearing, how the final drive is worked out, the in-game
+runs behind it, and what was measured.
 
 Every gearing number is read from the game's own files. The rev limits are measured in game
 and the rolling radius factor is fitted, not read — see below.
@@ -160,6 +162,8 @@ node --test
 | `data/` | Generated. Never edit by hand. |
 | `index.html` | Generated. Never edit by hand. |
 | `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
+| `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer. Never edit by hand. |
+| `js/drivetrain.js` | The drivetrain pages' theme toggle and tracking (`read-drivetrain-workings`). |
 | `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
 
 ## Licence

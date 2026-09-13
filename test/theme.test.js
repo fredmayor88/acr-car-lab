@@ -124,7 +124,8 @@ const carDirs = readdirSync(new URL('../', import.meta.url))
   .filter(d => exists(`data/${d}.json`));
 
 test('the no-flash head script in every page reads the key theme.js writes', () => {
-  const pages = ['index.html', ...carDirs.map(d => `${d}/gears/index.html`)];
+  const pages = ['index.html', ...carDirs.flatMap(d =>
+    [`${d}/gears/index.html`, `${d}/drivetrain/index.html`])];
   assert.equal(carDirs.length, JSON.parse(read('data/index.json')).cars.length);
   for (const page of pages) {
     const html = read(page);

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>(function(){try{var t=localStorage.getItem('acr-car-lab-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<title>Mini Cooper S 1964 — drivetrain — ACR Car Lab</title>
+<meta name="description" content="How the Mini Cooper S 1964 turns engine revs into road speed in Assetto Corsa Rally: layout, gearing settings, final drive formula and measurements.">
+<link rel="stylesheet" href="../../app.css">
+<script data-goatcounter="https://acr-car-lab.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+<div class="wrap dt">
+  <header>
+    <div class="brandrow">
+      <span class="brand">ACR <b>Car Lab</b></span>
+      <a class="crumb" href="../gears/">Gearing charts</a>
+      <a class="crumb" href="../../">All cars →</a>
+      <button class="theme" type="button"><span class="to-dark"><svg class="icon moon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.2 7.6A4.6 4.6 0 0 1 4.4 1.8a4.6 4.6 0 1 0 5.8 5.8z"/></svg>Dark</span><span class="to-light"><svg class="icon sun" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><path d="M6 .9v1.2M6 9.9v1.2M.9 6h1.2M9.9 6h1.2M2.4 2.4l.85.85M8.75 8.75l.85.85M2.4 9.6l.85-.85M8.75 3.25l.85-.85"/></svg>Light</span></button>
+    </div>
+    <h1>Mini Cooper S 1964 — drivetrain</h1>
+  </header>
+<section class="top" id="facts">
+<dl class="facts"><dt>Layout</dt><dd>Front-wheel drive</dd><dt>Gearing settings</dt><dd><ul class="settings"><li><span class="setname">Gear Set</span> 4 gear sets, all 4-speed</li><li><span class="setname">Differential Ratio Front</span> 7 steps · stock <span class="mono">63//16</span><details><summary>All 7 steps</summary><p class="mono steps">67//14, 65//15, 64//15, 62//15, 63//16, 64//17, 62//18</p></details></li></ul></dd><dt>Final drive</dt><dd>One ratio sits below the gearbox, and setup offers it.<br><span class="formula">Final drive = Differential Ratio Front.</span></dd><dt>Primary gear</dt><dd>No Primary Gear setting: each gear set&#x27;s own primary applies (set 1 24//23, set 2 23//22, set 3 25//20, set 4 26//20).</dd><dt>Rev limit</dt><dd>7400 rpm, measured in game with telemetry (ACR 0.6).</dd><dt>Engine curve</dt><dd>Own curve.</dd></dl>
+</section>
+<section class="workings" id="workings">
+<div class="workhead" data-event="read-drivetrain-workings"><h2>How we worked it out</h2><p class="cap">The reasoning and the in-game runs behind the numbers above.</p><p>Every speed on these pages is revs turned into road speed: rpm × tyre circumference ÷ total ratio, where the total ratio is primary × gear × final drive. The circumference is the tyre&#x27;s free radius from the game files times a rolling factor of 0.9904, fitted to the top speeds Fred measured on 14 runs across seven cars (Stratos, 306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale and Impreza).</p></div>
+<p>The rev limit, 7400 rpm, was measured in game with telemetry. The end of the torque curve in the game files is not the limiter: on most cars the curve runs past it.</p>
+<p>The final drive is Differential Ratio Front alone, the one ratio below the gearbox in the game files. The same reading was measured on the Stratos and the 037 (Differential Ratio Rear) and on the 306 Maxi (Differential Ratio Front). It has not been tested on this car.</p>
+<p>Each gear set stores its own primary, and with no Primary Gear setting that is the one in force. Every run so far was on a car whose gear sets share one primary, so primaries that change from set to set have not been tested.</p>
+</section>
+<section class="measured" id="measured">
+<h2>Measured in game</h2>
+<p class="cap">Fred's raw readings: rev limit from telemetry.</p>
+<dl class="facts"><dt>Rev limit</dt><dd>7400 rpm · SimHub telemetry · ACR 0.6 · 2026-09-13</dd></dl>
+</section>
+  <div class="foot">
+    <div>
+      <h3>Data</h3>
+      <p class="limits">Read from the ACR 0.6 game files. Generated 2026-09-13.</p>
+    </div>
+    <p class="promo">Want a setup, not just the numbers? <a href="https://github.com/fredmayor88/acr-setup-engineer" data-track="click-setup-engineer">ACR Setup Engineer</a> — a free Claude skill that tunes a car to how you drive and saves it to your Notion. · <a href="https://github.com/fredmayor88/acr-car-lab/issues" data-track="click-issues">Issues and feedback</a></p>
+  </div>
+</div>
+<script type="module" src="../../js/drivetrain.js"></script>
+</body></html>

@@ -67,7 +67,7 @@ header{border-bottom:1px solid var(--line);margin-bottom:26px}
 .crumb{font-size:12.5px;color:var(--muted-text);text-decoration:none;margin-left:auto}
 .theme{font-family:inherit;font-size:12.5px;line-height:1.2;color:var(--muted-text);background:none;
   border:1px solid var(--line);border-radius:2px;padding:1px 8px;cursor:pointer;margin-left:auto}
-.crumb + .theme{margin-left:0}
+.crumb + .theme,.crumb + .crumb{margin-left:0}
 /* sun or moon, drawn in the label's colour; sits inside the line box so the toggle stays
    no taller than the brand line */
 .theme .icon{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:4px}
@@ -200,12 +200,56 @@ svg{display:block;width:100%;height:auto}
 .carlist a{display:block;padding:12px 14px;text-decoration:none;color:var(--fg);
   border:1px solid var(--line);border-radius:2px;background:var(--surface)}
 .carlist a:hover{border-color:var(--accent);color:var(--accent-text)}
-.carlist + .foot{margin-top:34px}
+.carlist + .foot,.dtlist + .foot{margin-top:34px}
+/* the picker's second list, the drivetrain pages: the same links, quieter */
+.dtlist{margin:44px 0 0}
+.carlist.minor a{padding:8px 14px;font-size:13.5px;color:var(--muted-text);
+  background:none}
+
+/* a car's drivetrain page (<slug>/drivetrain/): static facts, then the workings for the
+   curious, then the raw measurements */
+.brandrow .crumb{white-space:nowrap}
+.dt section{margin-bottom:0}
+.facts{display:grid;grid-template-columns:minmax(130px,max-content) minmax(0,1fr);
+  gap:10px 26px;margin:0 0 40px;max-width:900px}
+.facts dt{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted-text);font-weight:600;padding-top:3px}
+.facts dd{margin:0;color:var(--fg)}
+.mono,.formula{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px}
+.formula{color:var(--fg-strong)}
+.settings{list-style:none;margin:0;padding:0}
+.settings li{margin-bottom:6px}
+.setname{color:var(--fg-strong);font-weight:600;margin-right:6px}
+.settings details{margin-top:2px}
+.settings summary{font-size:12.5px;color:var(--accent-text);cursor:pointer;width:max-content}
+.steps{margin:4px 0 0;color:var(--muted-text);overflow-wrap:anywhere}
+.handling{color:var(--fg-strong);font-weight:600}
+.workings{border-top:1px solid var(--line);padding:26px 0 8px;margin-bottom:34px}
+.workings p{max-width:720px;margin:0 0 12px;font-size:14px}
+.workings .cap{font-size:12.5px;margin-bottom:14px}
+.measured{border-top:1px solid var(--line);padding-top:26px;margin-bottom:40px}
+.measured .facts{margin-bottom:20px}
+.run{margin:0 0 22px}
+.run h3{font-size:13.5px;margin:0 0 3px;color:var(--fg-strong)}
+.runset{font-size:13px;margin:0 0 8px;color:var(--muted-text)}
+.runset .mono{color:var(--fg)}
+.tablewrap{overflow-x:auto;max-width:100%}
+.speeds{border-collapse:collapse;font:13px "SF Mono",Menlo,Consolas,monospace;
+  background:var(--surface);border:1px solid var(--line)}
+.speeds th,.speeds td{padding:5px 12px;text-align:right;border-bottom:1px solid var(--line);
+  white-space:nowrap}
+.speeds tr:last-child th,.speeds tr:last-child td{border-bottom:0}
+.speeds th{font-weight:600;color:var(--muted-text)}
+.speeds th[scope="row"]{text-align:left;font-family:-apple-system,"Segoe UI",sans-serif;
+  font-size:10.5px;letter-spacing:.13em;text-transform:uppercase}
+.runnote{margin:4px 0 0}
 
 @media (max-width:720px){
   .wrap{padding:0 16px 60px}
   .panel.row{flex-direction:column}
   .setlist{width:100%;flex:1 1 auto}
+  .facts{grid-template-columns:minmax(0,1fr);gap:2px}
+  .facts dd{margin-bottom:12px}
   .revboxes{position:static;flex-direction:column;align-items:flex-end;gap:8px;
     margin-bottom:10px}
 
