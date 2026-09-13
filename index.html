@@ -2,6 +2,8 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem('acr-car-lab-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
 <title>ACR Car Lab</title>
 <meta name="description" content="Interactive gearing and power charts for 17 cars in Assetto Corsa Rally.">
 <link rel="stylesheet" href="app.css">
@@ -11,7 +13,10 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="brandrow"><span class="brand">ACR <b>Car Lab</b></span></div>
+    <div class="brandrow">
+      <span class="brand">ACR <b>Car Lab</b></span>
+      <button class="theme" type="button"><span class="to-dark">Dark</span><span class="to-light">Light</span></button>
+    </div>
     <h1>17 cars, gear by gear</h1>
     <p class="sub">Gearing, final drive and power, read from the game files.</p>
   </header>
@@ -35,4 +40,5 @@
     <li><a href="volkswagen-polo-gti-r5-2018/">Volkswagen Polo GTI R5 2018</a></li>
   </ul>
 </div>
+<script type="module" src="js/theme.js"></script>
 </body></html>

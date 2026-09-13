@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { SET_COLOURS, SET_COLOURS_DARK } from '../js/gearing.js';
+import { STORAGE_KEY } from '../js/theme.js';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const css = read('app.css').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -93,5 +94,19 @@ test('no chart module names a colour; they all go through app.css', () => {
   for (const f of files) {
     const src = read(f).replace(/\/\/.*$/gm, '');
     assert.doesNotMatch(src, /#[0-9a-f]{3}(?:[0-9a-f]{3})?\b|rgba?\(/i, f);
+  }
+});
+
+test('the no-flash head script in every page reads the key theme.js writes', () => {
+  const pages = ['index.html', ...readdirSync(new URL('../', import.meta.url))
+    .filter(d => { try { read(`${d}/index.html`); return true; } catch { return false; } })
+    .map(d => `${d}/index.html`)];
+  assert.ok(pages.length > 1);
+  for (const page of pages) {
+    const html = read(page);
+    const head = html.slice(0, html.indexOf('</head>'));
+    assert.ok(head.includes(`localStorage.getItem('${STORAGE_KEY}')`), page);
+    assert.ok(head.indexOf(STORAGE_KEY) < head.indexOf('stylesheet'), `${page}: script after css`);
+    assert.match(html, /<button class="theme" type="button">/, page);
   }
 });
