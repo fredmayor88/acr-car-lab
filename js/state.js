@@ -8,21 +8,49 @@ const K_MIN = 0.80;
 const K_MAX = 1.10;
 const FLOOR_STEP = 100;
 
-/** The rev floor on Shift points: any whole rpm from 0 to one step under the limit. */
-export const floorBounds = car => ({ min: 0, max: car.engine.redline - FLOOR_STEP });
+/**
+ * The rev floor on Shift points: any whole rpm from 0 to one step under the ceiling, which
+ * is the rev limit unless it has been lowered.
+ */
+export const floorBounds = (car, ceil = car.engine.redline) =>
+  ({ min: 0, max: ceil - FLOOR_STEP });
 
 /** A typed or linked rev floor as an integer, or null when it is not a valid one. */
-export function parseFloor(raw, car) {
-  if (typeof raw !== 'string' || !/^\s*\d+\s*$/.test(raw)) return null;
-  const n = Number(raw);
-  const { min, max } = floorBounds(car);
-  return n >= min && n <= max ? n : null;
+export function parseFloor(raw, car, ceil = car.engine.redline) {
+  const n = wholeRpm(raw);
+  const { min, max } = floorBounds(car, ceil);
+  return n !== null && n >= min && n <= max ? n : null;
 }
 
 /** One click of the -/+ buttons: 100 rpm from the current value, clamped to the bounds. */
-export function stepFloor(floor, direction, car) {
-  const { min, max } = floorBounds(car);
+export function stepFloor(floor, direction, car, ceil = car.engine.redline) {
+  const { min, max } = floorBounds(car, ceil);
   return Math.min(max, Math.max(min, floor + direction * FLOOR_STEP));
+}
+
+/**
+ * The rev ceiling on Shift points: one step over the floor (and never under one step) up
+ * to the rev limit. The limit need not sit on the 100 rpm grid (the Stratos is 8750), so
+ * it is the exact default and a clamped step up reaches it.
+ */
+export const ceilBounds = (car, floor = 0) =>
+  ({ min: Math.max(FLOOR_STEP, floor + FLOOR_STEP), max: car.engine.redline });
+
+/** A typed or linked rev ceiling as an integer, or null when it is not a valid one. */
+export function parseCeil(raw, car, floor = 0) {
+  const n = wholeRpm(raw);
+  const { min, max } = ceilBounds(car, floor);
+  return n !== null && n >= min && n <= max ? n : null;
+}
+
+/** One click of the ceiling's -/+ buttons, clamped to its bounds. */
+export function stepCeil(ceil, direction, car, floor = 0) {
+  const { min, max } = ceilBounds(car, floor);
+  return Math.min(max, Math.max(min, ceil + direction * FLOOR_STEP));
+}
+
+function wholeRpm(raw) {
+  return typeof raw === 'string' && /^\s*\d+\s*$/.test(raw) ? Number(raw) : null;
 }
 
 /**
@@ -70,6 +98,7 @@ export function defaultState(car) {
     draw: [0],
     k: car.defaults?.loaded_radius_factor ?? DEFAULT_FACTOR,
     floor: REV_FLOOR,
+    ceil: car.engine.redline,
   };
 }
 
@@ -103,8 +132,11 @@ export function parseHash(hash, car) {
   const k = Number.parseFloat(q.get('k'));
   if (Number.isFinite(k) && k >= K_MIN && k <= K_MAX) out.k = k;
 
-  const floor = parseFloor(q.get('floor'), car);
-  if (floor !== null) out.floor = floor;
+  // the ceiling first, so the floor can be checked against the ceiling it will sit under
+  const ceil = parseCeil(q.get('ceil'), car);
+  if (ceil !== null) out.ceil = ceil;
+  const floor = parseFloor(q.get('floor'), car, out.ceil);
+  out.floor = floor !== null ? floor : Math.min(REV_FLOOR, out.ceil - FLOOR_STEP);
 
   return out;
 }
@@ -117,5 +149,7 @@ export function toHash(state, car) {
   q.set('draw', state.draw.join(','));
   q.set('k', String(state.k));
   if (state.floor !== REV_FLOOR) q.set('floor', String(state.floor));
+  const ceil = state.ceil ?? car.engine.redline;
+  if (ceil !== car.engine.redline) q.set('ceil', String(ceil));
   return '#' + q.toString();
 }

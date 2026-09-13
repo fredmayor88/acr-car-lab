@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { defaultState, floorBounds, floorFocusAfterStep, parseFloor, parseHash, stepFloor,
-  toHash }
+import { ceilBounds, defaultState, floorBounds, floorFocusAfterStep, parseCeil, parseFloor,
+  parseHash, stepCeil, stepFloor, toHash }
   from '../js/state.js';
 import { finalDriveCombos } from '../js/gearing.js';
 import { layout } from '../js/charts/finalDrive.js';
@@ -34,7 +34,7 @@ test('exactly one gear set is drawn by default', () => {
 });
 
 test('a full hash round-trips', () => {
-  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97, floor: 3500 };
+  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97, floor: 3500, ceil: 8000 };
   assert.deepEqual(parseHash(toHash(s, car), car), s);
 });
 
@@ -191,4 +191,83 @@ test('focus stays put when the stepped button is still enabled, or is not a step
   assert.equal(floorFocusAfterStep(input, floor, true), null);
   assert.equal(floorFocusAfterStep({ disabled: true }, floor, true), null);
   assert.equal(floorFocusAfterStep(null, floor, true), null);
+});
+
+// --- the Shift points rev ceiling -----------------------------------------------------
+
+test('the rev ceiling defaults to the rev limit and stays out of the hash at that value', () => {
+  assert.equal(defaultState(car).ceil, 8750);
+  assert.doesNotMatch(toHash(defaultState(car), car), /ceil=/);
+  // links from before the ceiling existed open exactly as they did
+  assert.equal(parseHash('#s=Gravel&floor=4000', car).ceil, 8750);
+  assert.equal(parseHash('#s=Gravel&floor=4000', car).floor, 4000);
+});
+
+test('a non-default rev ceiling round-trips through the hash', () => {
+  const s = { ...defaultState(car), ceil: 7000 };
+  assert.match(toHash(s, car), /ceil=7000/);
+  assert.deepEqual(parseHash(toHash(s, car), car), s);
+  const both = { ...defaultState(car), floor: 4000, ceil: 7000 };
+  assert.deepEqual(parseHash(toHash(both, car), car), both);
+  const low = { ...defaultState(car), floor: 1900, ceil: 2000 };
+  assert.deepEqual(parseHash(toHash(low, car), car), low);
+  const tight = { ...defaultState(car), floor: 3000, ceil: 3100 };
+  assert.deepEqual(parseHash(toHash(tight, car), car), tight);
+  assert.equal(parseHash('#ceil=100&floor=0', car).ceil, 100);
+});
+
+test('an out-of-range or garbage rev ceiling falls back to the rev limit', () => {
+  for (const raw of ['8751', '99999', '99', '0', '-100', '7000.5', '70abc', 'banana', '', '7e3']) {
+    assert.equal(parseHash(`#ceil=${raw}`, car).ceil, 8750, raw);
+  }
+});
+
+test('the floor in a link is checked against the ceiling in that link', () => {
+  // over ceil - 100: the default floor, pulled under the ceiling when it has to be
+  assert.equal(parseHash('#floor=7000&ceil=7000', car).floor, 3000);
+  assert.equal(parseHash('#floor=6950&ceil=7000', car).floor, 3000);
+  assert.equal(parseHash('#floor=6900&ceil=7000', car).floor, 6900);
+  assert.equal(parseHash('#floor=5000&ceil=2000', car).floor, 1900);
+  assert.equal(parseHash('#ceil=2000', car).floor, 1900);
+  assert.equal(parseHash('#ceil=100', car).floor, 0);
+  // the order of the keys does not matter
+  assert.deepEqual(parseHash('#ceil=7000&floor=4000', car),
+                   parseHash('#floor=4000&ceil=7000', car));
+});
+
+test('the ceiling bounds: 100 over the floor (and at least 100) up to the rev limit', () => {
+  assert.deepEqual(ceilBounds(car, 3000), { min: 3100, max: 8750 });
+  assert.deepEqual(ceilBounds(car, 0), { min: 100, max: 8750 });
+  assert.deepEqual(ceilBounds(car), { min: 100, max: 8750 });
+  assert.deepEqual(floorBounds(car, 7000), { min: 0, max: 6900 });
+});
+
+test('a typed rev ceiling accepts any whole number from floor + 100 to the rev limit', () => {
+  assert.equal(parseCeil('7050', car, 3000), 7050);
+  assert.equal(parseCeil(' 8750 ', car, 3000), 8750);
+  assert.equal(parseCeil('3100', car, 3000), 3100);
+  for (const raw of ['3099', '3000', '8751', '-1', '2.5', 'abc', '', '1e3', null]) {
+    assert.equal(parseCeil(raw, car, 3000), null, String(raw));
+  }
+});
+
+test('a typed rev floor is capped at 100 under the ceiling', () => {
+  assert.equal(parseFloor('6900', car, 7000), 6900);
+  assert.equal(parseFloor('6901', car, 7000), null);
+  assert.equal(parseFloor('7000', car, 7000), null);
+});
+
+test('the buttons step the ceiling by 100 and clamp at both bounds', () => {
+  assert.equal(stepCeil(8750, -1, car, 3000), 8650);
+  assert.equal(stepCeil(8650, 1, car, 3000), 8750);
+  assert.equal(stepCeil(8700, 1, car, 3000), 8750, 'a limit off the 100 grid is reachable');
+  assert.equal(stepCeil(8750, 1, car, 3000), 8750);
+  assert.equal(stepCeil(3100, -1, car, 3000), 3100);
+  assert.equal(stepCeil(3150, -1, car, 3000), 3100);
+  assert.equal(stepCeil(200, -1, car, 0), 100);
+});
+
+test('the floor buttons clamp to 100 under the ceiling', () => {
+  assert.equal(stepFloor(6800, 1, car, 7000), 6900);
+  assert.equal(stepFloor(6900, 1, car, 7000), 6900);
 });
