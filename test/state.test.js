@@ -167,20 +167,28 @@ test('the buttons step the rev floor by 100 from where it is and clamp at the bo
   assert.deepEqual(floorBounds(car), { min: 0, max: 8650 });
 });
 
-test('a step button that disables itself while focused hands focus to the rpm input', () => {
+test('a keyboard step that disables its button hands focus to the rpm input', () => {
   const minus = { disabled: true }, plus = { disabled: false }, input = {};
   const floor = { minus, plus, input };
-  assert.equal(floorFocusAfterStep(minus, floor), input);
-  assert.equal(floorFocusAfterStep(plus, { ...floor, plus: { disabled: true } }), null);
+  assert.equal(floorFocusAfterStep(minus, floor, true), input);
   const disabledPlus = { disabled: true };
-  assert.equal(floorFocusAfterStep(disabledPlus, { ...floor, plus: disabledPlus }), input);
+  assert.equal(floorFocusAfterStep(disabledPlus, { ...floor, plus: disabledPlus }, true), input);
 });
 
-test('focus stays put when the focused step button is still enabled, or focus is elsewhere', () => {
+test('a mouse or touch step never moves focus, even at a bound', () => {
+  // Chrome focuses a clicked button, so focus alone cannot tell a tap from a key press;
+  // focusing the numeric input from a tap would pop the on-screen keyboard
+  const minus = { disabled: true }, plus = { disabled: true }, input = {};
+  const floor = { minus, plus, input };
+  assert.equal(floorFocusAfterStep(minus, floor, false), null);
+  assert.equal(floorFocusAfterStep(plus, floor, false), null);
+});
+
+test('focus stays put when the stepped button is still enabled, or is not a step button', () => {
   const minus = { disabled: false }, plus = { disabled: true }, input = {};
   const floor = { minus, plus, input };
-  assert.equal(floorFocusAfterStep(minus, floor), null);
-  assert.equal(floorFocusAfterStep(input, floor), null);
-  assert.equal(floorFocusAfterStep({}, floor), null);
-  assert.equal(floorFocusAfterStep(null, floor), null);
+  assert.equal(floorFocusAfterStep(minus, floor, true), null);
+  assert.equal(floorFocusAfterStep(input, floor, true), null);
+  assert.equal(floorFocusAfterStep({ disabled: true }, floor, true), null);
+  assert.equal(floorFocusAfterStep(null, floor, true), null);
 });

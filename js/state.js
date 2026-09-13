@@ -26,12 +26,15 @@ export function stepFloor(floor, direction, car) {
 }
 
 /**
- * Where keyboard focus goes after a step: a −/+ button that just disabled itself at a
- * bound would drop focus to <body>, so the rpm input takes it. `active` is the element
- * that had focus before the buttons were updated. Null means leave focus alone.
+ * Where focus goes after a −/+ step. A button that just disabled itself at a bound drops
+ * keyboard focus to <body>, so a keyboard step hands it to the rpm input. A mouse or touch
+ * step leaves focus alone: Chrome focuses a clicked button too, and focusing the numeric
+ * input from a tap would open the on-screen keyboard. `stepped` is the button used;
+ * `byKeyboard` is whether the click came from Enter/Space. Null means leave focus alone.
  */
-export function floorFocusAfterStep(active, { minus, plus, input }) {
-  return active && (active === minus || active === plus) && active.disabled ? input : null;
+export function floorFocusAfterStep(stepped, { minus, plus, input }, byKeyboard) {
+  const atBound = stepped && (stepped === minus || stepped === plus) && stepped.disabled;
+  return byKeyboard && atBound ? input : null;
 }
 
 const surfacesFor = car =>

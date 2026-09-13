@@ -186,7 +186,11 @@ function buildFloorControl() {
     onkeydown: e => { if (e.key === 'Enter') typed(); } });
   const step = (direction, name, glyph) => h('button', {
     class: 'floorstep', type: 'button', 'aria-label': name,
-    onclick: () => set(stepFloor(state.floor, direction, car)),
+    onclick: e => {
+      set(stepFloor(state.floor, direction, car));
+      // a click from Enter/Space has detail 0; a mouse click or tap counts its clicks
+      floorFocusAfterStep(e.currentTarget, { minus, plus, input }, e.detail === 0)?.focus();
+    },
   }, glyph);
   const minus = step(-1, 'Lower rev floor by 100 rpm', '−');
   const plus = step(1, 'Raise rev floor by 100 rpm', '+');
@@ -362,11 +366,9 @@ function syncControls() {
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
   const { min, max } = floorBounds(car);
-  const active = document.activeElement;
   controls.floor.input.value = String(state.floor);
   controls.floor.minus.disabled = state.floor <= min;
   controls.floor.plus.disabled = state.floor >= max;
-  floorFocusAfterStep(active, controls.floor)?.focus();
   document.querySelector('#sec-shift .cap').textContent = shiftPoints.shiftCaption(state.floor);
   document.querySelectorAll('.setlist .opt').forEach(node => {
     const i = Number(node.dataset.set);
