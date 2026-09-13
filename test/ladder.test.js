@@ -135,3 +135,19 @@ test('clampSpeed keeps a hovered speed inside the lane, from a standing start to
   assert.equal(clampSpeed(l, 0, 999), l.lanes[0].tops[4]);
   assert.equal(clampSpeed(l, 0, 120), 120);
 });
+
+test('lane name hit boxes: tile the label column lane by lane, cover the name, stop before the plot', async () => {
+  const { laneNameHit } = await import('../js/charts/ladder.js');
+  const L = 214, T = 56, step = 62;
+  for (let i = 0; i < 10; i++) {
+    const b = laneNameHit(i);
+    const y = T + i * step + step / 2;
+    // the name is end-anchored at L - 22 on y + 4, and "selected" sits at y + 19
+    assert.ok(b.x <= 0 && b.x + b.width >= L - 22, 'spans the label column');
+    assert.ok(b.y <= y - 11 && b.y + b.height >= y + 19, 'covers the name and the selected tag');
+    assert.ok(b.x + b.width < L, 'stops before the plot, where the lane line starts');
+    if (i > 0) assert.equal(laneNameHit(i - 1).y + laneNameHit(i - 1).height, b.y, 'no gap, no overlap');
+    // the chart is 330px wide on a 400px screen, so a lane is 18.6px tall there
+    assert.ok(b.height * 330 / 1100 >= 18, 'at least 18px tall on a 400px screen');
+  }
+});

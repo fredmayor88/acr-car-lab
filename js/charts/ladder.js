@@ -55,10 +55,19 @@ export function hoverLine(car, state, laneIndex, speed) {
   return `${speed.toFixed(0)} km/h  ·  gear ${gear + 1}  ·  ${rpm.toFixed(0)} rpm`;
 }
 
+// viewBox geometry: plot left and right edges, top of the first lane, lane height
+const L = 214, R = 1020, T = 56, step = 62;
+
+/**
+ * The tap target for lane i's name: the whole label column over the full height of the
+ * lane, stopping short of the plot. The name itself is 11 viewBox units tall, which a
+ * 400px-wide screen scales to about 5px, far too small for a finger.
+ */
+export const laneNameHit = i => ({ x: 0, y: T + i * step, width: L - 8, height: step });
+
 export function render(svg, car, state, onPickSet, hover = null) {
   clear(svg);
   const l = layout(car, state);
-  const L = 214, R = 1020, T = 56, step = 62;
   const xs = v => L + (v / l.vmax) * (R - L);
   const bottom = T + l.lanes.length * step;
   svg.setAttribute('viewBox', `0 0 1100 ${bottom + 60}`);
@@ -96,11 +105,14 @@ export function render(svg, car, state, onPickSet, hover = null) {
       'font-weight': lane.selected ? '600' : '400',
     });
     name.setAttribute('class', 'rowlbl hit');
-    name.addEventListener('click', () => onPickSet(i));
     if (lane.selected) {
       text(svg, L - 22, y + 19, 'selected', 'lbl',
            { 'text-anchor': 'end', fill: C.accentText });
     }
+    // invisible, over the name, so it takes the click; see laneNameHit
+    const hit = el(svg, 'rect', { ...laneNameHit(i), fill: 'transparent',
+                                  'pointer-events': 'all', class: 'hit' });
+    hit.addEventListener('click', () => onPickSet(i));
   });
 
   if (hover) {

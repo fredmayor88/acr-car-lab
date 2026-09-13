@@ -10,6 +10,7 @@ import { settingsText } from './settingsText.js';
 import { ISSUES, PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
+import { leaveRedraws, movesHover } from './hover.js';
 import * as powerTorque from './charts/powerTorque.js';
 import * as finalDrive from './charts/finalDrive.js';
 import * as ladder from './charts/ladder.js';
@@ -308,10 +309,9 @@ function wireHover(id, toHover) {
   const svg = svgOf(id);
   svg.addEventListener('pointermove', e => {
     const map = maps[id];
-    // Redrawing replaces every node, so a redraw between pointerdown and pointerup would
-    // swap the lane name out from under a click and the click would never fire. Mouse
-    // only: a touch or pen in contact always reports a button, and would never hover.
-    if (!map || (e.pointerType === 'mouse' && e.buttons)) return;
+    // Redrawing replaces every node, so a redraw between pointerdown and click swaps the
+    // lane name out from under the click. See js/hover.js.
+    if (!map || !movesHover(e)) return;
     const box = svg.getBoundingClientRect();
     const vb = svg.viewBox.baseVal;
     const p = {
@@ -322,7 +322,11 @@ function wireHover(id, toHover) {
     if (id === 'shift') track('shift-helper');
     RENDER[id]();
   });
-  svg.addEventListener('pointerleave', () => { hover[id] = null; RENDER[id](); });
+  svg.addEventListener('pointerleave', () => {
+    if (!leaveRedraws(hover[id])) return;
+    hover[id] = null;
+    RENDER[id]();
+  });
 }
 
 function renderFinalDrive() {
