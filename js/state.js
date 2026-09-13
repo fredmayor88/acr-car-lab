@@ -2,10 +2,28 @@
 // what someone was looking at, so every control's value lives here and nowhere else.
 // Values arriving from a URL get the same validation as typed input.
 
-import { DEFAULT_FACTOR, SURFACES, finalDriveCombos } from './gearing.js';
+import { DEFAULT_FACTOR, REV_FLOOR, SURFACES, finalDriveCombos } from './gearing.js';
 
 const K_MIN = 0.80;
 const K_MAX = 1.10;
+const FLOOR_STEP = 100;
+
+/** The rev floor on Shift points: any whole rpm from 0 to one step under the limit. */
+export const floorBounds = car => ({ min: 0, max: car.engine.redline - FLOOR_STEP });
+
+/** A typed or linked rev floor as an integer, or null when it is not a valid one. */
+export function parseFloor(raw, car) {
+  if (typeof raw !== 'string' || !/^\s*\d+\s*$/.test(raw)) return null;
+  const n = Number(raw);
+  const { min, max } = floorBounds(car);
+  return n >= min && n <= max ? n : null;
+}
+
+/** One click of the -/+ buttons: 100 rpm from the current value, clamped to the bounds. */
+export function stepFloor(floor, direction, car) {
+  const { min, max } = floorBounds(car);
+  return Math.min(max, Math.max(min, floor + direction * FLOOR_STEP));
+}
 
 const surfacesFor = car =>
   SURFACES.filter(s => Object.prototype.hasOwnProperty.call(car.tyres, s.key));
@@ -39,6 +57,7 @@ export function defaultState(car) {
     set: 0,
     draw: [0],
     k: car.defaults?.loaded_radius_factor ?? DEFAULT_FACTOR,
+    floor: REV_FLOOR,
   };
 }
 
@@ -72,6 +91,9 @@ export function parseHash(hash, car) {
   const k = Number.parseFloat(q.get('k'));
   if (Number.isFinite(k) && k >= K_MIN && k <= K_MAX) out.k = k;
 
+  const floor = parseFloor(q.get('floor'), car);
+  if (floor !== null) out.floor = floor;
+
   return out;
 }
 
@@ -82,5 +104,6 @@ export function toHash(state, car) {
   q.set('set', String(state.set));
   q.set('draw', state.draw.join(','));
   q.set('k', String(state.k));
+  if (state.floor !== REV_FLOOR) q.set('floor', String(state.floor));
   return '#' + q.toString();
 }

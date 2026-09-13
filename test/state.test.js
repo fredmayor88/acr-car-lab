@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { defaultState, parseHash, toHash } from '../js/state.js';
+import { defaultState, floorBounds, parseFloor, parseHash, stepFloor, toHash }
+  from '../js/state.js';
 import { finalDriveCombos } from '../js/gearing.js';
 import { layout } from '../js/charts/finalDrive.js';
 
@@ -9,6 +10,7 @@ const set = (label, primary) => ({ label, gears: [], primary: { name: primary, v
 
 const car = {
   gear_sets: [set('Gear set 1', 'b'), set('Gear set 2', 'b'), set('Gear set 3', 'b')],
+  engine: { redline: 8750 },
   final_drive: {
     primaries: [{ name: 'a', value: 1.375 }, { name: 'b', value: 1.1 }],
     options: [{ name: 'x', value: 3.8 }, { name: 'y', value: 3.4 }],
@@ -31,7 +33,7 @@ test('exactly one gear set is drawn by default', () => {
 });
 
 test('a full hash round-trips', () => {
-  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97 };
+  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97, floor: 3500 };
   assert.deepEqual(parseHash(toHash(s, car), car), s);
 });
 
@@ -121,4 +123,47 @@ test('every car opens on a combo carrying its stock option and fitted primary', 
     // and it is the row the chart highlights
     assert.equal(layout(c, state).rows.filter(r => r.selected).length, 1, slug);
   }
+});
+
+// --- the Shift points rev floor -------------------------------------------------------
+
+const revCar = { ...car, engine: { redline: 8750 } };
+
+test('the rev floor defaults to 3000 and stays out of the hash at that value', () => {
+  assert.equal(defaultState(revCar).floor, 3000);
+  assert.doesNotMatch(toHash(defaultState(revCar), revCar), /floor=/);
+});
+
+test('a non-default rev floor round-trips through the hash', () => {
+  const s = { ...defaultState(revCar), floor: 4200 };
+  assert.match(toHash(s, revCar), /floor=4200/);
+  assert.deepEqual(parseHash(toHash(s, revCar), revCar), s);
+  assert.equal(parseHash('#floor=0', revCar).floor, 0);
+  assert.equal(parseHash('#floor=8650', revCar).floor, 8650);
+});
+
+test('an out-of-range or garbage rev floor falls back to the default', () => {
+  for (const raw of ['8651', '8750', '99999', '-100', '3000.5', '35abc', 'banana', '', '1e3']) {
+    assert.equal(parseHash(`#floor=${raw}`, revCar).floor, 3000, raw);
+  }
+});
+
+test('a typed rev floor accepts any whole number from 0 to 100 under the limit', () => {
+  assert.equal(parseFloor('3050', revCar), 3050);
+  assert.equal(parseFloor(' 0 ', revCar), 0);
+  assert.equal(parseFloor('8650', revCar), 8650);
+  for (const raw of ['8651', '-1', '2.5', 'abc', '', '1e3', null]) {
+    assert.equal(parseFloor(raw, revCar), null, String(raw));
+  }
+});
+
+test('the buttons step the rev floor by 100 from where it is and clamp at the bounds', () => {
+  assert.equal(stepFloor(3000, 1, revCar), 3100);
+  assert.equal(stepFloor(3000, -1, revCar), 2900);
+  assert.equal(stepFloor(3050, 1, revCar), 3150);
+  assert.equal(stepFloor(50, -1, revCar), 0);
+  assert.equal(stepFloor(0, -1, revCar), 0);
+  assert.equal(stepFloor(8600, 1, revCar), 8650);
+  assert.equal(stepFloor(8650, 1, revCar), 8650);
+  assert.deepEqual(floorBounds(revCar), { min: 0, max: 8650 });
 });
