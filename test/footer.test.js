@@ -54,3 +54,8 @@ test('car pages track rev ceiling edits as edit-rev-ceiling, with named step but
   assert.match(src, /`Lower \$\{noun\} by 100 rpm`/);
   assert.match(src, /`Raise \$\{noun\} by 100 rpm`/);
 });
+
+test('car pages send no car-<slug> event on load: GoatCounter already counts the page view', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /track\(\s*['"`]car-/);
+});

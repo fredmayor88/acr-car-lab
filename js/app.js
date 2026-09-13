@@ -421,7 +421,6 @@ async function main() {
   }
   state = parseHash(location.hash, car);
   controls = buildShell();
-  track('car-' + slug);
   commit();
   onThemeChange(() => {
     syncControls();

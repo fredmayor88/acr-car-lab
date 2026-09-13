@@ -8,8 +8,8 @@ beforeEach(() => {
 });
 
 test('an event fires once and only once', () => {
-  track('car-lancia-stratos');
-  track('car-lancia-stratos');
+  track('copy-settings');
+  track('copy-settings');
   assert.equal(_queue().length, 1);
 });
 
@@ -35,12 +35,12 @@ test('the queue drains once goatcounter arrives', () => {
 });
 
 test('an event tracked before goatcounter exists is sent by a later flush() with no further track() call', () => {
-  track('car-load');
+  track('edit-rev-floor');
   assert.equal(_queue().length, 1);
   const seen = [];
   globalThis.window.goatcounter = { count: e => seen.push(e) };
   flush();
-  assert.deepEqual(seen.map(e => e.path), ['car-load']);
+  assert.deepEqual(seen.map(e => e.path), ['edit-rev-floor']);
   assert.equal(_queue().length, 0);
 });
 
