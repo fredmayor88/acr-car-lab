@@ -25,6 +25,15 @@ export function stepFloor(floor, direction, car) {
   return Math.min(max, Math.max(min, floor + direction * FLOOR_STEP));
 }
 
+/**
+ * Where keyboard focus goes after a step: a −/+ button that just disabled itself at a
+ * bound would drop focus to <body>, so the rpm input takes it. `active` is the element
+ * that had focus before the buttons were updated. Null means leave focus alone.
+ */
+export function floorFocusAfterStep(active, { minus, plus, input }) {
+  return active && (active === minus || active === plus) && active.disabled ? input : null;
+}
+
 const surfacesFor = car =>
   SURFACES.filter(s => Object.prototype.hasOwnProperty.call(car.tyres, s.key));
 

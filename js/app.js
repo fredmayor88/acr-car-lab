@@ -4,7 +4,8 @@
 
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
-import { floorBounds, parseFloor, parseHash, stepFloor, toHash } from './state.js';
+import { floorBounds, floorFocusAfterStep, parseFloor, parseHash, stepFloor, toHash }
+  from './state.js';
 import { settingsText } from './settingsText.js';
 import { PROMO, dataLine } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
@@ -360,9 +361,11 @@ function syncControls() {
   controls.setSel.value = String(state.set);
   controls.factor.value = String(state.k);
   const { min, max } = floorBounds(car);
+  const active = document.activeElement;
   controls.floor.input.value = String(state.floor);
   controls.floor.minus.disabled = state.floor <= min;
   controls.floor.plus.disabled = state.floor >= max;
+  floorFocusAfterStep(active, controls.floor)?.focus();
   document.querySelector('#sec-shift .cap').textContent = shiftPoints.shiftCaption(state.floor);
   document.querySelectorAll('.setlist .opt').forEach(node => {
     const i = Number(node.dataset.set);

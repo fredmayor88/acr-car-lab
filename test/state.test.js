@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { defaultState, floorBounds, parseFloor, parseHash, stepFloor, toHash }
+import { defaultState, floorBounds, floorFocusAfterStep, parseFloor, parseHash, stepFloor,
+  toHash }
   from '../js/state.js';
 import { finalDriveCombos } from '../js/gearing.js';
 import { layout } from '../js/charts/finalDrive.js';
@@ -164,4 +165,22 @@ test('the buttons step the rev floor by 100 from where it is and clamp at the bo
   assert.equal(stepFloor(8600, 1, car), 8650);
   assert.equal(stepFloor(8650, 1, car), 8650);
   assert.deepEqual(floorBounds(car), { min: 0, max: 8650 });
+});
+
+test('a step button that disables itself while focused hands focus to the rpm input', () => {
+  const minus = { disabled: true }, plus = { disabled: false }, input = {};
+  const floor = { minus, plus, input };
+  assert.equal(floorFocusAfterStep(minus, floor), input);
+  assert.equal(floorFocusAfterStep(plus, { ...floor, plus: { disabled: true } }), null);
+  const disabledPlus = { disabled: true };
+  assert.equal(floorFocusAfterStep(disabledPlus, { ...floor, plus: disabledPlus }), input);
+});
+
+test('focus stays put when the focused step button is still enabled, or focus is elsewhere', () => {
+  const minus = { disabled: false }, plus = { disabled: true }, input = {};
+  const floor = { minus, plus, input };
+  assert.equal(floorFocusAfterStep(minus, floor), null);
+  assert.equal(floorFocusAfterStep(input, floor), null);
+  assert.equal(floorFocusAfterStep({}, floor), null);
+  assert.equal(floorFocusAfterStep(null, floor), null);
 });
