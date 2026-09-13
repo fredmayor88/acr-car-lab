@@ -17,6 +17,9 @@ import * as speedRevs from './charts/speedRevs.js';
 
 const root = document.getElementById('app');
 const slug = root.dataset.car;
+// The site root, from where this module sits (js/), so data resolves the same however deep
+// the page that loads it is (<slug>/gears/ today).
+const SITE = new URL('../', import.meta.url);
 
 // `car` and `state` are only ever assigned together, from parseHash, which always hands
 // back a valid final-drive index. belowGearbox throws on a car that needs a combo and has
@@ -374,9 +377,9 @@ function syncControls() {
 async function main() {
   try {
     [car, index] = await Promise.all([
-      fetch(`../data/${slug}.json`).then(r => r.json()),
+      fetch(new URL(`data/${slug}.json`, SITE)).then(r => r.json()),
       // only the footer's data line comes from here, so a missing index must not sink the page
-      fetch('../data/index.json').then(r => r.json()).catch(() => ({})),
+      fetch(new URL('data/index.json', SITE)).then(r => r.json()).catch(() => ({})),
     ]);
   } catch (err) {
     const loading = root.querySelector('.loading');

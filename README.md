@@ -111,7 +111,7 @@ ES modules need a server; `file://` will not work.
 
 ```bash
 python -m http.server 8000
-# http://localhost:8000/lancia-stratos/
+# http://localhost:8000/lancia-stratos/gears/
 ```
 
 Tests cover the pure modules — the maths, the URL state, tracking, and each chart's layout:
@@ -135,7 +135,8 @@ node --test
 | `package.json` | `npm test` runs `node --test`. |
 | `data/` | Generated. Never edit by hand. |
 | `index.html` | Generated. Never edit by hand. |
-| `<slug>/index.html` | Generated. Never edit by hand. |
+| `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
+| `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
 
 ## Licence
 

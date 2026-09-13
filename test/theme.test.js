@@ -119,18 +119,53 @@ test('no chart module names a colour; they all go through app.css', () => {
   }
 });
 
+const exists = path => { try { read(path); return true; } catch { return false; } };
+const carDirs = readdirSync(new URL('../', import.meta.url))
+  .filter(d => exists(`data/${d}.json`));
+
 test('the no-flash head script in every page reads the key theme.js writes', () => {
-  const pages = ['index.html', ...readdirSync(new URL('../', import.meta.url))
-    .filter(d => { try { read(`${d}/index.html`); return true; } catch { return false; } })
-    .map(d => `${d}/index.html`)];
-  assert.ok(pages.length > 1);
+  const pages = ['index.html', ...carDirs.map(d => `${d}/gears/index.html`)];
+  assert.equal(carDirs.length, JSON.parse(read('data/index.json')).cars.length);
   for (const page of pages) {
     const html = read(page);
     const head = html.slice(0, html.indexOf('</head>'));
     assert.ok(head.includes(`localStorage.getItem('${STORAGE_KEY}')`), page);
     assert.ok(head.indexOf(STORAGE_KEY) < head.indexOf('stylesheet'), `${page}: script after css`);
     assert.match(html, /<button class="theme" type="button">/, page);
+    assert.match(html, /<span class="to-dark"><svg class="icon moon"[^>]*aria-hidden="true"/, page);
+    assert.match(html, /<span class="to-light"><svg class="icon sun"[^>]*aria-hidden="true"/, page);
   }
+});
+
+test('car pages live at <slug>/gears/ and reach the site root two levels up', () => {
+  for (const d of carDirs) {
+    const html = read(`${d}/gears/index.html`);
+    assert.match(html, new RegExp(`data-car="${d}"`), d);
+    assert.match(html, /href="\.\.\/\.\.\/app\.css"/, d);
+    assert.match(html, /src="\.\.\/\.\.\/js\/app\.js"/, d);
+    assert.match(html, /class="crumb" href="\.\.\/\.\.\/"/, d);
+  }
+});
+
+test('<slug>/ forwards to gears/ with the hash, and is not counted', () => {
+  for (const d of carDirs) {
+    const html = read(`${d}/index.html`);
+    assert.ok(html.includes("location.replace('gears/'+location.search+location.hash)"), d);
+    assert.ok(html.includes('<meta http-equiv="refresh" content="0; url=gears/">'), d);
+    assert.ok(html.includes('<link rel="canonical" href="gears/">'), d);
+    assert.doesNotMatch(html, /goatcounter|gc\.zgo\.at|id="app"/, d);
+  }
+});
+
+test('the picker links straight to each car page', () => {
+  const html = read('index.html');
+  for (const d of carDirs) assert.ok(html.includes(`href="${d}/gears/"`), d);
+});
+
+test('app.js resolves data from its own location, not the page depth', () => {
+  const src = read('js/app.js');
+  assert.doesNotMatch(src, /fetch\(\s*[`'"]\.\.\//);
+  assert.match(src, /new URL\('\.\.\/', import\.meta\.url\)/);
 });
 
 test('the toggle icon stays inline and label-sized, not a full-width chart svg', () => {
