@@ -87,7 +87,7 @@ export function render(svg, car, state, hover = null) {
          { 'fill-opacity': on ? 1 : 0.6 });
   });
 
-  text(svg, 16, T - 44, car.gear_sets[state.set].label, 'lbl', { fill: C.accent });
+  text(svg, 16, T - 44, car.gear_sets[state.set].label, 'lbl', { fill: C.accentText });
 
   if (hover) {
     const r = shiftReadout(car, state, hover.gear, hover.speed);

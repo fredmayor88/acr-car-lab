@@ -55,17 +55,38 @@ test('dark defines every colour token light does, and no others', () => {
   assert.equal(osDark['color-scheme'], 'dark');
 });
 
-test('dark text roles clear WCAG AA on the ground and on a panel', () => {
-  for (const ground of [osDark['--bg'], osDark['--surface']]) {
-    for (const role of ['--fg', '--fg-strong', '--muted']) {
-      assert.ok(contrast(osDark[role], ground) >= 4.5,
-        `${role} ${osDark[role]} on ${ground}: ${contrast(osDark[role], ground).toFixed(2)}`);
+/** An `rgba(r,g,b,a)` token laid over an opaque ground, as the browser paints it. */
+const over = (colour, ground) => {
+  const m = colour.match(/^rgba\(([\d.]+),([\d.]+),([\d.]+),([\d.]+)\)$/);
+  if (!m) return colour;
+  const a = Number(m[4]);
+  return '#' + rgb(ground).map((g, i) => Math.round(a * Number(m[i + 1]) + (1 - a) * g)
+    .toString(16).padStart(2, '0')).join('');
+};
+
+// Every token that colours text, and what it sits on.
+const TEXT_ROLES = ['--fg', '--fg-strong', '--muted-text', '--accent-text', '--data'];
+const PAIRS = [['--tip-fg', '--tip-bg'], ['--tip-warn', '--tip-bg'],
+               ['--on-warn', '--warn'], ['--on-data', '--data']];
+
+for (const [name, theme] of [['light', light], ['dark', osDark]]) {
+  test(`${name}: every text role clears WCAG AA on the ground and on a panel`, () => {
+    const grounds = [theme['--bg'], over(theme['--surface'], theme['--bg'])];
+    for (const ground of grounds) {
+      for (const role of TEXT_ROLES) {
+        const ratio = contrast(theme[role], ground);
+        assert.ok(ratio >= 4.5, `${role} ${theme[role]} on ${ground}: ${ratio.toFixed(2)}`);
+      }
     }
-  }
-  assert.ok(contrast(osDark['--tip-fg'], osDark['--tip-bg']) >= 4.5);
-  assert.ok(contrast(osDark['--tip-warn'], osDark['--tip-bg']) >= 4.5);
-  assert.ok(contrast(osDark['--on-warn'], osDark['--warn']) >= 4.5);
-  assert.ok(contrast(osDark['--on-data'], osDark['--data']) >= 4.5);
+    for (const [fg, bg] of PAIRS) {
+      const ratio = contrast(theme[fg], theme[bg]);
+      assert.ok(ratio >= 4.5, `${fg} on ${bg}: ${ratio.toFixed(2)}`);
+    }
+  });
+}
+
+test('app.css sets text in the text roles, never in the mark colours', () => {
+  assert.doesNotMatch(css, /(?:^|[;{\s])(?:color|fill):var\(--(?:muted|accent)\)/m);
 });
 
 test('dark chart marks clear 3:1 on a panel', () => {

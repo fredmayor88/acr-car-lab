@@ -10,6 +10,8 @@ const NS = 'http://www.w3.org/2000/svg';
  */
 export const C = Object.freeze({
   fg: 'var(--fg)', muted: 'var(--muted)', data: 'var(--data)', accent: 'var(--accent)',
+  // muted and accent are for marks; text in those colours uses these darker text roles
+  mutedText: 'var(--muted-text)', accentText: 'var(--accent-text)',
   warn: 'var(--warn)', halo: 'var(--halo)', ink: 'var(--ink)',
   tipBg: 'var(--tip-bg)', tipFg: 'var(--tip-fg)', tipWarn: 'var(--tip-warn)',
   onWarn: 'var(--on-warn)', warnEdge: 'var(--warn-edge)',

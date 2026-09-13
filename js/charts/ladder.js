@@ -92,14 +92,14 @@ export function render(svg, car, state, onPickSet, hover = null) {
       text(svg, xs(v), y - 15, v.toFixed(0), 'val', { 'text-anchor': 'middle' });
     });
     const name = text(svg, L - 22, y + 4, lane.label, 'rowlbl', {
-      'text-anchor': 'end', fill: lane.selected ? C.accent : C.fg,
+      'text-anchor': 'end', fill: lane.selected ? C.accentText : C.fg,
       'font-weight': lane.selected ? '600' : '400',
     });
     name.setAttribute('class', 'rowlbl hit');
     name.addEventListener('click', () => onPickSet(i));
     if (lane.selected) {
       text(svg, L - 22, y + 19, 'selected', 'lbl',
-           { 'text-anchor': 'end', fill: C.accent });
+           { 'text-anchor': 'end', fill: C.accentText });
     }
   });
 

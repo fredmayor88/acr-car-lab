@@ -4,6 +4,9 @@
      take var(). The one indexed list, the gear-set colours, lives in js/gearing.js. */
   --bg:#F5F2EB; --fg:#30353A; --fg-strong:#212529; --muted:#7B858E;
   --data:#7A583B; --accent:#148FAC; --warn:#9C3B2E;
+  /* text only: Steel and Deep Cyan darkened until text clears 4.5:1 on ground and panel.
+     Steel and Deep Cyan themselves stay for rules, grid, curves and marks. */
+  --muted-text:#676F77; --accent-text:#0E6E85;
   --line:rgba(123,133,142,.28);
   --surface:rgba(255,255,255,.62); --field:#fff;
   --accent-edge:rgba(20,143,172,.35); --accent-wash:rgba(20,143,172,.05);
@@ -24,6 +27,7 @@
     color-scheme:dark;
     --bg:#212529; --fg:#D5D3CE; --fg-strong:#F5F2EB; --muted:#A6ABAF;
     --data:#B89873; --accent:#25C4E2; --warn:#9C3B2E;
+    --muted-text:#A6ABAF; --accent-text:#25C4E2;
     --line:rgba(245,242,235,.13);
     --surface:#30353A; --field:#212529;
     --accent-edge:rgba(37,196,226,.4); --accent-wash:rgba(37,196,226,.08);
@@ -36,6 +40,7 @@
   color-scheme:dark;
   --bg:#212529; --fg:#D5D3CE; --fg-strong:#F5F2EB; --muted:#A6ABAF;
   --data:#B89873; --accent:#25C4E2; --warn:#9C3B2E;
+  --muted-text:#A6ABAF; --accent-text:#25C4E2;
   --line:rgba(245,242,235,.13);
   --surface:#30353A; --field:#212529;
   --accent-edge:rgba(37,196,226,.4); --accent-wash:rgba(37,196,226,.08);
@@ -51,10 +56,10 @@ body{margin:0;background:var(--bg);color:var(--fg);
 header{border-bottom:1px solid var(--line);margin-bottom:26px}
 .brandrow{display:flex;align-items:baseline;gap:14px;padding:22px 0 4px}
 .brand{font-size:12.5px;letter-spacing:.17em;text-transform:uppercase;
-  color:var(--muted);font-weight:600}
-.brand b{color:var(--accent);font-weight:600}
-.crumb{font-size:12.5px;color:var(--muted);text-decoration:none;margin-left:auto}
-.theme{font-family:inherit;font-size:12.5px;line-height:1.2;color:var(--muted);background:none;
+  color:var(--muted-text);font-weight:600}
+.brand b{color:var(--accent-text);font-weight:600}
+.crumb{font-size:12.5px;color:var(--muted-text);text-decoration:none;margin-left:auto}
+.theme{font-family:inherit;font-size:12.5px;line-height:1.2;color:var(--muted-text);background:none;
   border:1px solid var(--line);border-radius:2px;padding:1px 8px;cursor:pointer;margin-left:auto}
 .crumb + .theme{margin-left:0}
 /* the label names the theme a click switches to, and is right before any script runs */
@@ -66,7 +71,7 @@ header{border-bottom:1px solid var(--line);margin-bottom:26px}
 :root[data-theme="dark"] .theme .to-dark{display:none}
 :root[data-theme="dark"] .theme .to-light{display:inline}
 h1{font-size:31px;margin:2px 0 3px;color:var(--fg-strong);letter-spacing:-.015em}
-.sub{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+.sub{color:var(--muted-text);font-size:13.5px;margin:0 0 20px}
 .sub span{color:var(--fg)}
 
 .bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;
@@ -74,26 +79,26 @@ h1{font-size:31px;margin:2px 0 3px;color:var(--fg-strong);letter-spacing:-.015em
   padding:14px 18px 15px;margin-bottom:8px;position:sticky;top:0;z-index:5}
 .ctl{display:flex;flex-direction:column;gap:5px}
 .ctl label{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);font-weight:600}
+  color:var(--muted-text);font-weight:600}
 select{font:13.5px/1 "SF Mono",Menlo,Consolas,monospace;padding:7px 10px;
   border:1px solid var(--line);background:var(--field);color:var(--fg);
   border-radius:2px;min-width:200px}
-.copy{margin-left:auto;font-size:12.5px;color:var(--accent);
+.copy{margin-left:auto;font-size:12.5px;color:var(--accent-text);
   border:1px solid var(--accent-edge);background:var(--accent-wash);
   padding:8px 14px;border-radius:2px;cursor:pointer}
-.barnote{font-size:11.5px;color:var(--muted);margin:0 0 32px;padding-left:2px}
+.barnote{font-size:11.5px;color:var(--muted-text);margin:0 0 32px;padding-left:2px}
 
 section{margin-bottom:42px}
 h2{font-size:17px;margin:0 0 2px;color:var(--fg-strong);letter-spacing:-.01em}
-.cap{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+.cap{font-size:12.5px;color:var(--muted-text);margin:0 0 14px}
 .cap b{color:var(--fg);font-weight:600}
 .panel{background:var(--surface);border:1px solid var(--line);
   border-radius:3px;padding:16px 18px}
 .panel.row{display:flex;gap:18px;align-items:flex-start}
 .panel.row svg{flex:1;min-width:0}
 svg{display:block;width:100%;height:auto}
-.axis{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--muted)}
-.lbl{font:11px -apple-system,"Segoe UI",sans-serif;fill:var(--muted)}
+.axis{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--muted-text)}
+.lbl{font:11px -apple-system,"Segoe UI",sans-serif;fill:var(--muted-text)}
 .rowlbl{font:11px -apple-system,"Segoe UI",sans-serif;fill:var(--fg)}
 .val{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--fg)}
 .pip{font:9px "SF Mono",Menlo,Consolas,monospace;fill:var(--on-data);font-weight:700}
@@ -101,34 +106,34 @@ svg{display:block;width:100%;height:auto}
 
 .setlist{width:158px;flex:0 0 158px;padding-top:6px}
 .setlist h4{font-size:10px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 8px;font-weight:600}
+  color:var(--muted-text);margin:0 0 8px;font-weight:600}
 .opt{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:2px;
-  font:12px "SF Mono",Menlo,Consolas,monospace;color:var(--muted);
+  font:12px "SF Mono",Menlo,Consolas,monospace;color:var(--muted-text);
   border:1px solid transparent;cursor:pointer}
 .opt i{width:12px;height:12px;border:1px solid var(--line);border-radius:2px;
   background:var(--field);flex:0 0 12px}
 .opt.on{color:var(--fg);border-color:var(--line);background:var(--field)}
-.opt small{color:var(--muted);font-size:10.5px}
+.opt small{color:var(--muted-text);font-size:10.5px}
 
 .foot{border-top:1px solid var(--line);padding-top:22px;display:flex;gap:34px;
   flex-wrap:wrap;align-items:flex-start}
 .foot h3{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 8px;font-weight:600}
+  color:var(--muted-text);margin:0 0 8px;font-weight:600}
 .kbox{display:flex;align-items:center;gap:10px}
 .kbox input{font:14px "SF Mono",Menlo,Consolas,monospace;width:104px;padding:7px 10px;
   border:1px solid var(--line);border-radius:2px;background:var(--field);color:var(--fg)}
-.kbox a{font-size:12px;color:var(--accent);text-decoration:none}
-.fnote{font-size:12px;color:var(--muted);max-width:430px;margin:9px 0 0}
-.limits{font-size:12px;color:var(--muted);margin:0;max-width:390px}
+.kbox a{font-size:12px;color:var(--accent-text);text-decoration:none}
+.fnote{font-size:12px;color:var(--muted-text);max-width:430px;margin:9px 0 0}
+.limits{font-size:12px;color:var(--muted-text);margin:0;max-width:390px}
 .limits ul{margin:0;padding-left:16px}
 .limits li{margin-bottom:3px}
-.notadjustable{font-size:13px;color:var(--muted);margin:0;padding:10px 2px}
+.notadjustable{font-size:13px;color:var(--muted-text);margin:0;padding:10px 2px}
 
 .carlist{list-style:none;margin:0;padding:0;display:grid;gap:2px;
   grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 .carlist a{display:block;padding:12px 14px;text-decoration:none;color:var(--fg);
   border:1px solid var(--line);border-radius:2px;background:var(--surface)}
-.carlist a:hover{border-color:var(--accent);color:var(--accent)}
+.carlist a:hover{border-color:var(--accent);color:var(--accent-text)}
 
 @media (max-width:720px){
   .wrap{padding:0 16px 60px}

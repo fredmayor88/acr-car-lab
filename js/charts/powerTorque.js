@@ -51,7 +51,7 @@ export function render(svg, car, hoverRpm = null) {
     text(svg, L - 9, yt(v) + 3.5, v, 'axis', { 'text-anchor': 'end' });
   }
   for (let v = 0; v <= kwMax; v += 70) {
-    text(svg, R + 9, yp(v) + 3.5, v, 'axis', { fill: C.accent, 'fill-opacity': 0.8 });
+    text(svg, R + 9, yp(v) + 3.5, v, 'axis', { fill: C.accentText });
   }
   for (let r = 0; r <= rpmMax; r += 1000) {
     text(svg, xs(r), B + 18, r / 1000 + 'k', 'axis', { 'text-anchor': 'middle' });
@@ -70,19 +70,19 @@ export function render(svg, car, hoverRpm = null) {
   el(svg, 'path', { d: dp, fill: 'none', stroke: C.accent, 'stroke-width': 2.1 });
   el(svg, 'path', { d: dt, fill: 'none', stroke: C.data, 'stroke-width': 2.4 });
 
-  const mark = (x, y, label, colour) => {
+  const mark = (x, y, label, colour, textColour) => {
     el(svg, 'circle', { cx: x, cy: y, r: 4.6, fill: colour, stroke: C.halo,
                         'stroke-width': 1.7 });
     text(svg, x, y - 12, label, 'val',
-         { 'text-anchor': 'middle', fill: colour, 'font-weight': '600' });
+         { 'text-anchor': 'middle', fill: textColour, 'font-weight': '600' });
   };
   mark(xs(l.peakTorque.rpm), yt(l.peakTorque.nm),
-       `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.data);
+       `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.data, C.data);
   mark(xs(l.peakPower.rpm), yp(l.peakPower.kw),
-       `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.accent);
+       `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.accent, C.accentText);
 
   text(svg, L - 9, T - 16, 'Nm', 'lbl', { 'text-anchor': 'end', fill: C.data });
-  text(svg, R + 9, T - 16, 'kW', 'lbl', { fill: C.accent });
+  text(svg, R + 9, T - 16, 'kW', 'lbl', { fill: C.accentText });
   text(svg, (L + R) / 2, B + 42, 'engine speed — rpm', 'lbl',
        { 'text-anchor': 'middle' });
 
