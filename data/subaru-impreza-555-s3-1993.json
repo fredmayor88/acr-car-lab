@@ -3,9 +3,13 @@
  "name": "Subaru Impreza 555 (S3) 1993",
  "axle": "Rear",
  "engine": {
-  "redline": 7000,
+  "redline": 6700,
+  "redline_source": "measured",
+  "game_v4": 6500,
   "peak_torque_rpm": 4000,
   "peak_power_rpm": 5500,
+  "curve_source": "SubaruImprezaS3555",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -463,6 +467,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

@@ -3,9 +3,13 @@
  "name": "Audi Quattro Gr.4 1981",
  "axle": "Rear",
  "engine": {
-  "redline": 7250,
+  "redline": 7000,
+  "redline_source": "measured",
+  "game_v4": 6950,
   "peak_torque_rpm": 4500,
   "peak_power_rpm": 6500,
+  "curve_source": "AudiQuattroGr_4",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -299,6 +303,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

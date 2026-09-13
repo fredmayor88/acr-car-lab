@@ -3,9 +3,13 @@
  "name": "Hyundai i20 Rally2 2021",
  "axle": "Rear",
  "engine": {
-  "redline": 7750,
+  "redline": 7500,
+  "redline_source": "measured",
+  "game_v4": 7300,
   "peak_torque_rpm": 3750,
   "peak_power_rpm": 7250,
+  "curve_source": "Hyundaii20NRally2",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -254,6 +258,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

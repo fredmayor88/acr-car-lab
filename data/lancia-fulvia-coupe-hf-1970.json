@@ -3,9 +3,13 @@
  "name": "Lancia Fulvia Coup\u00e9 HF 1970",
  "axle": "Front",
  "engine": {
-  "redline": 7500,
+  "redline": 7150,
+  "redline_source": "measured",
+  "game_v4": 7150,
   "peak_torque_rpm": 6000,
   "peak_power_rpm": 7250,
+  "curve_source": "LanciaFulviaCoupeRallye1_6HF",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -317,6 +321,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

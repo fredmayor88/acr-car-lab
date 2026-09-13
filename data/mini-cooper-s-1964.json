@@ -3,9 +3,13 @@
  "name": "Mini Cooper S 1964",
  "axle": "Front",
  "engine": {
-  "redline": 7750,
+  "redline": 7400,
+  "redline_source": "measured",
+  "game_v4": 7300,
   "peak_torque_rpm": 4500,
   "peak_power_rpm": 7000,
+  "curve_source": "MiniCooperS1275",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -331,6 +335,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

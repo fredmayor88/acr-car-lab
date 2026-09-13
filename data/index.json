@@ -49,6 +49,10 @@
    "name": "Mini Cooper S 1964"
   },
   {
+   "slug": "peugeot-206-wrc-1999",
+   "name": "Peugeot 206 WRC 1999"
+  },
+  {
    "slug": "peugeot-208-rally4",
    "name": "Peugeot 208 Rally4 2020"
   },
@@ -69,6 +73,6 @@
    "name": "Volkswagen Polo GTI R5 2018"
   }
  ],
- "generated": "2026-09-12",
+ "generated": "2026-09-13",
  "game_version": "0.6"
 }

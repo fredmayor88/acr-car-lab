@@ -3,9 +3,13 @@
  "name": "Alpine A110 1.8 1973",
  "axle": "Rear",
  "engine": {
-  "redline": 7250,
+  "redline": 7000,
+  "redline_source": "measured",
+  "game_v4": 6900,
   "peak_torque_rpm": 5000,
   "peak_power_rpm": 7000,
+  "curve_source": "AlpineA1101800",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -329,6 +333,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

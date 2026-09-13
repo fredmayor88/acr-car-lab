@@ -3,9 +3,13 @@
  "name": "Lancia Delta Integrale Evoluzione 1992",
  "axle": "Rear",
  "engine": {
-  "redline": 7250,
+  "redline": 7200,
+  "redline_source": "measured",
+  "game_v4": 7050,
   "peak_torque_rpm": 5000,
   "peak_power_rpm": 6500,
+  "curve_source": "LanciaDeltaHFIntegraleEvo",
+  "curve_from": null,
   "curve": [
    [
     0,
@@ -488,6 +492,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9562
+  "loaded_radius_factor": 0.9858
  }
 }

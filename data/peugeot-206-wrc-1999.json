@@ -1,6 +1,6 @@
 {
- "slug": "citroen-xsara-wrc-2003",
- "name": "Citroen Xsara WRC 2003",
+ "slug": "peugeot-206-wrc-1999",
+ "name": "Peugeot 206 WRC 1999",
  "axle": "Rear",
  "engine": {
   "redline": 7400,
@@ -9,7 +9,10 @@
   "peak_torque_rpm": 2750,
   "peak_power_rpm": 5500,
   "curve_source": "CitroenXsaraWRC",
-  "curve_from": null,
+  "curve_from": {
+   "slug": "citroen-xsara-wrc-2003",
+   "name": "Citroen Xsara WRC 2003"
+  },
   "curve": [
    [
     0,
@@ -197,208 +200,156 @@
   {
    "label": "Gear set 1",
    "primary": {
-    "name": "25//25",
-    "value": 1.0
+    "name": "20//25",
+    "value": 0.8
    },
    "gears": [
     {
-     "name": "37//12",
-     "value": 3.0833333333333335
+     "name": "36//12",
+     "value": 3.0
     },
     {
-     "name": "33//14",
-     "value": 2.357142857142857
-    },
-    {
-     "name": "28//15",
-     "value": 1.8666666666666667
+     "name": "29//14",
+     "value": 2.0714285714285716
     },
     {
      "name": "29//19",
      "value": 1.5263157894736843
     },
     {
-     "name": "23//18",
-     "value": 1.2777777777777777
+     "name": "26//23",
+     "value": 1.1304347826086956
     },
     {
-     "name": "25//23",
-     "value": 1.0869565217391304
+     "name": "20//24",
+     "value": 0.8333333333333334
     }
    ]
   },
   {
    "label": "Gear set 2",
    "primary": {
-    "name": "25//25",
-    "value": 1.0
+    "name": "20//25",
+    "value": 0.8
    },
    "gears": [
     {
-     "name": "37//12",
-     "value": 3.0833333333333335
+     "name": "36//12",
+     "value": 3.0
     },
     {
-     "name": "33//14",
-     "value": 2.357142857142857
+     "name": "29//14",
+     "value": 2.0714285714285716
     },
     {
-     "name": "28//15",
-     "value": 1.8666666666666667
+     "name": "29//19",
+     "value": 1.5263157894736843
     },
     {
-     "name": "30//20",
-     "value": 1.5
+     "name": "26//23",
+     "value": 1.1304347826086956
     },
     {
-     "name": "26//21",
-     "value": 1.2380952380952381
-    },
-    {
-     "name": "25//24",
-     "value": 1.0416666666666667
+     "name": "20//23",
+     "value": 0.8695652173913043
     }
    ]
   },
   {
    "label": "Gear set 3",
    "primary": {
-    "name": "25//25",
-    "value": 1.0
+    "name": "20//25",
+    "value": 0.8
    },
    "gears": [
     {
-     "name": "38//12",
-     "value": 3.1666666666666665
+     "name": "39//12",
+     "value": 3.25
     },
     {
      "name": "34//14",
      "value": 2.4285714285714284
     },
     {
-     "name": "28//15",
-     "value": 1.8666666666666667
+     "name": "29//15",
+     "value": 1.9333333333333333
     },
     {
-     "name": "30//20",
-     "value": 1.5
+     "name": "28//18",
+     "value": 1.5555555555555556
     },
     {
-     "name": "23//19",
-     "value": 1.2105263157894737
+     "name": "28//22",
+     "value": 1.2727272727272727
     },
     {
-     "name": "24//24",
-     "value": 1.0
+     "name": "20//19",
+     "value": 1.0526315789473684
     }
    ]
   },
   {
    "label": "Gear set 4",
    "primary": {
-    "name": "25//25",
-    "value": 1.0
+    "name": "20//25",
+    "value": 0.8
    },
    "gears": [
     {
-     "name": "37//12",
-     "value": 3.0833333333333335
+     "name": "36//12",
+     "value": 3.0
     },
     {
-     "name": "28//13",
-     "value": 2.1538461538461537
+     "name": "30//14",
+     "value": 2.142857142857143
     },
     {
-     "name": "28//17",
-     "value": 1.6470588235294117
+     "name": "29//18",
+     "value": 1.6111111111111112
     },
     {
-     "name": "27//21",
-     "value": 1.2857142857142858
+     "name": "25//19",
+     "value": 1.3157894736842106
     },
     {
-     "name": "25//24",
-     "value": 1.0416666666666667
-    }
-   ]
-  },
-  {
-   "label": "Gear set 5",
-   "primary": {
-    "name": "25//25",
-    "value": 1.0
-   },
-   "gears": [
-    {
-     "name": "38//12",
-     "value": 3.1666666666666665
+     "name": "19//17",
+     "value": 1.1176470588235294
     },
     {
-     "name": "32//15",
-     "value": 2.1333333333333333
-    },
-    {
-     "name": "22//14",
-     "value": 1.5714285714285714
-    },
-    {
-     "name": "25//20",
-     "value": 1.25
-    },
-    {
-     "name": "24//23",
-     "value": 1.0434782608695652
+     "name": "24//25",
+     "value": 0.96
     }
    ]
   }
  ],
  "final_drive": {
-  "adjustment": "Center Differential Ratio",
-  "primaries": [],
-  "options": [
+  "adjustment": "Differential Ratio Rear",
+  "primaries": [
    {
-    "name": "39//24",
-    "value": 1.625
+    "name": "21//24",
+    "value": 0.875
    },
    {
-    "name": "39//25",
-    "value": 1.56
+    "name": "22//24",
+    "value": 0.9166666666666666
    },
    {
-    "name": "38//25",
-    "value": 1.52
-   },
-   {
-    "name": "38//26",
-    "value": 1.4615384615384615
-   },
-   {
-    "name": "37//26",
-    "value": 1.4230769230769231
-   },
-   {
-    "name": "36//26",
-    "value": 1.3846153846153846
-   },
-   {
-    "name": "35//26",
-    "value": 1.3461538461538463
-   },
-   {
-    "name": "35//27",
-    "value": 1.2962962962962963
-   },
-   {
-    "name": "34//27",
-    "value": 1.2592592592592593
-   },
-   {
-    "name": "35//28",
-    "value": 1.25
+    "name": "21//25",
+    "value": 0.84
    }
   ],
-  "stock_option": "37//26",
-  "rest": 2.7857142857142856
+  "options": [
+   {
+    "name": "46//14*26//16",
+    "value": 5.339285714285714
+   },
+   {
+    "name": "40//18*26//16",
+    "value": 3.611111111111111
+   }
+  ],
+  "stock_option": "46//14*26//16",
+  "rest": 1.0
  },
  "fixed_final_drive": null,
  "tyres": {
@@ -415,8 +366,8 @@
    "free_radius": 0.323
   },
   "Sweden": {
-   "asset": "MichelinS00",
-   "free_radius": 0.325
+   "asset": "MichelinS04",
+   "free_radius": 0.3245
   },
   "Montecarlo": {
    "asset": "MichelinTM00",
