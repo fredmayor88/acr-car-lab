@@ -5,6 +5,7 @@
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos }
   from './gearing.js';
 import { floorBounds, parseFloor, parseHash, stepFloor, toHash } from './state.js';
+import { settingsText } from './settingsText.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import * as powerTorque from './charts/powerTorque.js';
@@ -108,16 +109,23 @@ function buildShell() {
   } }, ...car.gear_sets.map((s, i) =>
     h('option', { value: String(i) }, `${s.label}  (${s.gears.length}-speed)`)));
 
-  const copy = h('button', { class: 'copy', type: 'button', onclick: async () => {
-    track('copy-link');
-    try {
-      await navigator.clipboard.writeText(location.href);
-      copy.textContent = 'Copied';
-      setTimeout(() => { copy.textContent = 'Copy link'; }, 1500);
-    } catch {
-      // no clipboard access (insecure context, denied permission): the URL bar has it
-    }
-  } }, 'Copy link');
+  const copyButton = (label, event, content) => {
+    const button = h('button', { class: 'copy', type: 'button', onclick: async () => {
+      track(event);
+      try {
+        await navigator.clipboard.writeText(content());
+        button.textContent = 'Copied';
+        setTimeout(() => { button.textContent = label; }, 1500);
+      } catch {
+        // no clipboard access (insecure context, denied permission): the URL bar has the
+        // link, and the bar and charts show the settings
+      }
+    } }, label);
+    return button;
+  };
+  const copies = h('div', { class: 'copies' },
+    copyButton('Copy link', 'copy-link', () => location.href),
+    copyButton('Copy settings', 'copy-settings', () => settingsText(car, state)));
 
   const bar = h('div', { class: 'bar' },
     h('div', { class: 'ctl' }, h('label', {}, 'Surface'), surfaceSel));
@@ -125,7 +133,7 @@ function buildShell() {
     bar.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Final drive'), fdSel));
   }
   bar.appendChild(h('div', { class: 'ctl' }, h('label', {}, 'Gear set'), setSel));
-  bar.appendChild(copy);
+  bar.appendChild(copies);
 
   root.appendChild(subtitle());
   root.appendChild(bar);

@@ -85,7 +85,8 @@ h1{font-size:31px;margin:2px 0 3px;color:var(--fg-strong);letter-spacing:-.015em
 select{font:13.5px/1 "SF Mono",Menlo,Consolas,monospace;padding:7px 10px;
   border:1px solid var(--line);background:var(--field);color:var(--fg);
   border-radius:2px;min-width:200px}
-.copy{margin-left:auto;font-size:12.5px;color:var(--accent-text);
+.copies{margin-left:auto;display:flex;gap:8px}
+.copy{font-size:12.5px;color:var(--accent-text);
   border:1px solid var(--accent-edge);background:var(--accent-wash);
   padding:8px 14px;border-radius:2px;cursor:pointer}
 .barnote{font-size:11.5px;color:var(--muted-text);margin:0 0 32px;padding-left:2px}
