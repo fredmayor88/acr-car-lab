@@ -153,6 +153,7 @@ test('<slug>/ forwards to gears/ with the hash, and is not counted', () => {
     assert.ok(html.includes("location.replace('gears/'+location.search+location.hash)"), d);
     assert.ok(html.includes('<meta http-equiv="refresh" content="0; url=gears/">'), d);
     assert.ok(html.includes('<link rel="canonical" href="gears/">'), d);
+    assert.ok(html.includes('<meta name="color-scheme" content="light dark">'), d);
     assert.doesNotMatch(html, /goatcounter|gc\.zgo\.at|id="app"/, d);
   }
 });
