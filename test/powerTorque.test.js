@@ -32,9 +32,49 @@ test('readout gives both values as a percentage of peak', () => {
   assert.equal(r.kwPct, Math.round((248 * 5000 / 9549) / (240 * 7750 / 9549) * 100));
 });
 
-test('readout snaps to the nearest sampled rpm rather than inventing a point', () => {
-  assert.equal(readout(car, 5900).rpm, 6000);
-  assert.equal(readout(car, 3100).rpm, 3000);
+test('readout is continuous: it reads the pointer rpm, not the nearest sampled one', () => {
+  assert.equal(readout(car, 5900).rpm, 5900);
+  assert.equal(readout(car, 3100).rpm, 3100);
+  assert.notEqual(readout(car, 5010).nm, readout(car, 5020).nm);
+});
+
+test('halfway between two curve points reads the average of both values', async () => {
+  const { curveAt } = await import('../js/charts/powerTorque.js');
+  const mid = curveAt(car.engine.curve, 5500);
+  assert.equal(mid.rpm, 5500);
+  assert.ok(Math.abs(mid.nm - (248 + 260) / 2) < 1e-9);
+  assert.ok(Math.abs(mid.kw - (248 * 5000 / 9549 + 260 * 6000 / 9549) / 2) < 1e-9);
+  // a quarter of the way is a quarter of the difference
+  assert.ok(Math.abs(curveAt(car.engine.curve, 5250).nm - 251) < 1e-9);
+});
+
+test('exact curve points read the stored values', async () => {
+  const { curveAt } = await import('../js/charts/powerTorque.js');
+  for (const [rpm, nm, kw] of car.engine.curve) {
+    assert.deepEqual(curveAt(car.engine.curve, rpm), { rpm, nm, kw });
+  }
+});
+
+test('the readout is held to the curve extent at both ends', async () => {
+  const { curveAt } = await import('../js/charts/powerTorque.js');
+  assert.deepEqual(curveAt(car.engine.curve, 0), { rpm: 3000, nm: 198, kw: 198 * 3000 / 9549 });
+  assert.deepEqual(curveAt(car.engine.curve, 9250),
+    { rpm: 8750, nm: 192, kw: 192 * 8750 / 9549 });
+});
+
+test('percentages follow the interpolated values', () => {
+  const r = readout(car, 5500);
+  assert.equal(r.nmPct, Math.round(254 / 260 * 100));
+  assert.equal(r.kwPct, Math.round(r.kw / (240 * 7750 / 9549) * 100));
+});
+
+test('the tooltip text rounds rpm, Nm and kW to whole numbers, as the other charts do', async () => {
+  const { readoutLines } = await import('../js/charts/powerTorque.js');
+  const lines = readoutLines(readout(car, 5512.7));
+  assert.equal(lines[0], '5513 rpm');
+  assert.match(lines[1], /^\d+ Nm {4}\d+% of peak$/);
+  assert.match(lines[2], /^\d+ kW {4}\d+% of peak$/);
+  assert.equal(lines[1], `${(248 + 0.5127 * 12).toFixed(0)} Nm    98% of peak`);
 });
 
 test('at peak torque the torque percentage is exactly 100', () => {

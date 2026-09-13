@@ -66,19 +66,44 @@ export function layout(car, ceil = car.engine.redline) {
   };
 }
 
-/** The hover readout: both values, and how much of the peak you are giving up. */
+/**
+ * The curve at any rpm: torque and power interpolated linearly between the two stored points
+ * either side, which is exactly the line the chart draws between them. Held to the curve's
+ * own extent, so a pointer past either end reads that end.
+ */
+export function curveAt(points, rpm) {
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (rpm <= first[0]) return { rpm: first[0], nm: first[1], kw: first[2] };
+  if (rpm >= last[0]) return { rpm: last[0], nm: last[1], kw: last[2] };
+  const i = points.findIndex(p => p[0] >= rpm);
+  const [r1, nm1, kw1] = points[i];
+  if (r1 === rpm) return { rpm, nm: nm1, kw: kw1 };
+  const [r0, nm0, kw0] = points[i - 1];
+  const t = (rpm - r0) / (r1 - r0);
+  return { rpm, nm: nm0 + t * (nm1 - nm0), kw: kw0 + t * (kw1 - kw0) };
+}
+
+/**
+ * The hover readout at the pointer rpm: both values, and how much of the peak you are giving
+ * up. Continuous, like every other chart's hover; the text rounds the way theirs does.
+ */
 export function readout(car, rpm) {
   const l = layout(car);
-  const point = l.points.reduce((best, r) =>
-    Math.abs(r[0] - rpm) < Math.abs(best[0] - rpm) ? r : best);
+  const at = curveAt(l.points, rpm);
   return {
-    rpm: point[0],
-    nm: point[1],
-    kw: point[2],
-    nmPct: Math.round(point[1] / l.peakTorque.nm * 100),
-    kwPct: Math.round(point[2] / l.peakPower.kw * 100),
+    ...at,
+    nmPct: Math.round(at.nm / l.peakTorque.nm * 100),
+    kwPct: Math.round(at.kw / l.peakPower.kw * 100),
   };
 }
+
+/** The three tooltip lines: whole rpm, Nm and kW, as the other charts' readouts show them. */
+export const readoutLines = r => [
+  `${r.rpm.toFixed(0)} rpm`,
+  `${r.nm.toFixed(0)} Nm    ${r.nmPct}% of peak`,
+  `${r.kw.toFixed(0)} kW    ${r.kwPct}% of peak`,
+];
 
 export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
   clear(svg);
@@ -163,12 +188,11 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
     // the two closest-margin curves
     // (Citroen Xsara WRC, Audi Quattro Gr4 — both turbo, both torque-heavy low down):
     // the tooltip box's y-range never reaches the curve's y at the rpm the box's
-    // x-range spans. See task-6-report.md for the per-car numbers.
-    tip(svg, L + 16, T + 6, [
-      `${r.rpm} rpm`,
-      `${r.nm.toFixed(0)} Nm    ${r.nmPct}% of peak`,
-      `${r.kw.toFixed(0)} kW    ${r.kwPct}% of peak`,
-    ]);
+    // x-range spans. See task-6-report.md for the per-car numbers. Still true with the
+    // readout interpolated: the box and the curves are unchanged, and the axis now runs at
+    // least to the curve end, so the box spans no more rpm than it did. Rechecked in the
+    // rev-limit fix round (revlimit-report.md).
+    tip(svg, L + 16, T + 6, readoutLines(r));
   }
 
   // rpm under the cursor, for the caller to feed back in as hoverRpm
