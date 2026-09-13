@@ -11,33 +11,44 @@ export const WORKINGS_EVENT = 'read-drivetrain-workings';
 // they were on screen. Most of it has to be visible, not a sliver at the bottom edge.
 export const WORKINGS_THRESHOLD = 0.6;
 
-const windowScroll = fn => {
-  globalThis.addEventListener?.('scroll', fn, { passive: true });
-  return () => globalThis.removeEventListener?.('scroll', fn);
+const windowEvent = type => fn => {
+  globalThis.addEventListener?.(type, fn, { passive: true });
+  return () => globalThis.removeEventListener?.(type, fn);
 };
+
+// A few pixels of slack: rounding can leave a page that fits 1px "taller" than the window.
+export const SCROLL_SLACK = 4;
+
+/** Whether the page is taller than the window, so reaching a section takes a scroll. */
+const pageScrolls = () => (globalThis.document?.documentElement.scrollHeight ?? 0)
+  > (globalThis.innerHeight ?? 0) + SCROLL_SLACK;
 
 /**
  * Fire `event` once, when `target` is at least WORKINGS_THRESHOLD visible AND the reader has
- * scrolled. On a tall desktop screen the section can sit above the fold at load, and a page
- * that was only opened has not been read. Then stop watching.
+ * scrolled, then stop watching. On a tall desktop screen the section can sit above the fold at
+ * load, and a page that was only opened has not been read. A page that fits the window cannot
+ * be scrolled at all, so there the section being on screen is enough; that is checked whenever
+ * the observer reports and whenever the window is resized.
  *
- * `Observer` is IntersectionObserver in the page and a fake in tests; `onScroll(fn)` subscribes
- * to scrolling and returns an unsubscribe. Without an observer (a very old browser) nothing is
- * tracked. Returns the observer, or null.
+ * `Observer` is IntersectionObserver in the page and a fake in tests. `onScroll(fn)` and
+ * `onResize(fn)` subscribe and return an unsubscribe; `canScroll()` says whether the page is
+ * taller than the window. Without an observer (a very old browser) nothing is tracked. Returns
+ * the observer, or null.
  */
 export function watchWorkings(target, { Observer = globalThis.IntersectionObserver,
-  send = track, event = WORKINGS_EVENT, onScroll = windowScroll } = {}) {
+  send = track, event = WORKINGS_EVENT, onScroll = windowEvent('scroll'),
+  onResize = windowEvent('resize'), canScroll = pageScrolls } = {}) {
   if (!target || typeof Observer !== 'function') return null;
   let visible = false;
   let scrolled = false;
   let done = false;
-  let unsubscribe = null;
+  const unsubscribe = [];
   const maybeFire = () => {
-    if (done || !visible || !scrolled) return;
+    if (done || !visible || !(scrolled || !canScroll())) return;
     done = true;
     send(event);
     observer.disconnect();
-    unsubscribe?.();
+    for (const off of unsubscribe) off?.();
   };
   const observer = new Observer(entries => {
     const last = entries[entries.length - 1];
@@ -45,10 +56,10 @@ export function watchWorkings(target, { Observer = globalThis.IntersectionObserv
     visible = Boolean(last?.isIntersecting && last.intersectionRatio >= WORKINGS_THRESHOLD - 0.01);
     maybeFire();
   }, { threshold: WORKINGS_THRESHOLD });
-  unsubscribe = onScroll(() => {
+  unsubscribe.push(onScroll(() => {
     scrolled = true;
     maybeFire();
-  });
+  }), onResize(maybeFire));
   observer.observe(target);
   return observer;
 }

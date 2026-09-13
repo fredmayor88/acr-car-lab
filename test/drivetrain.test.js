@@ -41,7 +41,7 @@ test('the workings event fires once, when the reader scrolls the section into vi
   const { Fake, made } = fakeObserver();
   const scroll = fakeScroll();
   const target = { id: 'workhead' };
-  watchWorkings(target, { Observer: Fake, onScroll: scroll.onScroll });
+  watchWorkings(target, { Observer: Fake, onScroll: scroll.onScroll, canScroll: () => true });
   const obs = made[0];
   assert.deepEqual(obs.targets, [target]);
   assert.equal(obs.options.threshold, WORKINGS_THRESHOLD);
@@ -69,17 +69,63 @@ test('the workings event fires once, when the reader scrolls the section into vi
 test('a section already on screen at load counts only once the reader scrolls', () => {
   const { Fake, made } = fakeObserver();
   const scroll = fakeScroll();
-  watchWorkings({}, { Observer: Fake, onScroll: scroll.onScroll });
+  watchWorkings({}, { Observer: Fake, onScroll: scroll.onScroll, canScroll: () => true });
   made[0].fire([{ isIntersecting: true, intersectionRatio: 1 }]);
   assert.equal(_queue().length, 0);
   scroll.scroll();
   assert.deepEqual(_queue().map(e => e.path), [WORKINGS_EVENT]);
 });
 
+test('on a page that cannot scroll, the section on screen is enough', () => {
+  const { Fake, made } = fakeObserver();
+  const scroll = fakeScroll();
+  watchWorkings({}, { Observer: Fake, onScroll: scroll.onScroll, onResize: () => null,
+    canScroll: () => false });
+  made[0].fire([{ isIntersecting: true, intersectionRatio: 1 }]);
+  assert.deepEqual(_queue().map(e => e.path), [WORKINGS_EVENT]);
+  made[0].fire([{ isIntersecting: true, intersectionRatio: 1 }]);
+  assert.equal(_queue().length, 1);
+});
+
+test('a page that scrolls still waits for a scroll with the section on screen at load', () => {
+  const { Fake, made } = fakeObserver();
+  const scroll = fakeScroll();
+  const resize = fakeScroll();
+  watchWorkings({}, { Observer: Fake, onScroll: scroll.onScroll, onResize: resize.onScroll,
+    canScroll: () => true });
+  made[0].fire([{ isIntersecting: true, intersectionRatio: 1 }]);
+  resize.scroll();
+  assert.equal(_queue().length, 0);
+  scroll.scroll();
+  assert.deepEqual(_queue().map(e => e.path), [WORKINGS_EVENT]);
+  assert.equal(resize.unsubscribed, true);
+});
+
+test('a resize that makes the page fit counts, once the section is on screen', () => {
+  const { Fake, made } = fakeObserver();
+  const resize = fakeScroll();
+  let tall = true;
+  watchWorkings({}, { Observer: Fake, onScroll: () => null, onResize: resize.onScroll,
+    canScroll: () => tall });
+  made[0].fire([{ isIntersecting: true, intersectionRatio: 1 }]);
+  assert.equal(_queue().length, 0);
+  tall = false;
+  resize.scroll();
+  assert.deepEqual(_queue().map(e => e.path), [WORKINGS_EVENT]);
+});
+
+test('a page that fits but has the section off screen does not count', () => {
+  const { Fake, made } = fakeObserver();
+  watchWorkings({}, { Observer: Fake, onScroll: () => null, onResize: () => null,
+    canScroll: () => false });
+  made[0].fire([{ isIntersecting: false, intersectionRatio: 0 }]);
+  assert.equal(_queue().length, 0);
+});
+
 test('scrolling that leaves the section out of view does not count', () => {
   const { Fake, made } = fakeObserver();
   const scroll = fakeScroll();
-  watchWorkings({}, { Observer: Fake, onScroll: scroll.onScroll });
+  watchWorkings({}, { Observer: Fake, onScroll: scroll.onScroll, canScroll: () => true });
   made[0].fire([{ isIntersecting: true, intersectionRatio: 1 }]);
   made[0].fire([{ isIntersecting: false, intersectionRatio: 0 }]);
   scroll.scroll();
