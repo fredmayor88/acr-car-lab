@@ -16,10 +16,7 @@
 // which is what `state.fd` and the URL hash mean. They are not the same number.
 
 import { circumference, finalDriveCombos, kmh, overallRatio } from '../gearing.js';
-import { el, text, clear } from '../svg.js';
-
-const C = { warm: '#F5F2EB', graphite: '#30353A', steel: '#7B858E',
-            walnut: '#7A583B', cyan: '#148FAC' };
+import { C, el, text, clear } from '../svg.js';
 
 /**
  * Cars with an empty `primaries` list have no primary of their own to show.
@@ -68,11 +65,11 @@ export function render(svg, car, state, onPick) {
 
   for (let v = 100; v <= maxPct + 6; v += 10) {
     el(svg, 'line', { x1: xs(v), x2: xs(v), y1: T, y2: bottom,
-                      stroke: C.steel, 'stroke-opacity': 0.16 });
+                      stroke: C.muted, 'stroke-opacity': 0.16 });
     text(svg, xs(v), bottom + 17, v + '%', 'axis', { 'text-anchor': 'middle' });
   }
   el(svg, 'line', { x1: xs(100), x2: xs(100), y1: T, y2: bottom,
-                    stroke: C.steel, 'stroke-opacity': 0.75, 'stroke-width': 1.3 });
+                    stroke: C.muted, 'stroke-opacity': 0.75, 'stroke-width': 1.3 });
 
   rows.forEach((r, i) => {
     const y = T + i * step + step / 2;
@@ -83,12 +80,12 @@ export function render(svg, car, state, onPick) {
     // km/h readout (the two most natural targets) hit a text node and the event was lost.
     if (r.selected) {
       el(svg, 'rect', { x: 6, y: y - 12, width: 1080, height: 24, rx: 2,
-                        fill: C.cyan, 'fill-opacity': 0.07 });
+                        fill: C.accent, 'fill-opacity': 0.07 });
     }
-    el(svg, 'line', { x1: xs(100), x2: xs(r.pct), y1: y, y2: y, stroke: C.steel,
+    el(svg, 'line', { x1: xs(100), x2: xs(r.pct), y1: y, y2: y, stroke: C.muted,
                       'stroke-opacity': 0.42, 'stroke-width': 1.3 });
     el(svg, 'circle', { cx: xs(r.pct), cy: y, r: r.selected ? 6.4 : 5,
-                        fill: r.selected ? C.cyan : C.walnut, stroke: C.warm,
+                        fill: r.selected ? C.accent : C.data, stroke: C.halo,
                         'stroke-width': 1.6 });
     text(svg, L - 12, y + 3.6, r.label, 'val',
          { 'text-anchor': 'end', 'fill-opacity': r.selected ? 1 : 0.72 });

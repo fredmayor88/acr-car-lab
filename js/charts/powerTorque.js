@@ -2,10 +2,7 @@
 // The peaks are annotated with their values rather than the words "peak torque" and
 // "peak power": where they sit on the curve already says which is which.
 
-import { el, text, tip, clear } from '../svg.js';
-
-const C = { warm: '#F5F2EB', graphite: '#30353A', dark: '#212529',
-            steel: '#7B858E', walnut: '#7A583B', cyan: '#148FAC' };
+import { C, el, text, tip, clear } from '../svg.js';
 
 export function layout(car) {
   const curve = car.engine.curve;
@@ -50,18 +47,18 @@ export function render(svg, car, hoverRpm = null) {
 
   for (let v = 0; v <= nmMax; v += 70) {
     el(svg, 'line', { x1: L, x2: R, y1: yt(v), y2: yt(v),
-                      stroke: C.steel, 'stroke-opacity': 0.18 });
+                      stroke: C.muted, 'stroke-opacity': 0.18 });
     text(svg, L - 9, yt(v) + 3.5, v, 'axis', { 'text-anchor': 'end' });
   }
   for (let v = 0; v <= kwMax; v += 70) {
-    text(svg, R + 9, yp(v) + 3.5, v, 'axis', { fill: C.cyan, 'fill-opacity': 0.8 });
+    text(svg, R + 9, yp(v) + 3.5, v, 'axis', { fill: C.accent, 'fill-opacity': 0.8 });
   }
   for (let r = 0; r <= rpmMax; r += 1000) {
     text(svg, xs(r), B + 18, r / 1000 + 'k', 'axis', { 'text-anchor': 'middle' });
   }
 
   el(svg, 'line', { x1: xs(l.redline), x2: xs(l.redline), y1: T, y2: B,
-                    stroke: C.graphite, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
+                    stroke: C.fg, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
                     'stroke-dasharray': '4 4' });
   text(svg, xs(l.redline) - 7, T + 12, 'rev limit', 'lbl', { 'text-anchor': 'end' });
 
@@ -70,34 +67,34 @@ export function render(svg, car, hoverRpm = null) {
     dt += (i ? 'L' : 'M') + xs(r).toFixed(1) + ' ' + yt(nm).toFixed(1);
     dp += (i ? 'L' : 'M') + xs(r).toFixed(1) + ' ' + yp(kw).toFixed(1);
   });
-  el(svg, 'path', { d: dp, fill: 'none', stroke: C.cyan, 'stroke-width': 2.1 });
-  el(svg, 'path', { d: dt, fill: 'none', stroke: C.walnut, 'stroke-width': 2.4 });
+  el(svg, 'path', { d: dp, fill: 'none', stroke: C.accent, 'stroke-width': 2.1 });
+  el(svg, 'path', { d: dt, fill: 'none', stroke: C.data, 'stroke-width': 2.4 });
 
   const mark = (x, y, label, colour) => {
-    el(svg, 'circle', { cx: x, cy: y, r: 4.6, fill: colour, stroke: C.warm,
+    el(svg, 'circle', { cx: x, cy: y, r: 4.6, fill: colour, stroke: C.halo,
                         'stroke-width': 1.7 });
     text(svg, x, y - 12, label, 'val',
          { 'text-anchor': 'middle', fill: colour, 'font-weight': '600' });
   };
   mark(xs(l.peakTorque.rpm), yt(l.peakTorque.nm),
-       `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.walnut);
+       `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.data);
   mark(xs(l.peakPower.rpm), yp(l.peakPower.kw),
-       `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.cyan);
+       `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.accent);
 
-  text(svg, L - 9, T - 16, 'Nm', 'lbl', { 'text-anchor': 'end', fill: C.walnut });
-  text(svg, R + 9, T - 16, 'kW', 'lbl', { fill: C.cyan });
+  text(svg, L - 9, T - 16, 'Nm', 'lbl', { 'text-anchor': 'end', fill: C.data });
+  text(svg, R + 9, T - 16, 'kW', 'lbl', { fill: C.accent });
   text(svg, (L + R) / 2, B + 42, 'engine speed — rpm', 'lbl',
        { 'text-anchor': 'middle' });
 
   if (hoverRpm !== null) {
     const r = readout(car, hoverRpm);
-    el(svg, 'line', { x1: xs(r.rpm), x2: xs(r.rpm), y1: T, y2: B, stroke: C.dark,
+    el(svg, 'line', { x1: xs(r.rpm), x2: xs(r.rpm), y1: T, y2: B, stroke: C.ink,
                       'stroke-opacity': 0.6, 'stroke-width': 1.2,
                       'stroke-dasharray': '3 3' });
-    el(svg, 'circle', { cx: xs(r.rpm), cy: yt(r.nm), r: 4.4, fill: C.walnut,
-                        stroke: C.warm, 'stroke-width': 1.6 });
-    el(svg, 'circle', { cx: xs(r.rpm), cy: yp(r.kw), r: 4.4, fill: C.cyan,
-                        stroke: C.warm, 'stroke-width': 1.6 });
+    el(svg, 'circle', { cx: xs(r.rpm), cy: yt(r.nm), r: 4.4, fill: C.data,
+                        stroke: C.halo, 'stroke-width': 1.6 });
+    el(svg, 'circle', { cx: xs(r.rpm), cy: yp(r.kw), r: 4.4, fill: C.accent,
+                        stroke: C.halo, 'stroke-width': 1.6 });
     // Parks top-left. Bottom-left was tried and rejected: both curves start at zero,
     // and zero is the bottom of the plot, so bottom-left is the one corner every car's
     // torque curve is guaranteed to pass through at low rpm — it hid the curve. The

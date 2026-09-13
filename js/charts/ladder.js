@@ -12,10 +12,7 @@
 
 import { circumference, finalDriveCombos, gearAtSpeed, gearTops, overallRatio, rpmAt }
   from '../gearing.js';
-import { el, text, tip, tipWidth, clear } from '../svg.js';
-
-const C = { warm: '#F5F2EB', graphite: '#30353A', steel: '#7B858E',
-            walnut: '#7A583B', cyan: '#148FAC' };
+import { C, el, text, tip, tipWidth, clear } from '../svg.js';
 
 /**
  * The overall ratio below the individual gear, for one gear set (default: the selected
@@ -70,7 +67,7 @@ export function render(svg, car, state, onPickSet, hover = null) {
     const v = p * l.base / 100;
     if (v > l.vmax) break;
     el(svg, 'line', { x1: xs(v), x2: xs(v), y1: T - 10, y2: bottom,
-                      stroke: C.steel, 'stroke-opacity': 0.16 });
+                      stroke: C.muted, 'stroke-opacity': 0.16 });
     text(svg, xs(v), T - 20, p + '%', 'axis', { 'text-anchor': 'middle' });
   }
   text(svg, (L + R) / 2, T - 38, 'relative to the slowest gear', 'lbl',
@@ -83,26 +80,26 @@ export function render(svg, car, state, onPickSet, hover = null) {
     const y = T + i * step + step / 2;
     if (lane.selected) {
       el(svg, 'rect', { x: 16, y: y - 23, width: R - 6, height: 46, rx: 2,
-                        fill: C.cyan, 'fill-opacity': 0.06 });
+                        fill: C.accent, 'fill-opacity': 0.06 });
     }
     // starts at a standing start, so first gear reads as a span like every other gear
     el(svg, 'line', { x1: xs(0), x2: xs(lane.tops[lane.tops.length - 1]), y1: y, y2: y,
-                      stroke: C.steel, 'stroke-width': 1.3, 'stroke-opacity': 0.5 });
+                      stroke: C.muted, 'stroke-width': 1.3, 'stroke-opacity': 0.5 });
     lane.tops.forEach((v, gi) => {
-      el(svg, 'circle', { cx: xs(v), cy: y, r: 9, fill: C.walnut, stroke: C.warm,
+      el(svg, 'circle', { cx: xs(v), cy: y, r: 9, fill: C.data, stroke: C.halo,
                           'stroke-width': 1.6 });
       text(svg, xs(v), y + 3.3, gi + 1, 'pip', { 'text-anchor': 'middle' });
       text(svg, xs(v), y - 15, v.toFixed(0), 'val', { 'text-anchor': 'middle' });
     });
     const name = text(svg, L - 22, y + 4, lane.label, 'rowlbl', {
-      'text-anchor': 'end', fill: lane.selected ? C.cyan : C.graphite,
+      'text-anchor': 'end', fill: lane.selected ? C.accent : C.fg,
       'font-weight': lane.selected ? '600' : '400',
     });
     name.setAttribute('class', 'rowlbl hit');
     name.addEventListener('click', () => onPickSet(i));
     if (lane.selected) {
       text(svg, L - 22, y + 19, 'selected', 'lbl',
-           { 'text-anchor': 'end', fill: C.cyan });
+           { 'text-anchor': 'end', fill: C.accent });
     }
   });
 
@@ -111,9 +108,9 @@ export function render(svg, car, state, onPickSet, hover = null) {
     const speed = clampSpeed(l, lane, hover.speed);
     const y = T + lane * step + step / 2;
     el(svg, 'line', { x1: xs(speed), x2: xs(speed), y1: T - 10, y2: bottom,
-                      stroke: '#212529', 'stroke-width': 1.3, 'stroke-opacity': 0.7,
+                      stroke: C.ink, 'stroke-width': 1.3, 'stroke-opacity': 0.7,
                       'stroke-dasharray': '3 3' });
-    el(svg, 'circle', { cx: xs(speed), cy: y, r: 4.4, fill: '#212529', stroke: C.warm,
+    el(svg, 'circle', { cx: xs(speed), cy: y, r: 4.4, fill: C.ink, stroke: C.halo,
                         'stroke-width': 1.6 });
     const lines = [hoverLine(car, state, lane, speed)];
     const tops = l.lanes[lane].tops;

@@ -6,10 +6,7 @@
 
 import { REV_FLOOR, circumference, gearTops, kmh, rpmAt } from '../gearing.js';
 import { fdValue } from './ladder.js';
-import { el, text, clear } from '../svg.js';
-
-const C = { warm: '#F5F2EB', dark: '#212529', steel: '#7B858E',
-            walnut: '#7A583B', cyan: '#148FAC', warn: '#9C3B2E' };
+import { C, el, text, clear } from '../svg.js';
 
 const circOf = (car, state) =>
   circumference(car.tyres[state.surface].free_radius, state.k);
@@ -72,7 +69,7 @@ export function render(svg, car, state, hover = null) {
 
   for (let v = 0; v <= l.vmax; v += 20) {
     el(svg, 'line', { x1: xs(v), x2: xs(v), y1: T - 6, y2: bottom,
-                      stroke: C.steel, 'stroke-opacity': 0.16 });
+                      stroke: C.muted, 'stroke-opacity': 0.16 });
     if (v % 40 === 0) text(svg, xs(v), bottom + 19, v, 'axis',
                            { 'text-anchor': 'middle' });
   }
@@ -81,7 +78,7 @@ export function render(svg, car, state, hover = null) {
     const y = T + i * step + step / 2;
     const on = i === hot;
     el(svg, 'line', { x1: xs(bar.from), x2: xs(bar.to), y1: y, y2: y,
-                      stroke: C.walnut, 'stroke-width': on ? 11 : 8,
+                      stroke: C.data, 'stroke-width': on ? 11 : 8,
                       'stroke-opacity': on ? 0.95 : 0.45, 'stroke-linecap': 'round' });
     text(svg, L - 16, y + 4, 'Gear ' + (i + 1), 'rowlbl',
          { 'text-anchor': 'end', 'fill-opacity': on ? 1 : 0.7,
@@ -90,24 +87,24 @@ export function render(svg, car, state, hover = null) {
          { 'fill-opacity': on ? 1 : 0.6 });
   });
 
-  text(svg, 16, T - 44, car.gear_sets[state.set].label, 'lbl', { fill: C.cyan });
+  text(svg, 16, T - 44, car.gear_sets[state.set].label, 'lbl', { fill: C.accent });
 
   if (hover) {
     const r = shiftReadout(car, state, hover.gear, hover.speed);
     const speed = r.speed;
     el(svg, 'line', { x1: xs(speed), x2: xs(speed), y1: T - 34, y2: bottom,
-                      stroke: C.dark, 'stroke-width': 1.3, 'stroke-opacity': 0.7,
+                      stroke: C.ink, 'stroke-width': 1.3, 'stroke-opacity': 0.7,
                       'stroke-dasharray': '3 3' });
     // the readout sits above the plot, so it covers no bar
     const label = `${speed.toFixed(0)} km/h   ·   gear ${r.gear + 1}`
                 + `   ·   ${r.rpm.toFixed(0)} rpm`;
     const w = label.length * 6.4 + 24;
     const x = Math.min(Math.max(xs(speed) - w / 2, 4), 1096 - w);
-    el(svg, 'rect', { x, y: T - 62, width: w, height: 25, rx: 3, fill: C.dark });
+    el(svg, 'rect', { x, y: T - 62, width: w, height: 25, rx: 3, fill: C.tipBg });
     text(svg, x + w / 2, T - 44.5, label, 'val',
-         { 'text-anchor': 'middle', fill: C.warm, 'font-weight': '600' });
+         { 'text-anchor': 'middle', fill: C.tipFg, 'font-weight': '600' });
     el(svg, 'circle', { cx: xs(speed), cy: T + r.gear * step + step / 2, r: 5,
-                        fill: C.dark, stroke: C.warm, 'stroke-width': 1.7 });
+                        fill: C.ink, stroke: C.halo, 'stroke-width': 1.7 });
 
     const chip = (target, arrow, warn) => {
       const y = T + target.gear * step + step / 2;
@@ -115,13 +112,14 @@ export function render(svg, car, state, hover = null) {
               + (warn ? '   over limit' : '');
       const cw = t.length * 6.4 + 18;
       el(svg, 'circle', { cx: xs(speed), cy: y, r: 4.4,
-                          fill: warn ? C.warn : C.dark, stroke: C.warm,
+                          fill: warn ? C.warn : C.ink, stroke: C.halo,
                           'stroke-width': 1.6 });
       const cx = chipX(xs(speed), cw);
       el(svg, 'rect', { x: cx, y: y - 10.5, width: cw, height: 21,
-                        rx: 2, fill: warn ? C.warn : C.dark });
+                        rx: 2, fill: warn ? C.warn : C.tipBg,
+                        stroke: warn ? C.warnEdge : 'none', 'stroke-width': 1.2 });
       text(svg, cx + cw / 2, y + 3.8, t, 'val',
-           { 'text-anchor': 'middle', fill: C.warm, 'font-weight': '600' });
+           { 'text-anchor': 'middle', fill: warn ? C.onWarn : C.tipFg, 'font-weight': '600' });
     };
     if (r.up) chip(r.up, '↑ upshift', false);
     if (r.down) chip(r.down, '↓ downshift', r.overRev);

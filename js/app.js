@@ -295,7 +295,7 @@ function syncControls() {
     const on = state.draw.includes(i);
     node.classList.toggle('on', on);
     const box = node.querySelector('i');
-    box.style.background = on ? colourFor(i) : '#fff';
+    box.style.background = on ? colourFor(i) : 'var(--field)';
     box.style.borderColor = on ? colourFor(i) : 'var(--line)';
   });
 }

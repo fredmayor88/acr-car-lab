@@ -12,9 +12,7 @@
 
 import { SET_COLOURS, circumference, kmh } from '../gearing.js';
 import { fdValue } from './ladder.js';
-import { el, text, tip, tipWidth, clear } from '../svg.js';
-
-const C = { warm: '#F5F2EB', graphite: '#30353A', steel: '#7B858E' };
+import { C, el, text, tip, tipWidth, clear } from '../svg.js';
 
 /** Plot frame in viewBox units. The km/h title sits above the plot, clear of the ticks. */
 export const FRAME = Object.freeze({ L: 64, R: 876, T: 38, B: 346, H: 416, titleY: 20 });
@@ -79,14 +77,14 @@ export function render(svg, car, state, hover = null) {
 
   for (let v = 0; v <= l.vmax; v += 40) {
     el(svg, 'line', { x1: L, x2: R, y1: ys(v), y2: ys(v),
-                      stroke: C.steel, 'stroke-opacity': 0.16 });
+                      stroke: C.muted, 'stroke-opacity': 0.16 });
     text(svg, L - 9, ys(v) + 3.5, v, 'axis', { 'text-anchor': 'end' });
   }
   for (let r = 0; r <= rpmMax; r += 1000) {
     text(svg, xs(r), B + 18, r / 1000 + 'k', 'axis', { 'text-anchor': 'middle' });
   }
   el(svg, 'line', { x1: xs(car.engine.redline), x2: xs(car.engine.redline), y1: T, y2: B,
-                    stroke: C.graphite, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
+                    stroke: C.fg, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
                     'stroke-dasharray': '4 4' });
   text(svg, xs(car.engine.redline) - 7, T + 12, 'rev limit', 'lbl',
        { 'text-anchor': 'end' });
@@ -107,7 +105,7 @@ export function render(svg, car, state, hover = null) {
       const v = kmh(hover.rpm, line.total, l.circ);
       const colour = SET_COLOURS[line.set % SET_COLOURS.length];
       el(svg, 'circle', { cx: xs(hover.rpm), cy: ys(v), r: 5, fill: colour,
-                          stroke: C.warm, 'stroke-width': 1.7 });
+                          stroke: C.halo, 'stroke-width': 1.7 });
       const lines = [`${car.gear_sets[line.set].label}  ·  gear ${line.gear + 1}`,
                      `${hover.rpm.toFixed(0)} rpm    ${v.toFixed(0)} km/h`];
       // tooltip sits left of the point by default, but that runs off the viewBox's
