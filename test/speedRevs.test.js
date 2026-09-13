@@ -160,3 +160,36 @@ test('the hover tooltip never starts above the viewBox', () => {
   assert.equal(tipTop(FRAME.T), 4);
   assert.equal(tipTop(200), 154);
 });
+
+// --- the page-wide rev ceiling ----------------------------------------------------------
+
+test('at the default ceiling the lines are what they always were, ending at the rev limit', () => {
+  assert.deepEqual(layout(car, { ...state, ceil: 8750 }), layout(car, state));
+  assert.equal(layout(car, state).ceil, 8750);
+});
+
+test('a lowered ceiling ends every line at the ceiling rpm, and vmax follows', () => {
+  const full = layout(car, { ...state, draw: [0, 1] });
+  const low = layout(car, { ...state, draw: [0, 1], ceil: 7000 });
+  assert.equal(low.ceil, 7000);
+  low.lines.forEach((line, i) => {
+    assert.equal(line.total, full.lines[i].total);
+    assert.ok(Math.abs(line.topSpeed - full.lines[i].topSpeed * 0.8) < 1e-9);
+  });
+  assert.ok(Math.abs(low.vmax - full.vmax * 0.8) < 1e-9);
+  assert.equal(Math.round(low.lines[4].topSpeed), 172);
+});
+
+test('nearestLine against the ceiling: a line at half the ceiling sits at half its top', () => {
+  const low = layout(car, { ...state, ceil: 7000 });
+  const target = low.lines[3];
+  const hit = nearestLine(low.lines, low.ceil, 3500, target.topSpeed / 2);
+  assert.equal(hit.gear, target.gear);
+});
+
+test('hoverRpm never passes the ceiling', async () => {
+  const { hoverRpm } = await import('../js/charts/speedRevs.js');
+  assert.equal(hoverRpm(9999, 7000), 7000);
+  assert.equal(hoverRpm(-5, 7000), 0);
+  assert.equal(hoverRpm(4200, 7000), 4200);
+});

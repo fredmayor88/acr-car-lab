@@ -42,6 +42,12 @@ export const SET_COLOURS_DARK = Object.freeze(
   ['#B89873', '#25C4E2', '#F5F2EB', '#D7C5AF', '#148FAC',
    '#A6ABAF', '#8DDBE7', '#997857', '#7B858E', '#9A8F80']);
 
+/**
+ * The rpm every "top speed" on the page is read at: the rev ceiling when it has been lowered,
+ * otherwise the rev limit. The over-limit downshift warning still uses the real limit.
+ */
+export const ceilingOf = (car, state) => state?.ceil ?? car.engine.redline;
+
 /** A loaded tyre rolls on a smaller radius than the stored free one. */
 export const circumference = (freeRadius, factor) => 2 * Math.PI * freeRadius * factor;
 

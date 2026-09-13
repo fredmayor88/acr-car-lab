@@ -44,3 +44,23 @@ test('at peak torque the torque percentage is exactly 100', () => {
 test('at peak power the power percentage is exactly 100', () => {
   assert.equal(readout(car, 7750).kwPct, 100);
 });
+
+// --- the page-wide rev ceiling ----------------------------------------------------------
+
+test('no ceiling marker at the rev limit, or with no ceiling given', async () => {
+  const { ceilingMarker } = await import('../js/charts/powerTorque.js');
+  assert.equal(ceilingMarker(8750, 8750), null);
+  assert.equal(ceilingMarker(8750, undefined), null);
+  assert.equal(layout(car).ceilMarker, null);
+  assert.equal(layout(car, 8750).ceilMarker, null);
+});
+
+test('a lowered ceiling gets a marker at its rpm, and the curves do not change', async () => {
+  const { ceilingMarker } = await import('../js/charts/powerTorque.js');
+  assert.deepEqual(ceilingMarker(8750, 7000), { rpm: 7000, label: 'rev ceiling' });
+  const low = layout(car, 7000);
+  assert.deepEqual(low.ceilMarker, { rpm: 7000, label: 'rev ceiling' });
+  assert.deepEqual(low.points, layout(car).points);
+  assert.equal(low.redline, 8750);
+  assert.deepEqual(readout(car, 5000), readout(car, 5000));
+});

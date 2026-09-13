@@ -1,10 +1,25 @@
-// Chart 1 — power and torque. No parameters: this one never changes with the controls.
+// Chart 1 — power and torque. The curves never change with the controls; the only thing
+// that does is a dashed rev ceiling marker, drawn when the ceiling is below the rev limit.
 // The peaks are annotated with their values rather than the words "peak torque" and
 // "peak power": where they sit on the curve already says which is which.
 
 import { C, el, text, tip, clear } from '../svg.js';
 
-export function layout(car) {
+/** The rev ceiling marker, or null when the ceiling is the rev limit (or not given). */
+export const ceilingMarker = (redline, ceil) =>
+  ceil != null && ceil < redline ? { rpm: ceil, label: 'rev ceiling' } : null;
+
+/**
+ * The dashed ceiling line, and its label low down on the plot: every curve that reaches the
+ * ceiling is high up there, and the rev limit's own label takes the top.
+ */
+export function drawCeilingMarker(svg, x, T, B) {
+  el(svg, 'line', { x1: x, x2: x, y1: T, y2: B, stroke: C.muted, 'stroke-opacity': 0.9,
+                    'stroke-width': 1.2, 'stroke-dasharray': '2 3' });
+  text(svg, x - 7, B - 8, 'rev ceiling', 'lbl', { 'text-anchor': 'end' });
+}
+
+export function layout(car, ceil = car.engine.redline) {
   const curve = car.engine.curve;
   const at = rpm => curve.find(r => r[0] === rpm) || curve[curve.length - 1];
   const pt = at(car.engine.peak_torque_rpm);
@@ -16,6 +31,7 @@ export function layout(car) {
     peakPower: { rpm: pp[0], kw: pp[2] },
     maxNm: Math.max(...curve.map(r => r[1])),
     maxKw: Math.max(...curve.map(r => r[2])),
+    ceilMarker: ceilingMarker(car.engine.redline, ceil),
   };
 }
 
@@ -33,10 +49,10 @@ export function readout(car, rpm) {
   };
 }
 
-export function render(svg, car, hoverRpm = null) {
+export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
   clear(svg);
   svg.setAttribute('viewBox', '0 0 1100 340');
-  const l = layout(car);
+  const l = layout(car, ceil);
   const L = 64, R = 1030, T = 46, B = 292;
   const rpmMax = Math.ceil(l.redline / 1000) * 1000 + 250;
   const nmMax = Math.ceil(l.maxNm / 70) * 70;
@@ -61,6 +77,7 @@ export function render(svg, car, hoverRpm = null) {
                     stroke: C.fg, 'stroke-opacity': 0.5, 'stroke-width': 1.2,
                     'stroke-dasharray': '4 4' });
   text(svg, xs(l.redline) - 7, T + 12, 'rev limit', 'lbl', { 'text-anchor': 'end' });
+  if (l.ceilMarker) drawCeilingMarker(svg, xs(l.ceilMarker.rpm), T, B);
 
   let dt = '', dp = '';
   l.points.forEach(([r, nm, kw], i) => {

@@ -10,7 +10,7 @@
 // (final_drive.primaries non-empty) replaces every lane's primary uniformly — see
 // overallRatio / effectivePrimary in js/gearing.js.
 
-import { circumference, finalDriveCombos, gearAtSpeed, gearTops, overallRatio, rpmAt }
+import { ceilingOf, circumference, finalDriveCombos, gearAtSpeed, gearTops, overallRatio, rpmAt }
   from '../gearing.js';
 import { C, el, text, tip, tipWidth, clear } from '../svg.js';
 
@@ -31,11 +31,19 @@ export function layout(car, state) {
   const circ = circOf(car, state);
   const lanes = car.gear_sets.map((set, i) => ({
     label: `${set.label}   (${set.gears.length}-speed)`,
-    tops: gearTops(set.gears, fdValue(car, state, i), circ, car.engine.redline),
+    tops: gearTops(set.gears, fdValue(car, state, i), circ, ceilingOf(car, state)),
     selected: i === state.set,
   }));
   const all = lanes.flatMap(l => l.tops);
   return { lanes, base: Math.min(...all), vmax: Math.max(...all) * 1.05 };
+}
+
+/** The x axis title: the rev limit, or the ceiling the tops are read at when it is lower. */
+export function axisTitle(car, state) {
+  const ceil = ceilingOf(car, state);
+  return ceil === car.engine.redline
+    ? `speed at the ${ceil} rpm rev limit — km/h`
+    : `speed at the ${ceil} rpm rev ceiling — km/h`;
 }
 
 /** A hovered speed, held inside its lane: a standing start up to that lane's top gear. */
@@ -147,8 +155,7 @@ export function render(svg, car, state, hover = null) {
         y - 14, lines);
   }
 
-  text(svg, (L + R) / 2, bottom + 42,
-       `speed at the ${car.engine.redline} rpm rev limit — km/h`, 'lbl',
+  text(svg, (L + R) / 2, bottom + 42, axisTitle(car, state), 'lbl',
        { 'text-anchor': 'middle' });
   return { laneAt: (p, how) => laneAtPoint(p, l.lanes.length, how),
            xToSpeed: x => Math.max(0, (x - L) / (R - L) * l.vmax),

@@ -407,10 +407,7 @@ function renderFinalDrive() {
   section.querySelector('.notadjustable')?.remove();
   if (car.final_drive) {
     svg.style.display = '';
-    section.querySelector('.cap').textContent =
-      'Every selectable combination. 100% is the shortest. Speed is top gear of '
-      + `${car.gear_sets[state.set].label.toLowerCase()} at the rev limit. `
-      + 'Click a row to use that final drive.';
+    section.querySelector('.cap').textContent = finalDrive.caption(car, state);
     finalDrive.render(svg, car, state, i => {
       state.fd = i;
       track('change-final-drive');
@@ -427,7 +424,9 @@ function renderFinalDrive() {
 
 // One entry per chart, so a hover redraws only the chart under the pointer.
 const RENDER = {
-  power: () => { maps.power = powerTorque.render(svgOf('power'), car, hover.power); },
+  power: () => {
+    maps.power = powerTorque.render(svgOf('power'), car, hover.power, state.ceil);
+  },
   fd: renderFinalDrive,
   ladder: () => {
     maps.ladder = ladder.render(svgOf('ladder'), car, state, hover.ladder);

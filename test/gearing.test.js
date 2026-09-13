@@ -259,3 +259,14 @@ test('every car in data/ produces finite top speeds for every gear set', () => {
     });
   }
 });
+
+// --- the page-wide rev ceiling ----------------------------------------------------------
+
+test('ceilingOf: the state ceiling, or the rev limit when there is none', async () => {
+  const { ceilingOf } = await import('../js/gearing.js');
+  const car = { engine: { redline: 8750 } };
+  assert.equal(ceilingOf(car, { ceil: 7000 }), 7000);
+  assert.equal(ceilingOf(car, { ceil: 8750 }), 8750);
+  assert.equal(ceilingOf(car, {}), 8750);
+  assert.equal(ceilingOf(car, undefined), 8750);
+});

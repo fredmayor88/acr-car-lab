@@ -127,3 +127,29 @@ test('every car in data/ lays out without throwing, on every gear set', () => {
     }
   }
 });
+
+// --- the page-wide rev ceiling ----------------------------------------------------------
+
+test('a lowered ceiling reads km/h at the ceiling; ratios and percentages do not move', () => {
+  const full = layout(stratos, stateFor(stratos));
+  assert.deepEqual(layout(stratos, stateFor(stratos, { ceil: stratos.engine.redline })), full);
+  const low = layout(stratos, stateFor(stratos, { ceil: 7000 }));
+  low.rows.forEach((r, i) => {
+    assert.equal(r.pct, full.rows[i].pct);
+    assert.equal(r.value, full.rows[i].value);
+    assert.ok(Math.abs(r.kmh - full.rows[i].kmh * 7000 / 8750) < 1e-9);
+  });
+  const stock = low.rows.find(r => r.primary.name === '33//31*31//30' && r.option.name === '65//19');
+  assert.equal(Math.round(stock.kmh), 172);
+});
+
+test('the caption names the rev limit at the default and the ceiling when it is lowered', async () => {
+  const { caption } = await import('../js/charts/finalDrive.js');
+  assert.equal(caption(stratos, stateFor(stratos)),
+    'Every selectable combination. 100% is the shortest. Speed is top gear of gear set 1 '
+    + 'at the rev limit. Click a row to use that final drive.');
+  assert.equal(caption(stratos, stateFor(stratos, { ceil: 8750 })), caption(stratos, stateFor(stratos)));
+  assert.equal(caption(stratos, stateFor(stratos, { set: 1, ceil: 7000 })),
+    'Every selectable combination. 100% is the shortest. Speed is top gear of gear set 2 '
+    + 'at the 7000 rpm rev ceiling. Click a row to use that final drive.');
+});

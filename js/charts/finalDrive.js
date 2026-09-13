@@ -15,7 +15,7 @@
 // Row order is display order; `row.index` is the combo's index in `finalDriveCombos`,
 // which is what `state.fd` and the URL hash mean. They are not the same number.
 
-import { circumference, finalDriveCombos, kmh, overallRatio } from '../gearing.js';
+import { ceilingOf, circumference, finalDriveCombos, kmh, overallRatio } from '../gearing.js';
 import { C, el, text, clear } from '../svg.js';
 
 /**
@@ -24,6 +24,15 @@ import { C, el, text, clear } from '../svg.js';
  */
 export const comboLabel = combo =>
   combo.primary ? `${combo.primary.name}  ·  ${combo.option.name}` : combo.option.name;
+
+/** The section caption: which gear set and rpm the km/h column is read at. */
+export function caption(car, state) {
+  const ceil = ceilingOf(car, state);
+  const at = ceil === car.engine.redline ? 'the rev limit' : `the ${ceil} rpm rev ceiling`;
+  return 'Every selectable combination. 100% is the shortest. Speed is top gear of '
+    + `${car.gear_sets[state.set].label.toLowerCase()} at ${at}. `
+    + 'Click a row to use that final drive.';
+}
 
 export function layout(car, state) {
   if (!car.final_drive) return { adjustable: false, rows: [] };
@@ -46,7 +55,7 @@ export function layout(car, state) {
   const shortest = rows[0].value;
   for (const r of rows) {
     r.pct = shortest / r.value * 100;
-    r.kmh = kmh(car.engine.redline, top * r.value, circ);
+    r.kmh = kmh(ceilingOf(car, state), top * r.value, circ);
   }
   return { adjustable: true, rows };
 }

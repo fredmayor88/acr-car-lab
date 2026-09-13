@@ -10,8 +10,9 @@
 // wrong on any set other than the selected one. This exact bug already shipped once in this
 // project's PNG charts (see js/charts/ladder.js).
 
-import { SET_COLOURS, circumference, kmh } from '../gearing.js';
+import { SET_COLOURS, ceilingOf, circumference, kmh } from '../gearing.js';
 import { fdValue } from './ladder.js';
+import { ceilingMarker, drawCeilingMarker } from './powerTorque.js';
 import { C, el, text, tip, tipWidth, clear } from '../svg.js';
 
 /** Plot frame in viewBox units. The km/h title sits above the plot, clear of the ticks. */
@@ -22,7 +23,8 @@ const COLUMN_STEP = 26;
 const LABEL_ROOM = 22;          // widest gear number plus a margin
 
 /**
- * One gear-number column per drawn set, right of the rev-limit line. The viewBox widens
+ * One gear-number column per drawn set, right of where the lines end (the rev limit, or the
+ * ceiling when it is lower). The viewBox widens
  * to fit them rather than letting the last columns run off the edge.
  */
 export function labelColumns(redlineX, count) {
@@ -33,7 +35,11 @@ export function labelColumns(redlineX, count) {
 /** Top of a hover tooltip drawn above its point, held inside the viewBox. */
 export const tipTop = pointY => Math.max(4, pointY - 46);
 
+/** The rpm a hover reads: never below zero, never past the ceiling the lines end at. */
+export const hoverRpm = (rpm, ceil) => Math.max(0, Math.min(ceil, rpm));
+
 export function layout(car, state) {
+  const ceil = ceilingOf(car, state);
   const circ = circumference(car.tyres[state.surface].free_radius, state.k);
   const lines = [];
   for (const si of state.draw) {
@@ -41,22 +47,22 @@ export function layout(car, state) {
     car.gear_sets[si].gears.forEach((g, gi) => {
       const total = g.value * fd;
       lines.push({ set: si, gear: gi, total,
-                   topSpeed: kmh(car.engine.redline, total, circ) });
+                   topSpeed: kmh(ceil, total, circ) });
     });
   }
-  return { lines, circ, vmax: Math.max(...lines.map(l => l.topSpeed)) * 1.06 };
+  return { lines, circ, ceil, vmax: Math.max(...lines.map(l => l.topSpeed)) * 1.06 };
 }
 
 /**
  * The drawn line closest to a point. Every line runs straight from the origin to its top
- * speed at the rev limit, so the speed it shows at any rpm is a simple proportion — no
+ * speed at `ceil` (the rev limit unless lowered), so the speed it shows at any rpm is a simple proportion — no
  * need for the circumference here.
  */
-export function nearestLine(lines, redline, rpm, speed) {
+export function nearestLine(lines, ceil, rpm, speed) {
   let best = null;
   let bestDistance = Infinity;
   for (const line of lines) {
-    const distance = Math.abs(line.topSpeed * (rpm / redline) - speed);
+    const distance = Math.abs(line.topSpeed * (rpm / ceil) - speed);
     if (distance < bestDistance) {
       bestDistance = distance;
       best = line;
@@ -73,7 +79,7 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
   const rpmMax = Math.ceil(car.engine.redline / 1000) * 1000 + 300;
   const xs = r => L + (r / rpmMax) * (R - L);
   const ys = v => B - (v / l.vmax) * (B - T);
-  const cols = labelColumns(xs(car.engine.redline), state.draw.length);
+  const cols = labelColumns(xs(l.ceil), state.draw.length);
   svg.setAttribute('viewBox', `0 0 ${cols.width} ${FRAME.H}`);
 
   for (let v = 0; v <= l.vmax; v += 40) {
@@ -89,10 +95,12 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
                     'stroke-dasharray': '4 4' });
   text(svg, xs(car.engine.redline) - 7, T + 12, 'rev limit', 'lbl',
        { 'text-anchor': 'end' });
+  const marker = ceilingMarker(car.engine.redline, l.ceil);
+  if (marker) drawCeilingMarker(svg, xs(marker.rpm), T, B);
 
   l.lines.forEach(line => {
     const colour = colours[line.set % colours.length];
-    el(svg, 'line', { x1: xs(0), x2: xs(car.engine.redline), y1: ys(0),
+    el(svg, 'line', { x1: xs(0), x2: xs(l.ceil), y1: ys(0),
                       y2: ys(line.topSpeed), stroke: colour, 'stroke-width': 2.1,
                       'stroke-opacity': 0.85 });
     // one label column per gear set, so two sets never collide
@@ -122,9 +130,9 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
   text(svg, L - 9, FRAME.titleY, 'km/h', 'lbl', { 'text-anchor': 'end' });
   return {
     atPoint(x, y) {
-      const rpm = Math.max(0, Math.min(car.engine.redline, (x - L) / (R - L) * rpmMax));
+      const rpm = hoverRpm((x - L) / (R - L) * rpmMax, l.ceil);
       const speed = Math.max(0, (B - y) / (B - T) * l.vmax);
-      const line = nearestLine(l.lines, car.engine.redline, rpm, speed);
+      const line = nearestLine(l.lines, l.ceil, rpm, speed);
       return line ? { set: line.set, gear: line.gear, rpm } : null;
     },
   };

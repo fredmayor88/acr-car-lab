@@ -180,3 +180,29 @@ test('laneAtPoint, fine: only on the name box itself, never beside a short name'
   assert.equal(laneAtPoint({ x: 130, y }, 3, { coarse: false, nameBox: () => undefined }), null,
     'no name node measured, nothing picked');
 });
+
+// --- the page-wide rev ceiling ----------------------------------------------------------
+
+test('at the default ceiling the lanes and the axis title are what they always were', async () => {
+  const { axisTitle } = await import('../js/charts/ladder.js');
+  assert.deepEqual(layout(car, { ...state, ceil: 8750 }), layout(car, state));
+  assert.equal(axisTitle(car, state), 'speed at the 8750 rpm rev limit — km/h');
+  assert.equal(axisTitle(car, { ...state, ceil: 8750 }), 'speed at the 8750 rpm rev limit — km/h');
+});
+
+test('a lowered ceiling reads every lane top at the ceiling rpm, and the relative base follows', async () => {
+  const { axisTitle } = await import('../js/charts/ladder.js');
+  const full = layout(car, state);
+  const low = layout(car, { ...state, ceil: 7000 });
+  low.lanes.forEach((lane, i) => lane.tops.forEach((v, gi) =>
+    assert.ok(Math.abs(v - full.lanes[i].tops[gi] * 7000 / 8750) < 1e-9)));
+  assert.ok(Math.abs(low.base - full.base * 0.8) < 1e-9);
+  assert.ok(Math.abs(low.vmax - full.vmax * 0.8) < 1e-9);
+  assert.equal(Math.round(low.lanes[0].tops[4]), 172);
+  assert.equal(axisTitle(car, { ...state, ceil: 7000 }), 'speed at the 7000 rpm rev ceiling — km/h');
+});
+
+test('hover past the last dot under a lowered ceiling clamps to the ceiling rpm', () => {
+  assert.match(hoverLine(car, { ...state, ceil: 7000 }, 0, 260),
+    /^172 km\/h {2}· {2}gear 5 {2}· {2}7000 rpm$/);
+});
