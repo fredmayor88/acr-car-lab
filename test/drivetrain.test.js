@@ -165,9 +165,28 @@ test('every car has a drivetrain page that links back to its gears page', () => 
   }
 });
 
-test('each gears page links to its drivetrain page', () => {
+// The drivetrain pages are generated and kept current but not published yet: nothing on the site
+// links to them (PUBLISH_DRIVETRAIN_LINKS in the exporter), and they ask not to be indexed.
+test('no gears page links to a drivetrain page yet', () => {
   for (const d of carDirs) {
-    assert.ok(read(`${d}/gears/index.html`).includes('<a class="crumb" href="../drivetrain/">'), d);
+    const html = read(`${d}/gears/index.html`);
+    assert.doesNotMatch(html, /drivetrain\//, d);
+    assert.doesNotMatch(html, /Drivetrain notes/, d);
+    assert.ok(html.includes('<a class="crumb" href="../../">All cars'), d);
+  }
+});
+
+test('every drivetrain page is still generated, asks not to be indexed, and has no engine curve fact', () => {
+  for (const d of carDirs) {
+    const html = read(`${d}/drivetrain/index.html`);
+    const head = html.slice(0, html.indexOf('</head>'));
+    assert.ok(head.includes('<meta name="robots" content="noindex">'), d);
+    assert.doesNotMatch(html, /Engine curve|Own curve|engine curve of its own/, d);
+    assert.doesNotMatch(html, /averag/i, d);
+    assert.doesNotMatch(html, /Fred/, d);
+  }
+  for (const page of ['index.html', ...carDirs.map(d => `${d}/gears/index.html`)]) {
+    assert.doesNotMatch(read(page), /noindex/, page);
   }
 });
 
@@ -231,7 +250,7 @@ test('every drivetrain page opens its workings with the speed formulas and where
     assert.deepEqual(lines.slice(0, 3), [
       'speed (km/h) = rpm × tyre circumference (m) × 0.06 ÷ total ratio',
       'total ratio = primary × gear × final drive',
-      `tyre circumference = 2π × free radius × ${DEFAULT_FACTOR}`,
+      `tyre circumference = 2π × free radius × ${DEFAULT_FACTOR.toFixed(4)}`,
     ], d);
     assert.ok(decode(work).includes('<p>rpm × tyre circumference ÷ total ratio is metres per minute; × 0.06 (× 60 minutes per hour ÷ 1000 metres per kilometre) turns that into km/h.</p>'), d);
     // the 0.06 sentence sits directly after the speed line
@@ -239,12 +258,10 @@ test('every drivetrain page opens its workings with the speed formulas and where
   }
 });
 
-test('the picker keeps its 18 gears links and adds 18 drivetrain links below them', () => {
+test('the picker keeps its 18 gears links and links no drivetrain page', () => {
   const html = read('index.html');
   const gears = [...html.matchAll(/href="([a-z0-9-]+)\/gears\/"/g)].map(m => m[1]);
-  const drivetrain = [...html.matchAll(/href="([a-z0-9-]+)\/drivetrain\/"/g)].map(m => m[1]);
   assert.equal(gears.length, 18);
-  assert.deepEqual(drivetrain, gears);
-  assert.ok(html.lastIndexOf('/gears/"') < html.indexOf('<h2>Drivetrain notes</h2>'));
-  assert.ok(html.indexOf('<h2>Drivetrain notes</h2>') < html.indexOf('/drivetrain/"'));
+  assert.doesNotMatch(html, /drivetrain\//);
+  assert.doesNotMatch(html, /Drivetrain notes|dtlist/);
 });

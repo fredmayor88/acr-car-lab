@@ -2,6 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
 <script>(function(){try{var t=localStorage.getItem('acr-car-lab-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}})()</script>
 <title>Alfa Romeo GTA 1300 Junior 1972 — drivetrain — ACR Car Lab</title>
@@ -22,29 +23,33 @@
     <h1>Alfa Romeo GTA 1300 Junior 1972 — drivetrain</h1>
   </header>
 <section class="top" id="facts">
-<dl class="facts"><dt>Layout</dt><dd>Rear-wheel drive</dd><dt>Gearing settings</dt><dd><ul class="settings"><li><span class="setname">Gear Set</span> 5 gear sets, all 5-speed</li><li><span class="setname">Differential Ratio Rear</span> 10 steps · stock <span class="mono">43//9</span><details><summary>All 10 steps</summary><p class="mono steps">41//6, 43//7, 41//7, 43//8, 41//8, 43//9, 41//9, 41//10, 43//11, 41//11</p></details></li></ul></dd><dt>Final drive</dt><dd>One ratio sits below the gearbox, and setup offers it.<div class="formula"><code>final drive = Differential Ratio Rear</code></div></dd><dt>Primary gear</dt><dd>No Primary Gear setting: each gear set&#x27;s own primary applies (30//23 on every set).<div class="formula"><code>primary = the gear set&#x27;s own primary</code></div></dd><dt>Rev limit</dt><dd>8450 rpm, measured in game with telemetry (ACR 0.6).</dd><dt>Engine curve</dt><dd>Own curve.</dd></dl>
+<dl class="facts"><dt>Layout</dt><dd>Rear-wheel drive</dd><dt>Gearing settings</dt><dd><ul class="settings"><li><span class="setname">Gear Set</span> 5 gear sets, all 5-speed</li><li><span class="setname">Differential Ratio Rear</span> 10 steps · stock <span class="mono">43//9</span><details><summary>All 10 steps</summary><p class="mono steps">41//6, 43//7, 41//7, 43//8, 41//8, 43//9, 41//9, 41//10, 43//11, 41//11</p></details></li></ul></dd><dt>Final drive</dt><dd>One ratio sits below the gearbox, and setup offers it.<div class="formula"><code>final drive = Differential Ratio Rear</code></div></dd><dt>Primary gear</dt><dd>No Primary Gear setting: each gear set&#x27;s own primary applies (30//23 on every set).<div class="formula"><code>primary = the gear set&#x27;s own primary</code></div></dd><dt>Rev limit</dt><dd>8510 rpm, measured in game with telemetry (ACR 0.6).</dd></dl>
 </section>
 <section class="workings" id="workings">
 <div class="workhead" data-event="read-drivetrain-workings"><h2>How we worked it out</h2><p class="cap">The reasoning and the in-game runs behind the numbers above.</p><p>Every speed on these pages is worked out from engine revs and the gearing alone:</p></div>
 <div class="formula"><code>speed (km/h) = rpm × tyre circumference (m) × 0.06 ÷ total ratio</code></div>
 <p>rpm × tyre circumference ÷ total ratio is metres per minute; × 0.06 (× 60 minutes per hour ÷ 1000 metres per kilometre) turns that into km/h.</p>
-<div class="formula"><code>total ratio = primary × gear × final drive</code><code>tyre circumference = 2π × free radius × 0.9904</code></div>
-<p>The free radius is the tyre radius stored in the game files. The rolling factor, 0.9904, allows for a loaded tyre rolling on a slightly smaller radius; it was fitted to the top speeds measured in game on 14 runs across seven cars (Stratos, 306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale and Impreza).</p>
-<p>The rev limit, 8450 rpm, was measured in game with telemetry. The end of the torque curve in the game files is not the limiter: on every car here the curve runs past it.</p>
+<div class="formula"><code>total ratio = primary × gear × final drive</code><code>tyre circumference = 2π × free radius × 0.9780</code></div>
+<p>The free radius is the tyre radius stored in the game files. The rolling factor, 0.9780, allows for a loaded tyre rolling on a slightly smaller radius; it was fitted to the top speeds measured in game on 15 runs across eight cars (Stratos, 306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale, Impreza and GTA Junior).</p>
+<p>The rev limit, 8510 rpm, was measured in game with telemetry. The end of the torque curve in the game files is not the limiter: on most cars here the curve runs past it.</p>
 <p>The final drive is Differential Ratio Rear alone, the one ratio below the gearbox in the game files:</p>
 <div class="formula"><code>final drive = Differential Ratio Rear</code></div>
-<p>The same rule fits the runs on the Stratos and the 037 (Differential Ratio Rear) and on the 306 Maxi (Differential Ratio Front). This car was not run.</p>
-<p>Each gear set stores its own primary, and with no Primary Gear setting that is taken to be the one in force. Every run so far on a car without a Primary Gear setting used a primary of 25//25, a ratio of 1, so a stored primary other than 1 has not been tested.</p>
+<p>The same rule fits the runs on the Stratos and the 037 (Differential Ratio Rear) and on the 306 Maxi (Differential Ratio Front).</p>
+<p>The GTA Junior has no Primary Gear setting, and every one of its gear sets stores a primary of 30//23 (1.304). The run was chosen to distinguish between two possibilities:</p>
+<ol class="hyp"><li>The gear set&#x27;s stored primary applies: primary = 30//23.</li><li>The stored primary is ignored: primary = 1.</li></ol>
+<p>It was run on gear set 1 with Differential Ratio Rear 43//9. The predictions for 3rd were about 129 km/h under possibility 1 and 168 km/h under possibility 2. The speedometer read 128, supporting possibility 1: primary = the gear set&#x27;s own primary.</p>
+<div class="formula"><code>primary = the gear set&#x27;s own primary</code></div>
 </section>
 <section class="measured" id="measured">
 <h2>Measured in game</h2>
-<p class="cap">Raw in-game readings: rev limit from telemetry.</p>
-<dl class="facts"><dt>Rev limit</dt><dd>8450 rpm · SimHub telemetry · ACR 0.6 · 2026-09-13</dd></dl>
+<p class="cap">Raw in-game readings: rev limit from telemetry, top speed per gear from the in-game speedometer at the rev limiter.</p>
+<dl class="facts"><dt>Rev limit</dt><dd>8510 rpm · SimHub telemetry · ACR 0.6 · 2026-09-14</dd></dl>
+<div class="run"><h3>Gear set 1 · dry tarmac · 2026-09-14</h3><p class="runset">Differential Ratio Rear <span class="mono">43//9</span></p><div class="tablewrap"><table class="speeds"><tr><th scope="row">Gear</th><th scope="col">1</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th></tr><tr><th scope="row">km/h</th><td>54</td><td>88</td><td>128</td><td>174*</td></tr></table></div><p class="cap runnote">* an approximate reading.</p></div>
 </section>
   <div class="foot">
     <div>
       <h3>Data</h3>
-      <p class="limits">Read from the ACR 0.6 game files. Generated 2026-09-13.</p>
+      <p class="limits">Read from the ACR 0.6 game files. Generated 2026-09-14.</p>
     </div>
     <p class="promo">Want a setup, not just the numbers? <a href="https://github.com/fredmayor88/acr-setup-engineer" data-track="click-setup-engineer">ACR Setup Engineer</a> — a free Claude skill that tunes a car to how you drive and saves it to your Notion. · <a href="https://github.com/fredmayor88/acr-car-lab/issues" data-track="click-issues">Issues and feedback</a></p>
   </div>

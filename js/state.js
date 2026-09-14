@@ -58,7 +58,7 @@ export function stepFloor(floor, direction, car, ceil = car.engine.redline) {
 
 /**
  * The rev ceiling on Shift points: one step over the floor (and never under one step) up
- * to the rev limit. The limit need not sit on the 100 rpm grid (the Stratos is 8450), so
+ * to the rev limit. The limit need not sit on the 100 rpm grid (the Stratos is 8520), so
  * it is the exact default and a clamped step up reaches it.
  */
 export const ceilBounds = (car, floor = 0) =>

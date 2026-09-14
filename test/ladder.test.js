@@ -5,12 +5,12 @@ import { DEFAULT_FACTOR } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
 // REPLACES each gear set's own primary. Values line up with the game's real Stratos data
-// (see data/lancia-stratos.json: the measured 8450 rpm rev limit and the fitted factor), so
+// (see data/lancia-stratos.json: the measured 8520 rpm rev limit and the fitted factor), so
 // the pinned lane tops below are the site's own numbers, not fixture arithmetic that
 // happens to work.
 const car = {
   slug: 'test-stratos',
-  engine: { redline: 8450 },
+  engine: { redline: 8520 },
   gear_sets: [
     { label: 'Gear set 1', primary: { name: 'p', value: 1.1 },
       gears: [2.8, 2.053, 1.619, 1.32, 1.154].map(v => ({ name: '', value: v })) },
@@ -68,7 +68,7 @@ test('changing the selected set moves the flag but drops no lane', () => {
 
 test('lane tops match the known Stratos figures', () => {
   const tops = layout(car, state).lanes[0].tops.map(Math.round);
-  assert.deepEqual(tops, [89, 121, 153, 188, 215]);
+  assert.deepEqual(tops, [88, 120, 153, 187, 214]);
 });
 
 test('base is the slowest gear across every lane, for the relative axis', () => {
@@ -127,8 +127,8 @@ test('a fixed-final-drive car (shape 3) still lays out per-set with its own prim
 });
 
 test('hovering past a lane\'s last dot clamps to that lane\'s top speed', () => {
-  // gear set 1 tops out at 215 km/h; the axis runs further, but the car does not
-  assert.match(hoverLine(car, state, 0, 260), /^215 km\/h {2}· {2}gear 5 {2}· {2}8450 rpm$/);
+  // gear set 1 tops out at 214 km/h; the axis runs further, but the car does not
+  assert.match(hoverLine(car, state, 0, 260), /^214 km\/h {2}· {2}gear 5 {2}· {2}8520 rpm$/);
 });
 
 test('clampSpeed keeps a hovered speed inside the lane, from a standing start to its top', () => {
@@ -205,9 +205,9 @@ test('laneAtPoint, padded: a touch that starts within the tap slop right of a na
 
 test('at the default ceiling the lanes and the axis title are what they always were', async () => {
   const { axisTitle } = await import('../js/charts/ladder.js');
-  assert.deepEqual(layout(car, { ...state, ceil: 8450 }), layout(car, state));
-  assert.equal(axisTitle(car, state), 'speed at the 8450 rpm rev limit — km/h');
-  assert.equal(axisTitle(car, { ...state, ceil: 8450 }), 'speed at the 8450 rpm rev limit — km/h');
+  assert.deepEqual(layout(car, { ...state, ceil: 8520 }), layout(car, state));
+  assert.equal(axisTitle(car, state), 'speed at the 8520 rpm rev limit — km/h');
+  assert.equal(axisTitle(car, { ...state, ceil: 8520 }), 'speed at the 8520 rpm rev limit — km/h');
 });
 
 test('a lowered ceiling reads every lane top at the ceiling rpm, and the relative base follows', async () => {
@@ -215,14 +215,14 @@ test('a lowered ceiling reads every lane top at the ceiling rpm, and the relativ
   const full = layout(car, state);
   const low = layout(car, { ...state, ceil: 7000 });
   low.lanes.forEach((lane, i) => lane.tops.forEach((v, gi) =>
-    assert.ok(Math.abs(v - full.lanes[i].tops[gi] * 7000 / 8450) < 1e-9)));
-  assert.ok(Math.abs(low.base - full.base * 7000 / 8450) < 1e-9);
-  assert.ok(Math.abs(low.vmax - full.vmax * 7000 / 8450) < 1e-9);
-  assert.equal(Math.round(low.lanes[0].tops[4]), 178);
+    assert.ok(Math.abs(v - full.lanes[i].tops[gi] * 7000 / 8520) < 1e-9)));
+  assert.ok(Math.abs(low.base - full.base * 7000 / 8520) < 1e-9);
+  assert.ok(Math.abs(low.vmax - full.vmax * 7000 / 8520) < 1e-9);
+  assert.equal(Math.round(low.lanes[0].tops[4]), 176);
   assert.equal(axisTitle(car, { ...state, ceil: 7000 }), 'speed at the 7000 rpm rev ceiling — km/h');
 });
 
 test('hover past the last dot under a lowered ceiling clamps to the ceiling rpm', () => {
   assert.match(hoverLine(car, { ...state, ceil: 7000 }, 0, 260),
-    /^178 km\/h {2}· {2}gear 5 {2}· {2}7000 rpm$/);
+    /^176 km\/h {2}· {2}gear 5 {2}· {2}7000 rpm$/);
 });

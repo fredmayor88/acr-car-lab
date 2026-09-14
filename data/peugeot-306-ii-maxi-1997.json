@@ -3,7 +3,7 @@
  "name": "Peugeot 306 II Maxi 1997",
  "axle": "Front",
  "engine": {
-  "redline": 9500,
+  "redline": 9600,
   "redline_source": "measured",
   "game_v4": 9500,
   "peak_torque_rpm": 7750,
@@ -753,6 +753,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9904
+  "loaded_radius_factor": 0.978
  }
 }

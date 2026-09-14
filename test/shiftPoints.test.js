@@ -6,7 +6,7 @@ import { DEFAULT_FACTOR, circumference, kmh } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, each gear set also carries its own
 // primary (unused here since the combo's primary replaces it) — same fixture shape as
-// test/ladder.test.js, so the pinned numbers (first gear tops out at 89 km/h) hold.
+// test/ladder.test.js, so the pinned numbers (first gear tops out at 88 km/h) hold.
 const car = {
   slug: 'test-stratos',
   engine: { redline: 8450 },
@@ -42,7 +42,7 @@ test('bars overlap — the same speed is reachable in more than one gear', () =>
 
 test('every bar ends at its top speed and starts at the rev floor', () => {
   const bars = layout(car, state).bars;
-  assert.equal(Math.round(bars[0].to), 89);
+  assert.equal(Math.round(bars[0].to), 88);
   assert.ok(bars[0].from > 0);
   assert.ok(bars[0].from < bars[0].to);
 });

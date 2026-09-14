@@ -403,7 +403,7 @@ function buildFooter() {
       }
     } });
   // the car's rev limit, editable the same way as the factor: typed, with a reset link
-  const revLimit = h('input', { id: 'rev-limit', type: 'number', step: '50',
+  const revLimit = h('input', { id: 'rev-limit', type: 'number', step: '10',
     min: String(REV_LIMIT_MIN), max: String(REV_LIMIT_MAX), value: String(state.rl),
     inputmode: 'numeric', autocomplete: 'off', 'aria-label': 'Rev limit in rpm',
     onchange: e => {

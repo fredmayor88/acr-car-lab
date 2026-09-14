@@ -2,14 +2,9 @@
 
 **→ https://fredmayor88.github.io/acr-car-lab/**
 
-Interactive gearing and power charts for 18 cars in Assetto Corsa Rally. Each car has two
-pages:
-
-- **`<slug>/gears/`**, the gearing page: the power and torque curve, every selectable final
-  drive, where each gear tops out, shift points, and speed against revs.
-- **`<slug>/drivetrain/`**, the drivetrain page: the layout, the settings that change the
-  gearing, the final drive and primary as formulas, "How we worked it out" (the reasoning and
-  the in-game runs behind them) and the raw in-game measurements.
+Interactive gearing and power charts for 18 cars in Assetto Corsa Rally. Each car has a
+gearing page at **`<slug>/gears/`**: the power and torque curve, every selectable final drive,
+where each gear tops out, shift points, and speed against revs.
 
 `<slug>/` forwards to `<slug>/gears/`, keeping the hash, for links from before the move.
 
@@ -75,7 +70,7 @@ Every speed on the site is:
 ```
 speed (km/h)             = rpm × tyre circumference (m) × 0.06 ÷ total ratio
 total ratio              = primary × gear × final drive
-tyre circumference (m)   = 2π × free radius × 0.9904
+tyre circumference (m)   = 2π × free radius × 0.978
 ```
 
 0.06 turns metres per minute into km/h: × 60 minutes per hour ÷ 1000 metres per kilometre.
@@ -83,16 +78,17 @@ This is `kmh`, `totalRatio` and `circumference` in `js/gearing.js`.
 
 **Free radius and rolling factor.** The free radius is the tyre's, read from the game files.
 A loaded tyre rolls on a smaller radius than the stored free one, so it is multiplied by a
-rolling factor, 0.9904. The factor was fitted to the top speeds measured in game on 14 runs
-across seven cars (Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037, Peugeot
-206 WRC, Lancia Delta Integrale, Subaru Impreza), each read at that car's measured rev limit,
-and is applied to every car and every surface.
+rolling factor, 0.978. The factor was fitted to the top speeds measured in game on 15 runs
+across eight cars (Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037, Peugeot
+206 WRC, Lancia Delta Integrale, Subaru Impreza, Alfa Romeo GTA Junior), each read at that
+car's measured rev limit, and is applied to every car and every surface.
 
 **Primary.** A fixed gear pair in front of the gearbox that scales every gear in the set by
 the same amount. Each gear set in the game files carries its own: `primary = the gear set's own
 primary`. On most cars it is `25//25`, a ratio of 1. The Alfa Romeo GTA Junior has `30//23` on
-every set, and on the Mini, Fiat 124, Fiat 131 and Fulvia it changes from one gear set to the
-next. The Lancia Stratos and the Peugeot 206 WRC have a Primary Gear adjustment in setup, and
+every set, and a speed run on it measured that stored primary in force. On the Mini, Fiat 124,
+Fiat 131 and Fulvia it changes from one gear set to the next; each set is taken to use its own
+the same way, which has not been run. The Lancia Stratos and the Peugeot 206 WRC have a Primary Gear adjustment in setup, and
 the one you pick replaces the gear set's primary: `primary = Primary Gear` (measured on both).
 
 **Final drive.** Everything after the gearbox, as one number:
@@ -122,17 +118,18 @@ final drive = (front path ratio + rear path ratio) ÷ 2
 
 That was measured in game with speed runs on the Delta Integrale, 206 WRC and Impreza. Each
 ratio setting on those paths is its own control on the gearing page, the note under the Final
-drive chart writes the formula out in the game's setting names, and each drivetrain page shows
-both path ratios and the expanded formula. The fixed ratios are read from the car data (the
+drive chart writes the formula out in the game's setting names. The fixed ratios are read from the car data (the
 Xsara's two differentials are fixed). The Audi has no centre differential, so it cannot be
 driven with the front and rear ratios apart to test it; the same formula is taken from the
 measured cars, and its gearing page warns while they differ. In the data these cars carry
 `final_drive.settings` and `final_drive.formula`.
 
 **Rev limit.** Every top speed is read at the rev limit (or the rev ceiling when lowered). The
-rev limits come from in-game telemetry, not from the end of the torque curve in the game
-files, which runs past the limiter on every car. A car that has not been measured gets an
-estimate from the shift-light rev stages in the game files, and its pages say so.
+rev limits come from in-game telemetry (the highest rpm held over a few seconds at the
+limiter, rounded to the nearest 10), not from the end of the torque curve in the game files,
+which runs past the limiter on every car but the Lancia Delta Integrale (its curve ends at
+7250 rpm, 10 short of the limiter). A car that has not been measured gets an estimate from the
+shift-light rev stages in the game files, and its pages say so.
 
 **Peugeot 206 WRC.** The game files have no torque curve of its own: its car data points at
 the Citroen Xsara WRC's, so that is the curve its page draws, with a note saying so. Its
@@ -204,7 +201,7 @@ pages.
      Prints nothing if nothing shrank. Any output names the car and the missing surface —
      that means a tyre asset stopped resolving.
    - Spot-check one top speed in game. The Stratos on gear set 1, top gear, stock final
-     drive, dry tarmac should read 215 km/h. If it has drifted, the rolling factor needs
+     drive, dry tarmac should read 214 km/h. If it has drifted, the rolling factor needs
      refitting rather than the code changing: add the new runs to `calibration.json`, run
      `python tools/gearing-charts/calibration.py` to refit, set `LOADED_RADIUS_FACTOR` in
      `tools/gearing-charts/gearing.py` to the printed value (the acr-setup-engineer tests fail
@@ -225,13 +222,12 @@ ES modules need a server; `file://` will not work.
 ```bash
 python -m http.server 8000
 # http://localhost:8000/lancia-stratos/gears/
-# http://localhost:8000/lancia-stratos/drivetrain/
 ```
 
 Tests cover the pure modules — the maths, the URL state, touch and hover gestures, tracking,
 the theme, and each chart's layout — and the generated pages: every drivetrain page's
-formulas against the gears page note, and the copy rules (formulas written out, no personal
-names).
+formulas against the gears page note, that nothing links to the drivetrain pages yet, and the
+copy rules (formulas written out, no personal names).
 
 ```bash
 node --test
@@ -259,7 +255,7 @@ node --test
 | `data/` | Generated. Never edit by hand. |
 | `index.html` | The car picker. Generated. Never edit by hand. |
 | `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
-| `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer. Never edit by hand. |
+| `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer. Generated and kept current but not linked from the site yet, and marked noindex: set `PUBLISH_DRIVETRAIN_LINKS = True` in `export_car_data.py` to link them from the picker and each gearing page. Never edit by hand. |
 | `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
 
 ## Licence

@@ -6,10 +6,10 @@ import { DEFAULT_FACTOR } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
 // REPLACES each gear set's own primary. Gear set 1 top gear pins to the game's real
-// Stratos top speed (215 km/h at the measured 8450 rpm limit) — see test/ladder.test.js for the same pin.
+// Stratos top speed (214 km/h at the measured 8520 rpm limit) — see test/ladder.test.js for the same pin.
 const car = {
   slug: 'test-stratos',
-  engine: { redline: 8450 },
+  engine: { redline: 8520 },
   gear_sets: [
     { label: 'Gear set 1', primary: { name: 'p', value: 1.1 },
       gears: [2.8, 2.053, 1.619, 1.32, 1.154].map(v => ({ name: '', value: v })) },
@@ -48,7 +48,7 @@ test('an old link\'s drawn sets in state change nothing: only state.set is read'
 
 test('top speed matches the known Stratos top gear figure', () => {
   const l = layout(car, state);
-  assert.equal(Math.round(l.lines[4].topSpeed), 215);
+  assert.equal(Math.round(l.lines[4].topSpeed), 214);
 });
 
 test('vmax leaves headroom above the fastest drawn line', () => {
@@ -158,8 +158,8 @@ test('the hover tooltip never starts above the viewBox', () => {
 // --- the page-wide rev ceiling ----------------------------------------------------------
 
 test('at the default ceiling the lines are what they always were, ending at the rev limit', () => {
-  assert.deepEqual(layout(car, { ...state, ceil: 8450 }), layout(car, state));
-  assert.equal(layout(car, state).ceil, 8450);
+  assert.deepEqual(layout(car, { ...state, ceil: 8520 }), layout(car, state));
+  assert.equal(layout(car, state).ceil, 8520);
 });
 
 test('a lowered ceiling ends every line at the ceiling rpm, and vmax follows', () => {
@@ -168,10 +168,10 @@ test('a lowered ceiling ends every line at the ceiling rpm, and vmax follows', (
   assert.equal(low.ceil, 7000);
   low.lines.forEach((line, i) => {
     assert.equal(line.total, full.lines[i].total);
-    assert.ok(Math.abs(line.topSpeed - full.lines[i].topSpeed * 7000 / 8450) < 1e-9);
+    assert.ok(Math.abs(line.topSpeed - full.lines[i].topSpeed * 7000 / 8520) < 1e-9);
   });
-  assert.ok(Math.abs(low.vmax - full.vmax * 7000 / 8450) < 1e-9);
-  assert.equal(Math.round(low.lines[4].topSpeed), 178);
+  assert.ok(Math.abs(low.vmax - full.vmax * 7000 / 8520) < 1e-9);
+  assert.equal(Math.round(low.lines[4].topSpeed), 176);
 });
 
 test('nearestLine against the ceiling: a line at half the ceiling sits at half its top', () => {
@@ -227,7 +227,7 @@ test('render at a lowered ceiling: lines end at xs(ceil), columns start there, b
   const st = { ...state, ceil: 7000 };
   render(svg, car, st, null, ['#111']);
   const { L, R } = FRAME;
-  const rpmMax = Math.ceil(8450 / 1000) * 1000 + 300;
+  const rpmMax = Math.ceil(8520 / 1000) * 1000 + 300;
   const xs = r => L + (r / rpmMax) * (R - L);
   const { lines, texts } = drawn(svg);
   const gearLines = lines.filter(n => n.style.stroke === '#111');
@@ -236,7 +236,7 @@ test('render at a lowered ceiling: lines end at xs(ceil), columns start there, b
   const numbers = texts.filter(n => n.style.fill === '#111');
   numbers.forEach(n => assert.equal(Number(n.attrs.x), xs(7000) + 11));
   const dashed = lines.filter(n => n.attrs['stroke-dasharray']);
-  assert.deepEqual(dashed.map(n => Number(n.attrs.x1)).sort((a, b) => a - b), [xs(7000), xs(8450)]);
+  assert.deepEqual(dashed.map(n => Number(n.attrs.x1)).sort((a, b) => a - b), [xs(7000), xs(8520)]);
   assert.ok(texts.some(n => n.textContent === 'rev ceiling'));
   assert.ok(texts.some(n => n.textContent === 'rev limit'));
   delete globalThis.document;
@@ -248,7 +248,7 @@ test('render at the default ceiling: lines end at the rev limit and there is no 
   const { L, R } = FRAME;
   const xs = r => L + (r / 9300) * (R - L);
   const { lines, texts } = drawn(svg);
-  lines.filter(n => n.style.stroke === '#111').forEach(n => assert.equal(Number(n.attrs.x2), xs(8450)));
+  lines.filter(n => n.style.stroke === '#111').forEach(n => assert.equal(Number(n.attrs.x2), xs(8520)));
   assert.equal(lines.filter(n => n.attrs['stroke-dasharray']).length, 1);
   assert.ok(!texts.some(n => n.textContent === 'rev ceiling'));
   delete globalThis.document;

@@ -97,14 +97,14 @@ test('the stock combo matches the fitted primary, not just the option', () => {
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
 
-test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 215 km/h', () => {
+test('the Stratos opens on its real stock combo: 33//31*31//30 with 65//19, 214 km/h', () => {
   const stratos = load('lancia-stratos');
   const state = defaultState(stratos);
   const stock = finalDriveCombos(stratos.final_drive)[state.fd];
   assert.equal(stock.primary.name, '33//31*31//30');
   assert.equal(stock.option.name, '65//19');
   const row = layout(stratos, state).rows.find(r => r.selected);
-  assert.equal(Math.round(row.kmh), 215);
+  assert.equal(Math.round(row.kmh), 214);
 });
 
 test('every car opens on a combo carrying its stock option and fitted primary', () => {
@@ -403,4 +403,38 @@ test('app.js tracks rev limit edits as edit-rev-limit and reads the limit throug
   assert.match(src, /car = withRevLimit\(data, state\.rl\)/);
   assert.match(src, /toHash\(state, data\)/);
   assert.doesNotMatch(src, /toHash\(state, car\)/);
+});
+
+// --- rev limits off the 100 rpm grid (measured 2026-09-14, rounded to 10 rpm) -------------
+
+test('the Stratos at 8520: the ceiling opens on the limit, − goes to 8420, + back to 8520', () => {
+  const stratos = load('lancia-stratos');
+  assert.equal(stratos.engine.redline, 8520);
+  const s = defaultState(stratos);
+  assert.equal(s.ceil, 8520);
+  assert.equal(s.rl, 8520);
+  const down = stepCeil(s.ceil, -1, stratos, s.floor);
+  assert.equal(down, 8420);
+  assert.equal(stepCeil(down, 1, stratos, s.floor), 8520);
+  assert.equal(stepCeil(8520, 1, stratos, s.floor), 8520);
+  assert.equal(toHash(s, stratos).includes('ceil='), false);
+  assert.equal(parseHash('#ceil=8420', stratos).ceil, 8420);
+  assert.equal(stepFloor(8420, 1, stratos, 8520), 8420, 'the floor stays 100 under the ceiling');
+});
+
+test('every car: the default ceiling is its limit, and − then + comes back to it', () => {
+  const slugs = readdirSync(new URL('../data/', import.meta.url))
+    .filter(f => f.endsWith('.json') && f !== 'index.json').map(f => f.slice(0, -5));
+  for (const slug of slugs) {
+    const c = load(slug);
+    const s = defaultState(c);
+    assert.equal(s.ceil, c.engine.redline, slug);
+    assert.equal(stepCeil(stepCeil(s.ceil, -1, c, s.floor), 1, c, s.floor), c.engine.redline, slug);
+    assert.equal(c.engine.redline % 10, 0, `${slug}: limits are stored to the nearest 10 rpm`);
+  }
+});
+
+test('the rev limit input steps by 10, so every stored limit is a valid value of it', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.match(src, /id: 'rev-limit', type: 'number', step: '10',/);
 });

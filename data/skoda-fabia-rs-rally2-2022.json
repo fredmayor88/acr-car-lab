@@ -3,7 +3,7 @@
  "name": "Skoda Fabia RS Rally2 2022",
  "axle": "Rear",
  "engine": {
-  "redline": 7500,
+  "redline": 7550,
   "redline_source": "measured",
   "game_v4": 7300,
   "peak_torque_rpm": 3500,
@@ -229,6 +229,6 @@
   }
  },
  "defaults": {
-  "loaded_radius_factor": 0.9904
+  "loaded_radius_factor": 0.978
  }
 }
