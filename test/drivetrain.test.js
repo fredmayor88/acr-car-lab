@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { WORKINGS_EVENT, WORKINGS_THRESHOLD, watchWorkings } from '../js/drivetrain.js';
 import { _queue, resetTracking, track } from '../js/tracking.js';
-import { formulaNote } from '../js/charts/finalDrive.js';
+import { formulaExpression, formulaNote } from '../js/charts/finalDrive.js';
+import { DEFAULT_FACTOR } from '../js/gearing.js';
 
 /** A stand-in IntersectionObserver the test drives by hand. */
 function fakeObserver() {
@@ -170,25 +171,72 @@ test('each gears page links to its drivetrain page', () => {
   }
 });
 
-test('every drivetrain page states the formula the gears page Final drive note does', () => {
-  // the exporter's formula_note (Python) and formulaNote here are two implementations of one
-  // string: the page's formula line must be exactly the note wherever the site shows a note
+const section = (html, cls) => html.match(new RegExp(`<section class="${cls}"[^>]*>([\\s\\S]*?)</section>`))[1];
+const codeLines = html => [...decode(html).matchAll(/<code>([^<]*)<\/code>/g)].map(m => m[1]);
+const DIV2 = '\u00a0÷\u00a02';
+
+/** `front path ratio = …` and `rear path ratio = …`, worked out here from the data alone. */
+function pathLines(car) {
+  const fd = car.final_drive;
+  const f = fd.formula;
+  const name = key => fd.settings.find(s => s.key === key).adjustment;
+  const chain = (keys, fixed) => [...keys.map(name), ...(Math.abs(fixed - 1) < 1e-9 ? [] : [fixed.toFixed(3)])];
+  const pre = chain(f.pre, f.fixed_pre);
+  return ['front', 'rear'].map(side => `${side} path ratio = `
+    + ([...pre, ...chain(f[side], f[`fixed_${side}`])].join(' × ') || '1'));
+}
+
+test('every drivetrain page writes the final drive as formula lines, the expanded one equal to the gears page note', () => {
+  // the exporter's formula_expression (Python) and formulaExpression here are two
+  // implementations of one string; the gears page note is `Final drive = ` and that string
   let n = 0;
   for (const d of carDirs) {
     const car = JSON.parse(read(`data/${d}.json`));
-    const note = formulaNote(car);
-    const line = decode(read(`${d}/drivetrain/index.html`)).match(/<span class="formula">([^<]*)<\/span>/)[1];
-    if (note) {
+    const html = read(`${d}/drivetrain/index.html`);
+    const top = codeLines(section(html, 'top'));
+    const work = codeLines(section(html, 'workings'));
+    const expr = formulaExpression(car);
+    if (expr) {
       n += 1;
-      assert.equal(line, note, d);
-      assert.match(note, /\u00a0÷\u00a02/, d);
-      assert.doesNotMatch(line, /[ \n]÷\s2|÷[ \n]2/, d + ': the ÷ 2 is held together');
+      assert.ok(formulaNote(car).startsWith(`Final drive = ${expr}`), d);
+      const want = [...pathLines(car), `final drive = (front path ratio + rear path ratio)${DIV2}`,
+        `final drive = ${expr}`];
+      assert.deepEqual(top.slice(0, 4), want, `${d}: the Final drive fact`);
+      for (const line of want) assert.ok(work.includes(line), `${d}: the workings show ${line}`);
+      assert.match(expr, /\u00a0÷\u00a02$/, d);
+      for (const line of [...top, ...work]) {
+        assert.doesNotMatch(line, /[ \n]÷\s2|÷[ \n]2/, `${d}: the ÷ 2 is held together in ${line}`);
+      }
     } else {
-      assert.doesNotMatch(line, /÷/, `${d}: a car with no note has no (front + rear) ÷ 2 line`);
+      const fd = car.final_drive;
+      const want = fd ? `final drive = ${fd.adjustment}${Math.abs(fd.rest - 1) < 1e-9 ? '' : ` × ${fd.rest.toFixed(3)}`}`
+        : `final drive = ${car.fixed_final_drive.toFixed(3)} (fixed)`;
+      assert.equal(top[0], want, d);
+      assert.ok(work.includes(want), `${d}: the workings show ${want}`);
+      assert.ok([...top, ...work].every(l => !l.includes('÷ 2') && !l.includes(DIV2)),
+        `${d}: a car with no ratio settings has no (front path ratio + rear path ratio) ÷ 2 line`);
     }
+    const primary = car.final_drive?.primaries?.length ? 'primary = Primary Gear'
+      : "primary = the gear set's own primary";
+    assert.equal(top[top.length - 1], primary, `${d}: the Primary gear fact`);
   }
   assert.equal(carDirs.length, 18);
   assert.equal(n, 5);
+});
+
+test('every drivetrain page opens its workings with the speed formulas and where 0.06 comes from', () => {
+  for (const d of carDirs) {
+    const work = section(read(`${d}/drivetrain/index.html`), 'workings');
+    const lines = codeLines(work);
+    assert.deepEqual(lines.slice(0, 3), [
+      'speed (km/h) = rpm × tyre circumference (m) × 0.06 ÷ total ratio',
+      'total ratio = primary × gear × final drive',
+      `tyre circumference = 2π × free radius × ${DEFAULT_FACTOR}`,
+    ], d);
+    assert.ok(decode(work).includes('<p>0.06 turns metres per minute into km/h: × 60 minutes per hour ÷ 1000 metres per kilometre.</p>'), d);
+    // the 0.06 sentence sits directly after the speed line
+    assert.ok(/<code>speed \(km\/h\)[^<]*<\/code><\/div>\s*<p>0\.06 turns/.test(work), d);
+  }
 });
 
 test('the picker keeps its 18 gears links and adds 18 drivetrain links below them', () => {

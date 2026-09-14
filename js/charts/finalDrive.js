@@ -38,10 +38,11 @@ export function caption(car, state) {
 }
 
 /**
- * The averaged-axle cars' line under the caption: how their settings make the final drive.
- * Built from the data's formula, so it names exactly the settings the car publishes.
+ * The final drive of a car with ratio settings, expanded into the game's setting names: the
+ * right-hand side of the note below. The drivetrain pages show the same expression
+ * (drivetrain_page.py formula_expression in acr-setup-engineer); '' for every other car.
  */
-export function formulaNote(car) {
+export function formulaExpression(car) {
   if (!hasRatioSettings(car)) return '';
   const fd = car.final_drive;
   const f = fd.formula;
@@ -52,9 +53,19 @@ export function formulaNote(car) {
   const pre = product(f.pre, f.fixed_pre);
   // no-break spaces either side of the ÷, so a wrapped note never starts a line with ÷ 2
   const axles = `(${product(f.front, f.fixed_front)} + ${product(f.rear, f.fixed_rear)})${NBSP}÷${NBSP}2`;
+  return `${pre === '1' ? '' : `${pre} × `}${axles}`;
+}
+
+/**
+ * The line under the caption on a car with ratio settings: how they make the final drive.
+ * Built from the data's formula, so it names exactly the settings the car publishes.
+ */
+export function formulaNote(car) {
+  if (!hasRatioSettings(car)) return '';
+  const f = car.final_drive.formula;
   const fixed = !f.front.length && !f.rear.length
     ? ' (the front and rear differentials are fixed)' : '';
-  return `Final drive = ${pre === '1' ? '' : `${pre} × `}${axles}${fixed}`;
+  return `Final drive = ${formulaExpression(car)}${fixed}`;
 }
 
 /** Only on a car with no centre differential, and only while its row settings disagree. */

@@ -2,14 +2,63 @@
 
 **→ https://fredmayor88.github.io/acr-car-lab/**
 
-Interactive gearing and power charts for 18 cars in Assetto Corsa Rally. One page per
-car: the power and torque curve, every selectable final drive, where each gear tops out,
-shift points, and speed against revs. Each car also has a drivetrain page (`<slug>/drivetrain/`):
-its layout, the settings that change the gearing, how the final drive is worked out, the in-game
-runs behind it, and what was measured.
+Interactive gearing and power charts for 18 cars in Assetto Corsa Rally. Each car has two
+pages:
+
+- **`<slug>/gears/`**, the gearing page: the power and torque curve, every selectable final
+  drive, where each gear tops out, shift points, and speed against revs.
+- **`<slug>/drivetrain/`**, the drivetrain page: the layout, the settings that change the
+  gearing, the final drive and primary as formulas, "How we worked it out" (the reasoning and
+  the in-game runs behind them) and the raw in-game measurements.
+
+`<slug>/` forwards to `<slug>/gears/`, keeping the hash, for links from before the move.
 
 Every gearing number is read from the game's own files. The rev limits are measured in game
-and the rolling radius factor is fitted, not read — see below.
+and the rolling factor is fitted, not read — see below.
+
+## Using a gearing page
+
+**The control bar** at the top holds:
+
+- **Surface**: the tyre, and so the tyre radius, the speeds are worked out for.
+- **Final drive**: one select listing every final drive the car offers (on the Stratos each
+  entry is a Primary Gear and Differential Ratio Rear pair). On the five cars with front and
+  rear ratio settings (Delta Integrale, 206 WRC, Impreza, Xsara WRC, Quattro) there is instead
+  one select per ratio setting, plus Primary Gear on the 206, and a readout of the final drive
+  they make. Clicking a row of the Final drive chart picks that final drive too.
+- **Gear set**, also picked by clicking or tapping a lane name in "Where each gear tops out".
+- **Rev ceiling**: every top speed is read here instead of at the rev limit when lowered.
+- **Copy link** and **Copy settings** (the selected settings and each gear's top speed as
+  plain text for notes, ending with the link).
+
+On a narrow screen the bar collapses to a one-line summary and a button that opens it.
+
+**Shift points** has its own **Rev floor** and **Rev ceiling** over the chart (the ceiling is
+the same one as the bar's). **Speed against revs** draws one line per gear of the gear set
+selected in the bar. The **rolling factor** (0.8–1.1) and the **rev limit** (2000–15000 rpm)
+are editable at the foot of the page, each with a reset link.
+
+**Readouts.** With a mouse, hover over Power and torque, Where each gear tops out, Shift
+points or Speed against revs; the readout goes when the pointer leaves. On a touch screen,
+tap to show a readout (it stays after the finger lifts), drag sideways to move it, and tap
+anywhere outside the charts to clear it. A vertical swipe scrolls the page as usual, and a
+tap on a lane name selects that gear set without drawing a readout.
+
+**The URL hash** holds the state, so a link reopens the same view:
+
+| Key | What |
+| --- | --- |
+| `s` | Surface: `Tarmac_Dry`, `Tarmac_Wet`, `Gravel`, `Sweden`, `Montecarlo` |
+| `fd` | Final drive, as an index into the car's selectable combinations (cars without ratio settings) |
+| `pg`, `cdr`, `ctr`, `dfr`, `drr` | On the five cars with ratio settings: the step index of Primary Gear and of each ratio setting, only where it is off stock |
+| `set` | Gear set index, from 0 |
+| `k` | Rolling factor |
+| `floor` | Rev floor, only when not 3000 |
+| `rl` | Rev limit, only when edited |
+| `ceil` | Rev ceiling, only when below the rev limit |
+
+The old `draw` key (which gear sets Speed against revs drew) is gone; links that still carry
+it load normally and ignore it.
 
 ## How the numbers are made
 
@@ -17,64 +66,81 @@ Speed comes from gearing alone — no drag, no slip. Drive passes through three 
 its way from the engine to the wheels:
 
 ```
-engine → primary gear → gearbox gear → final drive → wheels
+engine → primary → gearbox gear → final drive → wheels
 ```
 
-Multiply them and you get the total ratio, which turns revs into speed:
+Every speed on the site is:
 
 ```
-total_ratio   = primary * gear * final_drive
-circumference = 2 * pi * free_tyre_radius * rolling_radius_factor
-km/h          = rpm * circumference * 0.06 / total_ratio
+speed (km/h)             = rpm × tyre circumference (m) × 0.06 ÷ total ratio
+total ratio              = primary × gear × final drive
+tyre circumference (m)   = 2π × free radius × 0.9904
 ```
 
-**Primary gear.** A fixed gear pair in front of the gearbox that scales every gear in the set
-by the same amount. Each gear set in the game files carries its own. On most cars it is
-`25//25`, a ratio of 1, but on the Mini, Fiat 124, Fiat 131 and Fulvia it changes from one
-gear set to the next. The Lancia Stratos and the Peugeot 206 WRC have a separate Primary Gear
-adjustment in setup; the one you pick there replaces the gear set's primary.
+0.06 turns metres per minute into km/h: × 60 minutes per hour ÷ 1000 metres per kilometre.
+This is `kmh`, `totalRatio` and `circumference` in `js/gearing.js`.
+
+**Free radius and rolling factor.** The free radius is the tyre's, read from the game files.
+A loaded tyre rolls on a smaller radius than the stored free one, so it is multiplied by a
+rolling factor, 0.9904. The factor was fitted to the top speeds measured in game on 14 runs
+across seven cars (Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037, Peugeot
+206 WRC, Lancia Delta Integrale, Subaru Impreza), each read at that car's measured rev limit,
+and is applied to every car and every surface.
+
+**Primary.** A fixed gear pair in front of the gearbox that scales every gear in the set by
+the same amount. Each gear set in the game files carries its own: `primary = the gear set's own
+primary`. On most cars it is `25//25`, a ratio of 1. The Alfa Romeo GTA Junior has `30//23` on
+every set, and on the Mini, Fiat 124, Fiat 131 and Fulvia it changes from one gear set to the
+next. The Lancia Stratos and the Peugeot 206 WRC have a Primary Gear adjustment in setup, and
+the one you pick replaces the gear set's primary: `primary = Primary Gear` (measured on both).
 
 **Final drive.** Everything after the gearbox, as one number:
 
-- On most cars it is the differential ratio you pick in setup.
+- On the single-ratio cars it is the one ratio setup offers: `final drive = Differential Ratio
+  Front` or `final drive = Differential Ratio Rear`.
 - The Hyundai i20, Skoda Fabia, VW Polo R5 and Peugeot 208 Rally4 have no final drive
-  adjustment. Their final drive is a single fixed number, stored as `fixed_final_drive`.
+  adjustment: `final drive = <value> (fixed)`, stored as `fixed_final_drive`.
+- On the five cars with front and rear ratio settings, see below.
 
-**Front and rear axles.** On the Lancia Delta Integrale, Peugeot 206 WRC, Subaru Impreza, Citroen
-Xsara WRC and Audi Quattro the drive splits to a front and a rear axle, each with its own chain
-of ratios. With every wheel at the same road speed the gearbox output turns at
-(front axle chain + rear axle chain) ÷ 2 times wheel speed. That was measured in game with speed
-runs on the Delta, 206 and Impreza:
+**Front and rear path ratios.** On the Delta Integrale, 206 WRC, Impreza, Xsara WRC and Audi
+Quattro the drive goes to the front and the rear wheels along two paths. Each path ratio is
+whatever is applied before the centre differential times that path's own ratios, for example
+on the Delta:
 
 ```
-final_drive = pre-split ratios * (front axle chain + rear axle chain) / 2
+front path ratio = Center Differential Ratio
+rear path ratio  = Center Differential Ratio × Center Ratio to Rear × Differential Ratio Rear
 ```
 
-Each ratio on those chains that setup offers is its own control on these pages, and the note
-under their Final drive chart spells out the formula. The fixed ratios are read from the car
-data (the Xsara's two differentials are fixed). The Audi has no centre differential, so it
-cannot be driven with the front and rear ratios apart to measure it; the same formula is
-assumed, and its page warns while they differ. In the data these cars carry
+With all four wheels turning at the same road speed, the centre differential's input turns at
+(front output speed + rear output speed) ÷ 2, so the equivalent final drive is:
+
+```
+final drive = (front path ratio + rear path ratio) ÷ 2
+```
+
+That was measured in game with speed runs on the Delta Integrale, 206 WRC and Impreza. Each
+ratio setting on those paths is its own control on the gearing page, the note under the Final
+drive chart writes the formula out in the game's setting names, and each drivetrain page shows
+both path ratios and the expanded formula. The fixed ratios are read from the car data (the
+Xsara's two differentials are fixed). The Audi has no centre differential, so it cannot be
+driven with the front and rear ratios apart to test it; the same formula is taken from the
+measured cars, and its gearing page warns while they differ. In the data these cars carry
 `final_drive.settings` and `final_drive.formula`.
 
-`rolling_radius_factor` defaults to `0.9904`. A loaded tyre rolls on a smaller radius than
-the stored free one; the factor was fitted against measured in-game top speeds on seven cars
-(Lancia Stratos, Peugeot 306 Maxi, Citroen Xsara WRC, Lancia 037, Peugeot 206 WRC, Lancia
-Delta Integrale, Subaru Impreza), each read at that car's measured rev limit, and is applied to every car and every surface. It is editable at the
-foot of each car page.
-
-**Rev limit.** Every top speed is read at the rev limit. The rev limits come from in-game
-telemetry measurements, not from the end of the torque curve, which runs past the limiter on
-most cars. A car that has not been measured yet gets an estimate from the game files, and its
-page says so. The rev limit is editable at the foot of each car page too; the power and
-torque chart still draws the whole curve.
+**Rev limit.** Every top speed is read at the rev limit (or the rev ceiling when lowered). The
+rev limits come from in-game telemetry, not from the end of the torque curve in the game
+files, which runs past the limiter on every car. A car that has not been measured gets an
+estimate from the shift-light rev stages in the game files, and its pages say so.
 
 **Peugeot 206 WRC.** The game files have no torque curve of its own: its car data points at
-the Citroen Xsara WRC's, so that is the curve its page draws. Its gearing is its own.
+the Citroen Xsara WRC's, so that is the curve its page draws, with a note saying so. Its
+gearing is its own.
 
 ## Updating after a game patch
 
-The site holds no numbers in its code, so a patch only changes `data/`.
+The site holds no numbers in its code, so a patch only changes `data/` and the generated
+pages.
 
 1. Check out `acr-setup-engineer` **as a sibling of this repo** — the exporter writes to
    `../acr-car-lab` by default:
@@ -91,12 +157,25 @@ The site holds no numbers in its code, so a patch only changes `data/`.
    make car-lab
    ```
 
-   The game version the footer names comes from the install as well: `ProjectVersion` in
+   This writes `data/`, `index.html`, and each car's `gears/`, `drivetrain/` and forwarding
+   page. The game version the footer names comes from the install: `ProjectVersion` in
    `acr/Config/DefaultGame.ini` inside the paks (`0.6.0.100866` is shown as `0.6`). It is
-   written to `data/index.json` as `game_version`, next to `generated`. If it cannot be
-   read, the export fails before writing anything.
+   written to `data/index.json` as `game_version`, next to `generated`. If it cannot be read,
+   the export fails before writing anything.
+
+   What the exporter reads besides the game files, all in `acr-setup-engineer/tools/gearing-charts/`:
+   - `calibration.json`: the measured rev limits (each with its date, game version and the
+     shift-light value it was measured against), the speed runs and the fit.
+   - `drivetrain_notes.json`: the drivetrain pages' prose. Every number in it is a placeholder
+     computed at export, so a data change updates the text. A note that no longer resolves
+     fails that car: it is skipped, the rest of the export completes, and the run ends
+     non-zero naming it.
 
 3. Check the result before committing:
+   - The export prints `!! <slug>: … re-measure` when a car's shift-light rev stages changed
+     since its rev limit was measured (or can no longer be read). That car's rev limit is
+     then shown as measured on an earlier game version: re-measure it and update
+     `calibration.json`.
    - New cars appear in `data/index.json` and have their own folder.
    - No car lost a surface. Three cars legitimately have four tyre entries instead of five
      (Alpine A110 1.8: no Sweden; Fiat 124 Abarth Rally and Lancia Fulvia Coupé HF: no
@@ -122,9 +201,11 @@ The site holds no numbers in its code, so a patch only changes `data/`.
      Prints nothing if nothing shrank. Any output names the car and the missing surface —
      that means a tyre asset stopped resolving.
    - Spot-check one top speed in game. The Stratos on gear set 1, top gear, stock final
-     drive, dry tarmac should read 215 km/h. If it has drifted, the rolling radius factor
-     needs refitting rather than the code changing. The export warns when a car's engine
-     data changed since its rev limit was measured (`measured-stale`): re-measure that car.
+     drive, dry tarmac should read 215 km/h. If it has drifted, the rolling factor needs
+     refitting rather than the code changing: add the new runs to `calibration.json`, run
+     `python tools/gearing-charts/calibration.py` to refit, and set `LOADED_RADIUS_FACTOR`
+     to the printed value (the acr-setup-engineer tests fail until the two agree).
+   - `node --test` here: the tests read the generated pages too.
 
 4. Commit here:
 
@@ -139,9 +220,13 @@ ES modules need a server; `file://` will not work.
 ```bash
 python -m http.server 8000
 # http://localhost:8000/lancia-stratos/gears/
+# http://localhost:8000/lancia-stratos/drivetrain/
 ```
 
-Tests cover the pure modules — the maths, the URL state, tracking, and each chart's layout:
+Tests cover the pure modules — the maths, the URL state, touch and hover gestures, tracking,
+the theme, and each chart's layout — and the generated pages: every drivetrain page's
+formulas against the gears page note, and the copy rules (formulas written out, no personal
+names).
 
 ```bash
 node --test
@@ -153,18 +238,23 @@ node --test
 | --- | --- |
 | `js/gearing.js` | Core maths. Pure. |
 | `js/state.js` | Page state and the URL hash. Pure. |
+| `js/hover.js` | When a mouse, pen or finger draws or clears a chart readout. Pure. |
+| `js/barSummary.js` | The collapsed bar's one-line summary. Pure. |
+| `js/settingsText.js` | The Copy settings text. Pure. |
+| `js/footer.js` | The footer's notes and links. Pure. |
+| `js/theme.js` | Light and dark theme toggle, shared by every page. |
 | `js/svg.js` | SVG helpers. |
 | `js/charts/*.js` | One file per chart: a pure `layout()` and a `render()`. |
 | `js/tracking.js` | GoatCounter event wrapper, deduped and queued until the script loads. |
-| `js/app.js` | Wiring. |
+| `js/app.js` | Gearing page wiring. |
+| `js/drivetrain.js` | The drivetrain pages' theme toggle and tracking (`read-drivetrain-workings`, promo and issues clicks). |
 | `app.css` | Shared styles. |
-| `test/` | Unit tests, one file per pure module. |
+| `test/` | Unit tests, one file per module, plus the generated pages and the copy rules. |
 | `package.json` | `npm test` runs `node --test`. |
 | `data/` | Generated. Never edit by hand. |
-| `index.html` | Generated. Never edit by hand. |
+| `index.html` | The car picker. Generated. Never edit by hand. |
 | `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
 | `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer. Never edit by hand. |
-| `js/drivetrain.js` | The drivetrain pages' theme toggle and tracking (`read-drivetrain-workings`). |
 | `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
 
 ## Licence

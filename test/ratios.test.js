@@ -8,7 +8,7 @@ import { DEFAULT_FACTOR, averagedBelow, circumference, finalDriveCombos, gearTop
   hasRatioSettings, matchingRow, primaryIndex, rowRatios, selectedRow, stockRatios }
   from '../js/gearing.js';
 import { defaultState, parseHash, pickRow, setPrimary, setRatio, toHash } from '../js/state.js';
-import { axleWarning, finalDriveReadout, formulaNote, layout } from '../js/charts/finalDrive.js';
+import { axleWarning, finalDriveReadout, formulaExpression, formulaNote, layout } from '../js/charts/finalDrive.js';
 import { fdValue } from '../js/charts/ladder.js';
 import { settingsText } from '../js/settingsText.js';
 
@@ -210,6 +210,10 @@ test('each car names its formula under the Final drive caption; no other car has
   assert.equal(formulaNote(load(AUDI)), 'Final drive = (Differential Ratio Front + Differential '
     + 'Ratio Rear)\u00a0÷\u00a02');
   for (const slug of slugs.filter(s => !FIVE.includes(s))) assert.equal(formulaNote(load(slug)), '');
+  // the expression alone, as the drivetrain pages write it: no note suffix
+  assert.equal(formulaExpression(load(XSARA)), 'Center Differential Ratio × (2.778 + 2.786) ÷ 2');
+  for (const slug of FIVE) assert.equal(formulaNote(load(slug)).startsWith(`Final drive = ${formulaExpression(load(slug))}`), true, slug);
+  for (const slug of slugs.filter(s => !FIVE.includes(s))) assert.equal(formulaExpression(load(slug)), '');
 });
 
 test('the Audi warns only while front and rear differ; no other car ever warns', () => {

@@ -208,6 +208,14 @@ svg{display:block;width:100%;height:auto}
 .facts dd{margin:0;color:var(--fg)}
 .mono,.formula{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px}
 .formula{color:var(--fg-strong)}
+/* a drivetrain page's formula block: one line per formula; a line too long for the screen
+   wraps inside the block with a hanging indent, never scrolling the page sideways */
+div.formula{margin:6px 0 14px;padding:8px 12px;max-width:720px;background:var(--surface);
+  border-left:2px solid var(--accent-edge);overflow-wrap:break-word;line-height:1.5}
+div.formula code{display:block;font:inherit;padding-left:2ch;text-indent:-2ch}
+.facts dd div.formula{margin:6px 0 2px}
+.workings ol.hyp{max-width:720px;margin:0 0 12px;padding-left:26px;font-size:14px}
+.workings ol.hyp li{margin-bottom:4px}
 .settings{list-style:none;margin:0;padding:0}
 .settings li{margin-bottom:6px}
 .setname{color:var(--fg-strong);font-weight:600;margin-right:6px}
