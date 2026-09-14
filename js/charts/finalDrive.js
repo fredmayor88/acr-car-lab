@@ -19,6 +19,8 @@ import { averagedBelow, ceilingOf, circumference, finalDriveCombos, hasRatioSett
   matchingRow, overallRatio, ratioSteps, selectedRow } from '../gearing.js';
 import { C, el, text, clear } from '../svg.js';
 
+const NBSP = '\u00a0';
+
 /**
  * Cars with an empty `primaries` list have no primary of their own to show.
  * Exported so the control bar's final-drive dropdown labels rows the same way.
@@ -48,7 +50,8 @@ export function formulaNote(car) {
   const product = (keys, fixed) => [...keys.map(name),
     ...(Math.abs(fixed - 1) < 1e-9 ? [] : [fixed.toFixed(3)])].join(' × ') || '1';
   const pre = product(f.pre, f.fixed_pre);
-  const axles = `(${product(f.front, f.fixed_front)} + ${product(f.rear, f.fixed_rear)}) ÷ 2`;
+  // no-break spaces either side of the ÷, so a wrapped note never starts a line with ÷ 2
+  const axles = `(${product(f.front, f.fixed_front)} + ${product(f.rear, f.fixed_rear)})${NBSP}÷${NBSP}2`;
   const fixed = !f.front.length && !f.rear.length
     ? ' (the front and rear differentials are fixed)' : '';
   return `Final drive = ${pre === '1' ? '' : `${pre} × `}${axles}${fixed}`;

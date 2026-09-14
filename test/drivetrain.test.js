@@ -181,9 +181,10 @@ test('every drivetrain page states the formula the gears page Final drive note d
     if (note) {
       n += 1;
       assert.equal(line, note, d);
-      assert.match(note, /÷ 2/, d);
+      assert.match(note, /\u00a0÷\u00a02/, d);
+      assert.doesNotMatch(line, /[ \n]÷\s2|÷[ \n]2/, d + ': the ÷ 2 is held together');
     } else {
-      assert.doesNotMatch(line, /÷ 2/, `${d}: a car with no note has no (front + rear) ÷ 2 line`);
+      assert.doesNotMatch(line, /÷/, `${d}: a car with no note has no (front + rear) ÷ 2 line`);
     }
   }
   assert.equal(carDirs.length, 18);

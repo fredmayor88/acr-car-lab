@@ -200,15 +200,15 @@ test('without ratios in the state the combos keep the stock path', () => {
 
 test('each car names its formula under the Final drive caption; no other car has a note', () => {
   assert.equal(formulaNote(load(DELTA)), 'Final drive = Center Differential Ratio × (1 + Center '
-    + 'Ratio to Rear × Differential Ratio Rear) ÷ 2');
+    + 'Ratio to Rear × Differential Ratio Rear)\u00a0÷\u00a02');
   assert.equal(formulaNote(load(P206)), 'Final drive = Center Differential Ratio × (Differential '
-    + 'Ratio Front + Differential Ratio Rear) ÷ 2');
+    + 'Ratio Front + Differential Ratio Rear)\u00a0÷\u00a02');
   assert.equal(formulaNote(load(IMPREZA)), 'Final drive = (Differential Ratio Front + Center Ratio '
-    + 'to Rear × Differential Ratio Rear) ÷ 2');
+    + 'to Rear × Differential Ratio Rear)\u00a0÷\u00a02');
   assert.equal(formulaNote(load(XSARA)), 'Final drive = Center Differential Ratio × (2.778 + '
-    + '2.786) ÷ 2 (the front and rear differentials are fixed)');
+    + '2.786)\u00a0÷\u00a02 (the front and rear differentials are fixed)');
   assert.equal(formulaNote(load(AUDI)), 'Final drive = (Differential Ratio Front + Differential '
-    + 'Ratio Rear) ÷ 2');
+    + 'Ratio Rear)\u00a0÷\u00a02');
   for (const slug of slugs.filter(s => !FIVE.includes(s))) assert.equal(formulaNote(load(slug)), '');
 });
 

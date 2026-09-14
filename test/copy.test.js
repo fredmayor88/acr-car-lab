@@ -146,7 +146,7 @@ test('no string literal in the site JS says average or names a person', () => {
   assert.ok(files.includes('js/app.js') && files.includes('js/charts/finalDrive.js'));
   // the scan does reach the captions and the formula text
   assert.ok(stringLiterals(read('js/app.js')).includes('One line per gear of the selected gear set.'));
-  assert.ok(stringLiterals(read('js/charts/finalDrive.js')).some(s => s.includes(') ÷ 2')));
+  assert.ok(stringLiterals(read('js/charts/finalDrive.js')).some(s => s.includes('÷')));
   for (const f of files) {
     for (const s of stringLiterals(read(f))) clean(s, `${f}: ${s}`);
   }
