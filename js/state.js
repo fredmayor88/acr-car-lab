@@ -14,6 +14,18 @@ const FLOOR_STEP = 100;
 export const REV_LIMIT_MIN = 2000;
 export const REV_LIMIT_MAX = 15000;
 
+/**
+ * The Power and torque chart's power unit: 'hp' when the Power in hp box is ticked, else 'kW'.
+ * Only 'hp' is stored (`state.pw`, hash `pw=hp`); kW is the default and leaves no trace.
+ */
+export const powerUnitOf = state => (state?.pw === 'hp' ? 'hp' : 'kW');
+
+/** The state with the power unit set: `pw: 'hp'` when on, no `pw` at all when off. */
+export function setPowerUnit(state, hp) {
+  const { pw: _old, ...rest } = state;
+  return hp ? { ...rest, pw: 'hp' } : rest;
+}
+
 /** A typed or linked rev limit as an integer, or null when it is not a valid one. */
 export function parseRevLimit(raw) {
   const n = wholeRpm(raw);
@@ -229,6 +241,9 @@ export function parseHash(hash, car) {
   const floor = parseFloor(q.get('floor'), limited, out.ceil);
   out.floor = floor !== null ? floor : Math.min(REV_FLOOR, out.ceil - FLOOR_STEP);
 
+  // anything but pw=hp is kW, the default
+  if (q.get('pw') === 'hp') out.pw = 'hp';
+
   return out;
 }
 
@@ -273,5 +288,6 @@ export function toHash(state, car) {
   if (rl !== car.engine.redline) q.set('rl', String(rl));
   const ceil = state.ceil ?? rl;
   if (ceil !== rl) q.set('ceil', String(ceil));
+  if (powerUnitOf(state) === 'hp') q.set('pw', 'hp');
   return '#' + q.toString();
 }

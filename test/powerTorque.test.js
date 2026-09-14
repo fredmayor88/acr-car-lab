@@ -157,3 +157,101 @@ test('boxesOverlap: touching within the padding counts, clear boxes do not', asy
   assert.equal(boxesOverlap(a, { x: 12, y: 0, width: 10, height: 10 }, 4), true);
   assert.equal(boxesOverlap(a, { x: 0, y: 20, width: 10, height: 10 }, 4), false);
 });
+
+// --- power in hp (the car catalogue's unit) ---------------------------------------------
+
+test('hp is the catalogue\'s metric hp: kW × 1.35962, so 195 kW is 265 hp', async () => {
+  const { HP_PER_KW, powerIn, POWER_UNITS } = await import('../js/charts/powerTorque.js');
+  assert.equal(HP_PER_KW, 1.35962);
+  assert.deepEqual([...POWER_UNITS], ['kW', 'hp']);
+  assert.equal(Math.round(powerIn(195, 'hp')), 265);
+  assert.equal(powerIn(195, 'kW'), 195);
+  assert.equal(powerIn(195, undefined), 195);
+  // the fixture's peak: 240 Nm at 7750 rpm is 195 kW
+  assert.equal(Math.round(powerIn(layout(car).peakPower.kw, 'hp')), 265);
+});
+
+test('powerTicks: kW keeps its 70 grid; hp takes round 50s up to the axis top, placed at their kW', async () => {
+  const { powerTicks, HP_PER_KW } = await import('../js/charts/powerTorque.js');
+  assert.deepEqual(powerTicks(210, 'kW'), [0, 70, 140, 210].map(v => ({ value: v, kw: v })));
+  assert.deepEqual(powerTicks(210, 'hp').map(t => t.value), [0, 50, 100, 150, 200, 250]);
+  assert.deepEqual(powerTicks(140, 'hp').map(t => t.value), [0, 50, 100, 150]);
+  for (const t of powerTicks(280, 'hp')) {
+    assert.ok(Math.abs(t.kw * HP_PER_KW - t.value) < 1e-9);
+    assert.ok(t.kw <= 280 + 1e-9);
+  }
+  // past ten 50s the step is 100
+  assert.deepEqual(powerTicks(420, 'hp').map(t => t.value), [0, 100, 200, 300, 400, 500]);
+});
+
+test('the peak power label and the readout say hp when asked; percentages do not change', async () => {
+  const { peakPowerLabel, readoutLines } = await import('../js/charts/powerTorque.js');
+  const peak = layout(car).peakPower;
+  assert.equal(peakPowerLabel(peak), '195 kW  ·  7750 rpm');
+  assert.equal(peakPowerLabel(peak, 'hp'), '265 hp  ·  7750 rpm');
+  const r = readout(car, 5000);
+  const kw = readoutLines(r);
+  const hp = readoutLines(r, 'hp');
+  assert.deepEqual(hp.slice(0, 2), kw.slice(0, 2));
+  assert.equal(kw[2], `${r.kw.toFixed(0)} kW    ${r.kwPct}% of peak`);
+  assert.equal(hp[2], `${(r.kw * 1.35962).toFixed(0)} hp    ${r.kwPct}% of peak`);
+});
+
+test('every car\'s peak power in hp is the car template\'s peak_power, from the same curve', async (t) => {
+  const { peakPowerLabel } = await import('../js/charts/powerTorque.js');
+  const { readFileSync, existsSync } = await import('node:fs');
+  const templates = new URL('../../acr-setup-engineer/.claude/skills/acr-setup-engineer/car-templates/',
+    import.meta.url);
+  if (!existsSync(templates)) { t.skip('no ../acr-setup-engineer checkout next to this repo'); return; }
+  const peakOf = slug => readFileSync(new URL(`${slug}.yaml`, templates), 'utf8')
+    .match(/^\s+peak_power: "(\d+) hp at (\d+) rpm"/m);
+  const { cars } = JSON.parse(readFileSync(new URL('../data/index.json', import.meta.url), 'utf8'));
+  assert.equal(cars.length, 18);
+  for (const { slug } of cars) {
+    const data = JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url), 'utf8'));
+    // the 206 WRC has no curve (and no peak_power) of its own: it runs on the Xsara WRC's
+    const owner = data.engine.curve_from?.slug ?? slug;
+    if (owner !== slug) assert.equal(peakOf(slug), null, `${slug} has no peak_power of its own`);
+    const m = peakOf(owner);
+    assert.ok(m, `${owner} template has a peak_power`);
+    assert.equal(peakPowerLabel(layout(data).peakPower, 'hp'), `${m[1]} hp  ·  ${m[2]} rpm`, slug);
+  }
+});
+
+test('render draws hp on the right axis, the peak label and the readout, and the curves stay put', async () => {
+  const { render } = await import('../js/charts/powerTorque.js');
+  const draw = unit => {
+    const svg = stubDocument();
+    render(svg, car, 5000, car.engine.redline, unit);
+    delete globalThis.document;
+    return { paths: svg.children.filter(n => n.tag === 'path').map(n => n.attrs.d),
+             texts: svg.children.filter(n => n.tag === 'text').map(n => String(n.textContent)) };
+  };
+  const kw = draw('kW');
+  const hp = draw('hp');
+  assert.deepEqual(hp.paths, kw.paths);
+  assert.equal(kw.paths.length, 2);
+  assert.ok(kw.texts.includes('kW') && !kw.texts.includes('hp'));
+  assert.ok(hp.texts.includes('hp') && !hp.texts.includes('kW'));
+  assert.ok(kw.texts.includes('195 kW  ·  7750 rpm'));
+  assert.ok(hp.texts.includes('265 hp  ·  7750 rpm'));
+  assert.ok(hp.texts.some(t => /^\d+ hp {4}\d+% of peak$/.test(t)));
+  assert.ok(kw.texts.some(t => /^\d+ kW {4}\d+% of peak$/.test(t)));
+  // the right axis: round 50s in hp (the fixture's axis top is 210 kW, 285 hp)
+  for (const v of ['50', '100', '150', '200', '250']) assert.ok(hp.texts.includes(v), v);
+});
+
+/** A minimal DOM for render(), as in test/speedRevs.test.js, with the bounding box it measures. */
+function stubDocument() {
+  const make = tag => ({
+    tag, attrs: {}, style: {}, children: [], textContent: '',
+    setAttribute(k, v) { this.attrs[k] = String(v); },
+    getAttribute(k) { return this.attrs[k]; },
+    appendChild(n) { this.children.push(n); return n; },
+    removeChild(n) { this.children.splice(this.children.indexOf(n), 1); return n; },
+    getBBox() { return { x: 0, y: 0, width: 0, height: 0 }; },
+    get firstChild() { return this.children[0] ?? null; },
+  });
+  globalThis.document = { createElementNS: (_, tag) => make(tag) };
+  return make('svg');
+}

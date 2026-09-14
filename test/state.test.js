@@ -438,3 +438,44 @@ test('the rev limit input steps by 10, so every stored limit is a valid value of
   const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
   assert.match(src, /id: 'rev-limit', type: 'number', step: '10',/);
 });
+
+// --- Power and torque's unit ---------------------------------------------------------------
+
+test('power in hp: pw=hp in the hash when on, nothing when off, and it round-trips', async () => {
+  const { powerUnitOf, setPowerUnit } = await import('../js/state.js');
+  const off = defaultState(car);
+  assert.equal(powerUnitOf(off), 'kW');
+  assert.equal('pw' in off, false);
+  assert.equal(toHash(off, car).includes('pw='), false);
+  const on = setPowerUnit(off, true);
+  assert.equal(powerUnitOf(on), 'hp');
+  assert.match(toHash(on, car), /&pw=hp$/);
+  assert.deepEqual(parseHash(toHash(on, car), car), on);
+  assert.deepEqual(setPowerUnit(on, false), off);
+  assert.deepEqual(parseHash(toHash(setPowerUnit(on, false), car), car), off);
+});
+
+test('an invalid pw in a link is kW', async () => {
+  const { powerUnitOf } = await import('../js/state.js');
+  for (const raw of ['ps', 'kW', 'HP', '1', '', 'hp ']) {
+    const s = parseHash(`#s=Gravel&pw=${encodeURIComponent(raw)}`, car);
+    assert.equal(powerUnitOf(s), 'kW', raw);
+    assert.equal('pw' in s, false, raw);
+  }
+});
+
+test('app.js: the Power in hp checkbox tracks toggle-power-unit and draws the chart in its unit', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.equal((src.match(/'toggle-power-unit'/g) || []).length, 1);
+  assert.match(src, /'Power in hp'/);
+  assert.match(src, /powerTorque\.render\(svgOf\('power'\), car, hover\.power, state\.ceil,\s*powerUnitOf\(state\)\)/);
+  assert.match(src, /controls\.powerUnit\.checked = powerUnitOf\(state\) === 'hp'/);
+});
+
+test('Copy settings does not mention the power unit', async () => {
+  const { settingsText } = await import('../js/settingsText.js');
+  const { setPowerUnit } = await import('../js/state.js');
+  const stratos = load('lancia-stratos');
+  const s = defaultState(stratos);
+  assert.equal(settingsText(stratos, setPowerUnit(s, true)), settingsText(stratos, s));
+});

@@ -5,8 +5,8 @@
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos, hasRatioSettings,
   primaryIndex, withRevLimit } from './gearing.js';
 import { REV_LIMIT_MAX, REV_LIMIT_MIN, applyRevLimit, floorFocusAfterStep, parseCeil, parseFloor,
-  parseHash, parseRevLimit, pickRow, revControlViews, rpmInputKey, setPrimary,
-  setRatio, stepCeil, stepFloor, toHash } from './state.js';
+  parseHash, parseRevLimit, pickRow, powerUnitOf, revControlViews, rpmInputKey, setPowerUnit,
+  setPrimary, setRatio, stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
 import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from './footer.js';
@@ -106,6 +106,7 @@ function buildShell() {
   root.querySelector('.loading')?.remove();
 
   const revs = buildRevControls();
+  const power = buildPowerUnitControl();
   const surfaces = SURFACES.filter(s => s.key in car.tyres);
   const combos = car.final_drive ? finalDriveCombos(car.final_drive) : [];
   // an averaged-axle car has a select per ratio setting instead of the combined one
@@ -202,6 +203,7 @@ function buildShell() {
     const panel = h('div', { class: 'panel' });
     panel.appendChild(svg);
     if (s.id === 'shift') panel.appendChild(revs.box);
+    if (s.id === 'power') panel.appendChild(power.box);
     // the 206 WRC runs on another car's curve, and its power section says whose
     const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
     // the averaged-axle cars say how their settings make the final drive
@@ -224,7 +226,24 @@ function buildShell() {
   wireTouchDismiss();
 
   return { surfaceSel, fdSel, setSel, factor, revLimit, revs, summary, subLimit: sub.limit,
-    ceils: [revs.ceil, barCeil], ratios };
+    ceils: [revs.ceil, barCeil], ratios, powerUnit: power.input };
+}
+
+/**
+ * Power and torque's unit: a checkbox over the top right of the chart (above it on a narrow
+ * screen) that labels power in hp instead of kW. The curves do not move; only the right axis,
+ * the peak power label and the readout change.
+ */
+function buildPowerUnitControl() {
+  const input = h('input', { id: 'power-unit', type: 'checkbox',
+    onchange: e => {
+      state = setPowerUnit(state, e.target.checked);
+      track('toggle-power-unit');
+      commit();
+    } });
+  const box = h('div', { class: 'unitbox' }, input,
+    h('label', { for: 'power-unit' }, 'Power in hp'));
+  return { box, input };
 }
 
 // The bar's short labels for the ratio settings; each select's accessible name and title is
@@ -606,7 +625,8 @@ function renderFinalDrive() {
 // One entry per chart, so a hover redraws only the chart under the pointer.
 const RENDER = {
   power: () => {
-    maps.power = powerTorque.render(svgOf('power'), car, hover.power, state.ceil);
+    maps.power = powerTorque.render(svgOf('power'), car, hover.power, state.ceil,
+      powerUnitOf(state));
   },
   fd: renderFinalDrive,
   ladder: () => {
@@ -646,6 +666,7 @@ function syncControls() {
     readout.textContent = finalDrive.finalDriveReadout(car, state);
   } else if (controls.fdSel?.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
+  controls.powerUnit.checked = powerUnitOf(state) === 'hp';
   controls.factor.value = String(state.k);
   controls.revLimit.value = String(state.rl);
   controls.subLimit.textContent = String(car.engine.redline);

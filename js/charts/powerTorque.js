@@ -5,6 +5,36 @@
 
 import { C, el, text, tip, clear } from '../svg.js';
 
+// Power in hp, as the car catalogue in acr-setup-engineer writes it (extract_torque_curves.py):
+// metric hp, kW = Nm × rpm / 9549, then hp = kW × 1.35962.
+export const HP_PER_KW = 1.35962;
+export const POWER_UNITS = Object.freeze(['kW', 'hp']);
+
+/** Power in the unit shown: kW as stored, or hp. */
+export const powerIn = (kw, unit) => (unit === 'hp' ? kw * HP_PER_KW : kw);
+
+/**
+ * The power axis ticks, `[{ value, kw }]`: the label, and the kW it sits at. The curve is drawn
+ * in kW whatever the unit, so the plot never moves; only the labels change. kW keeps its 70 kW
+ * grid; hp ticks are round 50s (100s once that would pass ten labels), up to the axis top.
+ */
+export function powerTicks(kwMax, unit) {
+  if (unit !== 'hp') {
+    const out = [];
+    for (let v = 0; v <= kwMax; v += 70) out.push({ value: v, kw: v });
+    return out;
+  }
+  const top = kwMax * HP_PER_KW;
+  const step = top / 50 > 10 ? 100 : 50;
+  const out = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push({ value: v, kw: v / HP_PER_KW });
+  return out;
+}
+
+/** The peak power label: `195 kW  ·  7750 rpm` or `265 hp  ·  7750 rpm`. */
+export const peakPowerLabel = (peak, unit = 'kW') =>
+  `${powerIn(peak.kw, unit).toFixed(0)} ${unit}  ·  ${peak.rpm} rpm`;
+
 /** The rev ceiling marker, or null when the ceiling is the rev limit (or not given). */
 export const ceilingMarker = (redline, ceil) =>
   ceil != null && ceil < redline ? { rpm: ceil, label: 'rev ceiling' } : null;
@@ -98,18 +128,24 @@ export function readout(car, rpm) {
   };
 }
 
-/** The three tooltip lines: whole rpm, Nm and kW, as the other charts' readouts show them. */
-export const readoutLines = r => [
+/**
+ * The three tooltip lines: whole rpm, Nm and power (kW, or hp), as the other charts' readouts
+ * show them. The percentage of peak is the same in either unit.
+ */
+export const readoutLines = (r, unit = 'kW') => [
   `${r.rpm.toFixed(0)} rpm`,
   `${r.nm.toFixed(0)} Nm    ${r.nmPct}% of peak`,
-  `${r.kw.toFixed(0)} kW    ${r.kwPct}% of peak`,
+  `${powerIn(r.kw, unit).toFixed(0)} ${unit}    ${r.kwPct}% of peak`,
 ];
 
-export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
+// The top margin leaves room for the power unit checkbox over the top right of the plot.
+export const PLOT = Object.freeze({ L: 64, R: 1030, T: 76, B: 322, W: 1100, H: 370 });
+
+export function render(svg, car, hoverRpm = null, ceil = car.engine.redline, unit = 'kW') {
   clear(svg);
-  svg.setAttribute('viewBox', '0 0 1100 340');
+  svg.setAttribute('viewBox', `0 0 ${PLOT.W} ${PLOT.H}`);
   const l = layout(car, ceil);
-  const L = 64, R = 1030, T = 46, B = 292;
+  const { L, R, T, B } = PLOT;
   // the curve is drawn whole, so the axis runs to its end even past the rev limit
   const rpmMax = rpmAxisMax(car);
   const nmMax = Math.ceil(l.maxNm / 70) * 70;
@@ -123,8 +159,8 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
                       stroke: C.muted, 'stroke-opacity': 0.18 });
     text(svg, L - 9, yt(v) + 3.5, v, 'axis', { 'text-anchor': 'end' });
   }
-  for (let v = 0; v <= kwMax; v += 70) {
-    text(svg, R + 9, yp(v) + 3.5, v, 'axis', { fill: C.accentText });
+  for (const tick of powerTicks(kwMax, unit)) {
+    text(svg, R + 9, yp(tick.kw) + 3.5, tick.value, 'axis', { fill: C.accentText });
   }
   for (let r = 0; r <= rpmMax; r += 1000) {
     text(svg, xs(r), B + 18, r / 1000 + 'k', 'axis', { 'text-anchor': 'middle' });
@@ -156,7 +192,7 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
     mark(xs(l.peakTorque.rpm), yt(l.peakTorque.nm),
          `${l.peakTorque.nm.toFixed(0)} Nm  ·  ${l.peakTorque.rpm} rpm`, C.data, C.data),
     mark(xs(l.peakPower.rpm), yp(l.peakPower.kw),
-         `${l.peakPower.kw.toFixed(0)} kW  ·  ${l.peakPower.rpm} rpm`, C.accent, C.accentText),
+         peakPowerLabel(l.peakPower, unit), C.accent, C.accentText),
   ];
   // measured once drawn: a peak label over the rev limit label moves the latter down
   if (!l.ceilMarker && peakLabels.some(p => boxesOverlap(p.getBBox(), limitLabel.getBBox(), 4))) {
@@ -167,7 +203,7 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
   }
 
   text(svg, L - 9, T - 16, 'Nm', 'lbl', { 'text-anchor': 'end', fill: C.data });
-  text(svg, R + 9, T - 16, 'kW', 'lbl', { fill: C.accentText });
+  text(svg, R + 9, T - 16, unit, 'lbl', { fill: C.accentText });
   text(svg, (L + R) / 2, B + 42, 'engine speed — rpm', 'lbl',
        { 'text-anchor': 'middle' });
 
@@ -192,7 +228,7 @@ export function render(svg, car, hoverRpm = null, ceil = car.engine.redline) {
     // readout interpolated: the box and the curves are unchanged, and the axis now runs at
     // least to the curve end, so the box spans no more rpm than it did. Rechecked in the
     // rev-limit fix round (revlimit-report.md).
-    tip(svg, L + 16, T + 6, readoutLines(r));
+    tip(svg, L + 16, T + 6, readoutLines(r, unit));
   }
 
   // rpm under the cursor, for the caller to feed back in as hoverRpm

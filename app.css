@@ -137,6 +137,13 @@ svg{display:block;width:100%;height:auto}
 .lanehit{pointer-events:none}
 @media (pointer:coarse){.lanehit{pointer-events:all;cursor:pointer}}
 
+/* Power and torque's unit checkbox, over the top right of the chart, in the rev controls' style */
+#sec-power .panel{position:relative}
+.unitbox{position:absolute;top:10px;right:18px;display:flex;align-items:center;gap:7px}
+.unitbox input{margin:0;width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.unitbox label{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted-text);font-weight:600;cursor:pointer}
+
 /* Shift points' rev floor and ceiling, over the top right of the chart */
 #sec-shift .panel{position:relative}
 .revboxes{position:absolute;top:10px;right:18px;display:flex;align-items:center;gap:22px}
@@ -250,6 +257,7 @@ div.formula code{display:block;font:inherit;padding-left:2ch;text-indent:-2ch}
   .facts dd{margin-bottom:12px}
   .revboxes{position:static;flex-direction:column;align-items:flex-end;gap:8px;
     margin-bottom:10px}
+  .unitbox{position:static;justify-content:flex-end;margin-bottom:10px}
 
   /* The bar collapses to one line: what is selected, and a button that opens the controls.
      Open, they hang below the line over the page rather than pushing it down, so opening
