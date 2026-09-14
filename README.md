@@ -35,8 +35,9 @@ catalogue in acr-setup-engineer) instead of kW. The curves and the percentages d
 
 **Shift points** has its own **Rev floor** and **Rev ceiling** over the chart (the ceiling is
 the same one as the bar's). **Speed against revs** draws one line per gear of the gear set
-selected in the bar. The rolling factor, labelled **Rolling radius factor** (0.8–1.1), and the **Rev limit**
-(2000–15000 rpm) are editable at the foot of the page, each with a reset link.
+selected in the bar. The rolling factor, labelled **Rolling radius factor** (0.8–1.1), and the
+**Rev limit** (2000–15000 rpm, to the nearest 10) are editable at the foot of the page, each
+with a reset link.
 
 **Readouts.** With a mouse, hover over Power and torque, Where each gear tops out, Shift
 points or Speed against revs; the readout goes when the pointer leaves. On a touch screen,
@@ -91,10 +92,11 @@ car's measured rev limit, and is applied to every car and every surface.
 **Primary.** A fixed gear pair in front of the gearbox that scales every gear in the set by
 the same amount. Each gear set in the game files carries its own: `primary = the gear set's own
 primary`. On most cars it is `25//25`, a ratio of 1. The Alfa Romeo GTA Junior has `30//23` on
-every set, and a speed run on it measured that stored primary in force. On the Mini, Fiat 124,
-Fiat 131 and Fulvia it changes from one gear set to the next; each set is taken to use its own
-the same way, which has not been run. The Lancia Stratos and the Peugeot 206 WRC have a Primary Gear adjustment in setup, and
-the one you pick replaces the gear set's primary: `primary = Primary Gear` (measured on both).
+every set, and a speed run on it fits that stored primary. On the Mini, Fiat 124, Fiat 131 and
+Fulvia it changes from one gear set to the next; each set is taken to use its own in the same
+way, which no run has tested yet. The Lancia Stratos and the Peugeot 206 WRC have a Primary
+Gear adjustment in setup, and the one you pick replaces the gear set's primary:
+`primary = Primary Gear` (measured on both).
 
 **Final drive.** Everything after the gearbox, as one number:
 
@@ -122,11 +124,11 @@ final drive = (front path ratio + rear path ratio) ÷ 2
 ```
 
 That was measured in game with speed runs on the Delta Integrale, 206 WRC and Impreza. Each
-ratio setting on those paths is its own control on the gearing page, the note under the Final
-drive chart writes the formula out in the game's setting names. The fixed ratios are read from the car data (the
-Xsara's two differentials are fixed). The Audi has no centre differential, so it cannot be
-driven with the front and rear ratios apart to test it; the same formula is taken from the
-measured cars, and its gearing page warns while they differ. In the data these cars carry
+ratio setting on those paths is its own control on the gearing page, and the note under the
+Final drive chart writes the formula out in the game's setting names. The fixed ratios are read
+from the car data (the Xsara's two differentials are fixed). The Audi has no centre
+differential, so it cannot be driven with the front and rear ratios apart to test it; the same
+formula is taken from the measured cars, and its gearing page warns while they differ. In the data these cars carry
 `final_drive.settings` and `final_drive.formula`.
 
 **Rev limit.** Every top speed is read at the rev limit (or the rev ceiling when lowered). The
@@ -168,7 +170,9 @@ pages.
 
    What the exporter reads besides the game files, all in `acr-setup-engineer/tools/gearing-charts/`:
    - `calibration.json`: the measured rev limits (each with its date, game version and the
-     shift-light value it was measured against), the speed runs and the fit.
+     shift-light value it was measured against), the speed runs and the fit. The runs and cars
+     of the fit are also written to `data/index.json` as `fit`, which the gearing page's rolling
+     factor note names.
    - `drivetrain_notes.json`: the drivetrain pages' prose. Every number in it is a placeholder
      computed at export, so a data change updates the text. A note that no longer resolves
      fails that car: it is left out of the export, the rest of the export completes, and the
@@ -260,7 +264,7 @@ node --test
 | `data/` | Generated. Never edit by hand. |
 | `index.html` | The car picker. Generated. Never edit by hand. |
 | `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
-| `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer. Generated and kept current but not linked from the site yet, and marked noindex: set `PUBLISH_DRIVETRAIN_LINKS = True` in `export_car_data.py` to link them from the picker and each gearing page. Never edit by hand. |
+| `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer and kept current, but not linked from the site yet and marked noindex: set `PUBLISH_DRIVETRAIN_LINKS = True` in `export_car_data.py` to link them from the picker and each gearing page. Never edit by hand. |
 | `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
 
 ## Licence

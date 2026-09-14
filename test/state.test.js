@@ -348,6 +348,10 @@ test('parseRevLimit: a whole rpm from 2000 to 15000, anything else is null', asy
   assert.equal(parseRevLimit('2000'), 2000);
   assert.equal(parseRevLimit(' 15000 '), 15000);
   assert.equal(parseRevLimit('8450'), 8450);
+  // to the nearest 10, as the measured limits and the input's step are
+  assert.equal(parseRevLimit('8515'), 8520);
+  assert.equal(parseRevLimit('8514'), 8510);
+  assert.equal(parseRevLimit('14996'), 15000, 'in range typed, so rounded, not refused');
   for (const raw of ['1999', '15001', '0', '-8000', '8450.5', '8e3', 'abc', '', null, undefined]) {
     assert.equal(parseRevLimit(raw), null, String(raw));
   }

@@ -26,10 +26,13 @@ export function setPowerUnit(state, hp) {
   return hp ? { ...rest, pw: 'hp' } : rest;
 }
 
-/** A typed or linked rev limit as an integer, or null when it is not a valid one. */
+/**
+ * A typed or linked rev limit as an integer, or null when it is not a valid one. It goes to the
+ * nearest 10 rpm, as the measured limits are stored and as the input steps.
+ */
 export function parseRevLimit(raw) {
   const n = wholeRpm(raw);
-  return n !== null && n >= REV_LIMIT_MIN && n <= REV_LIMIT_MAX ? n : null;
+  return n !== null && n >= REV_LIMIT_MIN && n <= REV_LIMIT_MAX ? Math.round(n / 10) * 10 : null;
 }
 
 /** The rev limit in force: the edited one, or the car's own from the data. */

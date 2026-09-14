@@ -26,7 +26,7 @@
 // no `settings` and no `ratios`, and takes exactly the path above.
 
 // Fitted in acr-setup-engineer (tools/gearing-charts/calibration.json) against measured top
-// speeds on eight cars at their measured rev limits. Every car's data carries the same value.
+// speeds at their measured rev limits. Every car's data carries the same value.
 export const DEFAULT_FACTOR = 0.978;
 export const REV_FLOOR = 3000;
 

@@ -9,7 +9,7 @@ import { REV_LIMIT_MAX, REV_LIMIT_MIN, applyRevLimit, floorFocusAfterStep, parse
   setPrimary, setRatio, stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
-import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from './footer.js';
+import { ISSUES, PROMO, dataLine, factorNote, revLimitNote } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
 import { coarseClick, isTap, leaveRedraws, movesHover, slopInViewBox, touchStep } from './hover.js';
@@ -450,7 +450,7 @@ function buildFooter() {
           state.k = car.defaults.loaded_radius_factor;
           commit();
         } }, 'reset')),
-      h('p', { class: 'fnote' }, FACTOR_NOTE)),
+      h('p', { class: 'fnote' }, factorNote(index))),
     h('div', {},
       h('h3', {}, 'Rev limit'),
       h('div', { class: 'kbox' }, revLimit, h('span', { class: 'unit' }, 'rpm'),

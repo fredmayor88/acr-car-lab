@@ -23,11 +23,24 @@ export function revLimitNote(source) {
   return (lead ? lead + ' ' : '') + 'If your limiter differs, edit it here.';
 }
 
-/** The rolling radius factor's note. */
-export const FACTOR_NOTE = 'A loaded tyre rolls on a smaller radius than the stored one. This '
-  + 'factor was fitted against measured in-game top speeds on seven cars (Stratos, 306 Maxi, '
-  + 'Xsara WRC, 037, 206 WRC, Delta Integrale, Impreza), and is applied to every car and '
-  + 'surface. Edit it and every chart redraws.';
+const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+  'ten'];
+
+/**
+ * The rolling radius factor's note. The cars it was fitted on come from data/index.json `fit`
+ * (written by the exporter from calibration.json), so the count never goes stale; an index
+ * without it leaves the list out rather than guess.
+ */
+export function factorNote(index) {
+  const cars = index?.fit?.cars;
+  const on = Array.isArray(cars) && cars.length
+    ? ` on ${NUMBER_WORDS[cars.length] ?? cars.length} car${cars.length === 1 ? '' : 's'} `
+      + `(${cars.join(', ')})`
+    : '';
+  return 'A loaded tyre rolls on a smaller radius than the stored one. This factor was fitted '
+    + `against measured in-game top speeds${on}, and is applied to every car and surface. `
+    + 'Edit it and every chart redraws.';
+}
 
 export const PROMO = Object.freeze({
   before: 'Want a setup, not just the numbers? ',

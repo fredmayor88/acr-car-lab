@@ -71,9 +71,39 @@ test('the rev limit note says where the limit came from, then how to change it',
   assert.equal(revLimitNote(undefined), 'If your limiter differs, edit it here.');
 });
 
-test('the factor note names the seven cars it was fitted on, not the old Stratos-only fit', async () => {
-  const { FACTOR_NOTE } = await import('../js/footer.js');
-  assert.ok(FACTOR_NOTE.includes('measured in-game top speeds on seven cars (Stratos, '
-    + '306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale, Impreza)'));
-  assert.doesNotMatch(FACTOR_NOTE, /15 gears/);
+test('the factor note names the cars it was fitted on, from the index', async () => {
+  const { factorNote } = await import('../js/footer.js');
+  const { readFileSync } = await import('node:fs');
+  const index = JSON.parse(readFileSync(new URL('../data/index.json', import.meta.url), 'utf8'));
+  assert.equal(factorNote(index),
+    'A loaded tyre rolls on a smaller radius than the stored one. This factor was fitted against '
+    + 'measured in-game top speeds on eight cars (Stratos, 306 Maxi, Xsara WRC, 037, 206 WRC, '
+    + 'Delta Integrale, Impreza, GTA Junior), and is applied to every car and surface. Edit it and '
+    + 'every chart redraws.');
+  assert.equal(factorNote({ fit: { runs: 2, cars: ['A', 'B'] } }).includes('on two cars (A, B),'), true);
+  assert.equal(factorNote({}), 'A loaded tyre rolls on a smaller radius than the stored one. This '
+    + 'factor was fitted against measured in-game top speeds, and is applied to every car and '
+    + 'surface. Edit it and every chart redraws.');
+  assert.equal(factorNote(undefined), factorNote({}));
+});
+
+test('the index fit is the cars of the speed runs in calibration.json, in order', async (t) => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const cal = new URL('../../acr-setup-engineer/tools/gearing-charts/calibration.json', import.meta.url);
+  if (!existsSync(cal)) { t.skip('no ../acr-setup-engineer checkout next to this repo'); return; }
+  const runs = JSON.parse(readFileSync(cal, 'utf8')).speed_runs;
+  const { fit } = JSON.parse(readFileSync(new URL('../data/index.json', import.meta.url), 'utf8'));
+  assert.equal(fit.runs, runs.length);
+  assert.equal(fit.cars.length, new Set(runs.map(r => r.car)).size);
+});
+
+test('the README states the fit the index carries', async () => {
+  const { readFileSync } = await import('node:fs');
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8').replace(/\s+/g, ' ');
+  const { fit } = JSON.parse(readFileSync(new URL('../data/index.json', import.meta.url), 'utf8'));
+  const words = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  assert.ok(readme.includes(`on ${fit.runs} runs across ${words[fit.cars.length]} cars`));
+  for (const stale of words.filter((_, i) => i !== fit.cars.length)) {
+    assert.doesNotMatch(readme, new RegExp(`across ${stale} cars|on ${stale} cars`));
+  }
 });

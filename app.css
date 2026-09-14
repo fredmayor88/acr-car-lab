@@ -258,6 +258,8 @@ div.formula code{display:block;font:inherit;padding-left:2ch;text-indent:-2ch}
   .revboxes{position:static;flex-direction:column;align-items:flex-end;gap:8px;
     margin-bottom:10px}
   .unitbox{position:static;justify-content:flex-end;margin-bottom:10px}
+  /* the plot's 30 of 1100 viewBox units of room for the checkbox, which now sits above it */
+  #svg-power{margin-top:calc(-100% * 30 / 1100)}
 
   /* The bar collapses to one line: what is selected, and a button that opens the controls.
      Open, they hang below the line over the page rather than pushing it down, so opening

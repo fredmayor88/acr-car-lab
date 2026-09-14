@@ -9,7 +9,7 @@ import { defaultState, setRatio } from '../js/state.js';
 import { hasRatioSettings } from '../js/gearing.js';
 import { settingsText } from '../js/settingsText.js';
 import { barSummary } from '../js/barSummary.js';
-import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from '../js/footer.js';
+import { ISSUES, PROMO, dataLine, factorNote, revLimitNote } from '../js/footer.js';
 import * as finalDrive from '../js/charts/finalDrive.js';
 import { borrowedCurveNote } from '../js/charts/powerTorque.js';
 import { shiftCaption } from '../js/charts/shiftPoints.js';
@@ -66,7 +66,7 @@ test('the strings the gears page builds, for every car and each of its gear sets
       texts.forEach((t, i) => clean(String(t), `${slug} set ${state.set} text ${i}: ${t}`));
     }
   }
-  clean([FACTOR_NOTE, dataLine({ generated: '2026-09-13', game_version: '0.6' }),
+  clean([factorNote(JSON.parse(readFileSync(new URL('../data/index.json', import.meta.url), 'utf8'))), dataLine({ generated: '2026-09-13', game_version: '0.6' }),
     PROMO.before, PROMO.link, PROMO.after, ISSUES.before, ISSUES.link].join('\n'), 'footer');
 });
 

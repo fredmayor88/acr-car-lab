@@ -74,5 +74,18 @@
   }
  ],
  "generated": "2026-09-14",
- "game_version": "0.6"
+ "game_version": "0.6",
+ "fit": {
+  "runs": 15,
+  "cars": [
+   "Stratos",
+   "306 Maxi",
+   "Xsara WRC",
+   "037",
+   "206 WRC",
+   "Delta Integrale",
+   "Impreza",
+   "GTA Junior"
+  ]
+ }
 }
