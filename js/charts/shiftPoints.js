@@ -63,7 +63,7 @@ export const shiftCaption = (floor, ceil, redline) =>
   'The selected gear set, one row per gear. Each bar covers the speeds where that gear '
   + `is usable, from ${floor} rpm to `
   + (ceil == null || ceil === redline ? 'the rev limit' : `${ceil} rpm`)
-  + '. Where bars overlap you have a choice of gear. Hover for the revs either side of '
+  + '. Where bars overlap you have a choice of gear. Hover or tap for the revs either side of '
   + 'a shift.';
 
 /**
