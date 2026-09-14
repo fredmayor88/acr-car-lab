@@ -216,7 +216,6 @@ export function parseHash(hash, car) {
   // `draw` (the gear sets Speed against revs used to draw) is no longer read: that chart draws
   // the selected gear set, so an old link's `draw` is ignored
 
-
   const k = Number.parseFloat(q.get('k'));
   if (Number.isFinite(k) && k >= K_MIN && k <= K_MAX) out.k = k;
 

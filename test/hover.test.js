@@ -85,6 +85,21 @@ test('touchStep: a tap that wobbles within the slop draws only on lift', () => {
   ]).draws, ['pointerup@12']);
 });
 
+test('touchStep: a lift beyond the slop that never became a drag draws nothing', () => {
+  // a 12px vertical nudge the page did not pan: not a drag, and not a tap either
+  assert.deepEqual(run([
+    { type: 'pointerdown', x: 10, y: 10, lane: false },
+    { type: 'pointermove', x: 10, y: 22 },
+    { type: 'pointerup', x: 10, y: 22 },
+  ]).draws, []);
+  // the draw decision is exactly isTap, the tap-outside dismiss's test
+  for (const [dx, dy] of [[0, 0], [6, 8], [0, TAP_SLOP], [0, TAP_SLOP + 1], [8, 7]]) {
+    const up = { type: 'pointerup', x: 10 + dx, y: 10 + dy };
+    const g = { x: 10, y: 10, lane: false, dragging: false };
+    assert.equal(touchStep(g, up).draw, isTap(g, up), `${dx},${dy}`);
+  }
+});
+
 test('touchStep: a drag draws on every move past the slop, and not again on lift', () => {
   assert.deepEqual(run([
     { type: 'pointerdown', x: 10, y: 10, lane: false },

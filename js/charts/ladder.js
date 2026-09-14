@@ -81,13 +81,17 @@ const inside = (p, b) =>
  * The lane a click at p (viewBox units) picks, or null. A coarse pointer (a finger) picks
  * anywhere in the lane's name column, laneNameHit(i). A fine one (mouse, trackpad) picks
  * only on the name itself: nameBox(i) is that name's box, as the browser measures it.
+ * `padRight` (viewBox units, coarse only) widens the column to the right: a touch readout is
+ * never drawn for a gesture that starts that close to a name, since the tap's click may land
+ * inside the column itself.
  * Clicks are read off the chart's <svg>, which is never redrawn, so a redraw between a
  * finger going down and its click cannot lose the tap.
  */
-export function laneAtPoint(p, count, { coarse, nameBox }) {
+export function laneAtPoint(p, count, { coarse, nameBox, padRight = 0 }) {
   const i = Math.floor((p.y - T) / step);
   if (!(i >= 0 && i < count)) return null;
-  const box = coarse ? laneNameHit(i) : nameBox?.(i);
+  const hit = laneNameHit(i);
+  const box = coarse ? { ...hit, width: hit.width + padRight } : nameBox?.(i);
   return box && inside(p, box) ? i : null;
 }
 

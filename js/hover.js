@@ -35,6 +35,9 @@ export const isDrag = (from, to) => {
   return dx > TAP_SLOP && dx >= Math.abs(to.y - from.y);
 };
 
+/** The tap slop in a chart's viewBox units, for an svg `cssWidth` pixels wide. */
+export const slopInViewBox = (viewBoxWidth, cssWidth) => TAP_SLOP * viewBoxWidth / cssWidth;
+
 /** A finger that went down at `from` and lifted at `to` without moving beyond the slop. */
 export const isTap = (from, to) => Math.hypot(to.x - from.x, to.y - from.y) <= TAP_SLOP;
 
@@ -48,8 +51,8 @@ export const isTap = (from, to) => Math.hypot(to.x - from.x, to.y - from.y) <= T
  * - pointerdown never draws: nothing is redrawn before a tap's click can arrive.
  * - pointermove draws only once the finger has moved sideways beyond the slop (a drag), and
  *   then on every move, so the readout follows the finger.
- * - pointerup draws for a tap, the readout staying after the finger lifts. After a drag the
- *   readout is already where the finger was.
+ * - pointerup draws for a tap (isTap), the readout staying after the finger lifts. After a
+ *   drag the readout is already where the finger was.
  * - A gesture that started on a lane name never draws: that tap selects a gear set, and a
  *   redraw between its pointerdown and its click is what WebKit drops a tap for.
  * - pointercancel (the page took the gesture to scroll) ends it without drawing.
@@ -64,7 +67,10 @@ export function touchStep(gesture, ev) {
       return { gesture: { ...gesture, dragging }, draw: dragging };
     }
     case 'pointerup':
-      return { gesture: null, draw: !!gesture && !gesture.lane && !gesture.dragging };
+      // the same tap test as the page's tap-outside dismiss: a lift beyond the slop that never
+      // became a drag (a vertical nudge the page did not pan) is not a tap
+      return { gesture: null,
+        draw: !!gesture && !gesture.lane && !gesture.dragging && isTap(gesture, ev) };
     default:
       return { gesture: null, draw: false };
   }

@@ -183,6 +183,24 @@ test('laneAtPoint, fine: only on the name box itself, never beside a short name'
     'no name node measured, nothing picked');
 });
 
+test('laneAtPoint, padded: a touch that starts within the tap slop right of a name column counts as on it', async () => {
+  const { laneAtPoint } = await import('../js/charts/ladder.js');
+  const { TAP_SLOP, slopInViewBox } = await import('../js/hover.js');
+  const T = 56, step = 62, L = 214;
+  // at 400px the ladder is 330 CSS px wide for a 1100-unit viewBox: 10px is about 33 units
+  const pad = slopInViewBox(1100, 330);
+  assert.ok(Math.abs(pad - TAP_SLOP * 1100 / 330) < 1e-9);
+  const y = T + step / 2;
+  const padded = { coarse: true, padRight: pad };
+  assert.equal(laneAtPoint({ x: L - 8, y }, 3, { coarse: true }), null, 'unpadded: the gap before the plot');
+  assert.equal(laneAtPoint({ x: L - 8, y }, 3, padded), 0, 'the gap before the plot');
+  assert.equal(laneAtPoint({ x: L, y }, 3, padded), 0, 'the first units of the plot, a finger width from the name');
+  assert.equal(laneAtPoint({ x: L - 8 + pad - 0.01, y }, 3, padded), 0, 'the last unit of the padding');
+  assert.equal(laneAtPoint({ x: L - 8 + pad, y }, 3, padded), null, 'past the padding: the plot');
+  assert.equal(laneAtPoint({ x: L - 8, y }, 3, { coarse: false, nameBox: () => ({ x: 72, y: y - 7, width: 120, height: 13 }), padRight: pad }),
+    null, 'a mouse is never padded');
+});
+
 // --- the page-wide rev ceiling ----------------------------------------------------------
 
 test('at the default ceiling the lanes and the axis title are what they always were', async () => {

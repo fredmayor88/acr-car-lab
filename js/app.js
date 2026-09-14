@@ -12,7 +12,7 @@ import { barSummaryParts, setLabel } from './barSummary.js';
 import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
-import { coarseClick, isTap, leaveRedraws, movesHover, touchStep } from './hover.js';
+import { coarseClick, isTap, leaveRedraws, movesHover, slopInViewBox, touchStep } from './hover.js';
 import * as powerTorque from './charts/powerTorque.js';
 import * as finalDrive from './charts/finalDrive.js';
 import * as ladder from './charts/ladder.js';
@@ -45,10 +45,10 @@ const maps = {};
 
 const SECTIONS = [
   { id: 'power', title: 'Power and torque',
-    cap: 'Engine output against revs. Hover for the values and how far off peak they are.' },
+    cap: 'Engine output against revs. Hover or tap for the values and how far off peak they are.' },
   { id: 'fd', title: 'Final drive', cap: '' },
   { id: 'ladder', title: 'Where each gear tops out',
-    cap: 'One lane per gear set, all of them at once. Click a lane name to select that gear set.' },
+    cap: 'One lane per gear set, all of them at once. Click or tap a lane name to select that gear set.' },
   { id: 'shift', title: 'Shift points', cap: shiftPoints.shiftCaption(REV_FLOOR) },
   { id: 'revs', title: 'Speed against revs', cap: 'One line per gear of the selected gear set.' },
 ];
@@ -481,13 +481,20 @@ function wireHover(id, toHover) {
   let gesture = null;
   const onTouch = e => {
     if (e.pointerType !== 'touch') return false;
+    // one gesture per chart: a second finger is not tracked (a pinch cancels both anyway)
+    if (!e.isPrimary) return true;
     // a finger down on a lane name is picking a gear set: see wireLanePick
     const lane = e.type === 'pointerdown' && id === 'ladder' && isLaneTap(svg, e);
     const step = touchStep(gesture, { type: e.type, x: e.clientX, y: e.clientY, lane });
     gesture = step.gesture;
     // keep a scrub's moves coming to the svg, which a redraw never replaces
     if (e.type === 'pointerdown' && !lane) svg.setPointerCapture?.(e.pointerId);
-    if (step.draw) show(e);
+    if (step.draw) {
+      // one readout at a time, as with a mouse: the other charts' go. None of them is under the
+      // finger, and a lane tap never gets here.
+      clearReadouts(HOVER_IDS.filter(other => other !== id));
+      show(e);
+    }
     return true;
   };
   for (const type of ['pointerdown', 'pointerup', 'pointercancel']) {
@@ -506,9 +513,16 @@ function wireHover(id, toHover) {
   });
 }
 
-/** Whether a finger went down on a lane name of the ladder, the same test its click uses. */
+/**
+ * Whether a finger went down on or near a lane name of the ladder: the test its click uses,
+ * with the column padded by the tap slop on the right, so a tap whose click drifts into the
+ * column never has its node redrawn first.
+ */
 function isLaneTap(svg, e) {
-  const i = maps.ladder?.laneAt(toViewBox(svg, e), { coarse: true });
+  const box = svg.getBoundingClientRect();
+  const vbWidth = svg.viewBox.baseVal.width || box.width;
+  const i = maps.ladder?.laneAt(toViewBox(svg, e),
+    { coarse: true, padRight: box.width ? slopInViewBox(vbWidth, box.width) : 0 });
   return i !== null && i !== undefined;
 }
 
@@ -517,21 +531,28 @@ function wireTouchDismiss() {
   let down = null;
   const onChart = target => target instanceof Element && !!target.closest('svg[id^="svg-"]');
   document.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch' && !e.isPrimary) return;
     down = e.pointerType === 'touch' ? { x: e.clientX, y: e.clientY, chart: onChart(e.target) }
       : null;
   });
   document.addEventListener('pointercancel', () => { down = null; });
   document.addEventListener('pointerup', e => {
+    if (e.pointerType === 'touch' && !e.isPrimary) return;
     const from = down;
     down = null;
     if (!from || e.pointerType !== 'touch' || from.chart
         || !isTap(from, { x: e.clientX, y: e.clientY })) return;
-    for (const id of HOVER_IDS) {
-      if (hover[id] === null) continue;
-      hover[id] = null;
-      RENDER[id]();
-    }
+    clearReadouts(HOVER_IDS);
   });
+}
+
+/** Take away the readouts on these charts, redrawing only those that have one. */
+function clearReadouts(ids) {
+  for (const id of ids) {
+    if (hover[id] === null) continue;
+    hover[id] = null;
+    RENDER[id]();
+  }
 }
 
 /**
