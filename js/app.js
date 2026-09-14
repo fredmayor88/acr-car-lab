@@ -203,7 +203,8 @@ function buildShell() {
     const panel = h('div', { class: 'panel' });
     panel.appendChild(svg);
     if (s.id === 'shift') panel.appendChild(revs.box);
-    if (s.id === 'power') panel.appendChild(power.box);
+    // before the chart, so on a narrow screen it stacks above it
+    if (s.id === 'power') panel.insertBefore(power.box, svg);
     // the 206 WRC runs on another car's curve, and its power section says whose
     const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
     // the averaged-axle cars say how their settings make the final drive
