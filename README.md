@@ -40,10 +40,11 @@ adjustment in setup; the one you pick there replaces the gear set's primary.
 - The Hyundai i20, Skoda Fabia, VW Polo R5 and Peugeot 208 Rally4 have no final drive
   adjustment. Their final drive is a single fixed number, stored as `fixed_final_drive`.
 
-**Averaged axles.** On the Lancia Delta Integrale, Peugeot 206 WRC, Subaru Impreza, Citroen
+**Front and rear axles.** On the Lancia Delta Integrale, Peugeot 206 WRC, Subaru Impreza, Citroen
 Xsara WRC and Audi Quattro the drive splits to a front and a rear axle, each with its own chain
-of ratios. With every wheel at the same road speed the gearbox output turns at the average of
-the two chains. That was measured in game with speed runs on the Delta, 206 and Impreza:
+of ratios. With every wheel at the same road speed the gearbox output turns at
+(front axle chain + rear axle chain) ÷ 2 times wheel speed. That was measured in game with speed
+runs on the Delta, 206 and Impreza:
 
 ```
 final_drive = pre-split ratios * (front axle chain + rear axle chain) / 2

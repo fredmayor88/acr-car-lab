@@ -170,15 +170,23 @@ test('each gears page links to its drivetrain page', () => {
   }
 });
 
-test('the averaged-axle cars state the same formula as the Final drive note', () => {
+test('every drivetrain page states the formula the gears page Final drive note does', () => {
+  // the exporter's formula_note (Python) and formulaNote here are two implementations of one
+  // string: the page's formula line must be exactly the note wherever the site shows a note
   let n = 0;
   for (const d of carDirs) {
     const car = JSON.parse(read(`data/${d}.json`));
     const note = formulaNote(car);
-    if (!note) continue;
-    n += 1;
-    assert.ok(decode(read(`${d}/drivetrain/index.html`)).includes(note), d);
+    const line = decode(read(`${d}/drivetrain/index.html`)).match(/<span class="formula">([^<]*)<\/span>/)[1];
+    if (note) {
+      n += 1;
+      assert.equal(line, note, d);
+      assert.match(note, /÷ 2/, d);
+    } else {
+      assert.doesNotMatch(line, /÷ 2/, `${d}: a car with no note has no (front + rear) ÷ 2 line`);
+    }
   }
+  assert.equal(carDirs.length, 18);
   assert.equal(n, 5);
 });
 

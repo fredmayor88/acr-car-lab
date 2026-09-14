@@ -44,18 +44,14 @@ export function formulaNote(car) {
   const fd = car.final_drive;
   const f = fd.formula;
   const name = key => fd.settings.find(s => s.key === key).adjustment;
-  const chain = keys => keys.map(name).join(' × ');
-  if (!f.front.length && !f.rear.length) {
-    const fixed = f.fixed_pre * (f.fixed_front + f.fixed_rear) / 2;
-    return `Final drive = ${chain(f.pre)} × ${fixed.toFixed(3)} `
-      + '(the front and rear differentials are fixed).';
-  }
-  if (!f.front.length) {
-    return `Final drive = average of the front axle (${chain(f.pre)}) and the rear axle `
-      + `(${chain([...f.pre, ...f.rear])}).`;
-  }
-  const average = `average of ${chain(f.front)} and ${chain(f.rear)}`;
-  return f.pre.length ? `Final drive = ${chain(f.pre)} × ${average}.` : `Final drive = ${average}.`;
+  // a chain's settings by game name, then its fixed ratio where it is not 1; '1' when empty
+  const product = (keys, fixed) => [...keys.map(name),
+    ...(Math.abs(fixed - 1) < 1e-9 ? [] : [fixed.toFixed(3)])].join(' × ') || '1';
+  const pre = product(f.pre, f.fixed_pre);
+  const axles = `(${product(f.front, f.fixed_front)} + ${product(f.rear, f.fixed_rear)}) ÷ 2`;
+  const fixed = !f.front.length && !f.rear.length
+    ? ' (the front and rear differentials are fixed)' : '';
+  return `Final drive = ${pre === '1' ? '' : `${pre} × `}${axles}${fixed}`;
 }
 
 /** Only on a car with no centre differential, and only while its row settings disagree. */
