@@ -26,7 +26,7 @@ const car = {
   tyres: { Tarmac_Dry: { asset: 'PirelliT03', free_radius: 0.296 } },
   defaults: { loaded_radius_factor: DEFAULT_FACTOR },
 };
-const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: DEFAULT_FACTOR };
+const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, k: DEFAULT_FACTOR };
 
 test('only the selected gear set is drawn', () => {
   assert.equal(layout(car, state).bars.length, 5);
@@ -106,7 +106,7 @@ const emptyPrimaryCar = {
   tyres: { Tarmac_Dry: { asset: 'x', free_radius: 0.3 } },
   defaults: { loaded_radius_factor: 0.95 },
 };
-const emptyState = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: 0.95 };
+const emptyState = { surface: 'Tarmac_Dry', fd: 0, set: 0, k: 0.95 };
 
 test('switching sets with different primaries scales every bar top by that ratio ' +
      '(regression guard: one set\'s primary leaking onto every set)', () => {

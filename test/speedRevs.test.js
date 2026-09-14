@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FRAME, labelColumns, layout, nearestLine, render, tipTop } from '../js/charts/speedRevs.js';
+import { FRAME, drawnSets, labelColumns, layout, nearestLine, render, tipTop }
+  from '../js/charts/speedRevs.js';
 import { DEFAULT_FACTOR } from '../js/gearing.js';
 
 // Stratos-shape: final_drive.primaries non-empty, so the selected combo's primary
@@ -27,21 +28,22 @@ const car = {
   tyres: { Tarmac_Dry: { asset: 'PirelliT03', free_radius: 0.296 } },
   defaults: { loaded_radius_factor: DEFAULT_FACTOR },
 };
-const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: DEFAULT_FACTOR };
+const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, k: DEFAULT_FACTOR };
 
-test('only the ticked gear sets are drawn', () => {
+test('the chart draws the selected gear set, one line per gear, and nothing else', () => {
+  assert.deepEqual(drawnSets(state), [0]);
   assert.equal(layout(car, state).lines.length, 5);
-  assert.equal(layout(car, { ...state, draw: [0, 2] }).lines.length, 7);
+  assert.equal(layout(car, { ...state, set: 1 }).lines.length, 3);
+  assert.equal(layout(car, { ...state, set: 2 }).lines.length, 2);
 });
 
-test('drawn sets are independent of the selected set', () => {
-  const l = layout(car, { ...state, set: 2, draw: [1] });
-  assert.deepEqual([...new Set(l.lines.map(x => x.set))], [1]);
+test('each line carries the selected set index, so it takes that set\'s colour', () => {
+  const l = layout(car, { ...state, set: 2 });
+  assert.deepEqual([...new Set(l.lines.map(x => x.set))], [2]);
 });
 
-test('each line carries its set index so it can be coloured consistently', () => {
-  const l = layout(car, { ...state, draw: [0, 1] });
-  assert.deepEqual([...new Set(l.lines.map(x => x.set))], [0, 1]);
+test('an old link\'s drawn sets in state change nothing: only state.set is read', () => {
+  assert.deepEqual(layout(car, { ...state, set: 1, draw: [0, 2] }), layout(car, { ...state, set: 1 }));
 });
 
 test('top speed matches the known Stratos top gear figure', () => {
@@ -65,17 +67,14 @@ test('nearestLine picks the gear whose line passes closest to the cursor', () =>
 });
 
 test('nearestLine only ever returns a line that is actually drawn', () => {
-  const l = layout(car, { ...state, draw: [1] });
+  const l = layout(car, { ...state, set: 1 });
   assert.equal(nearestLine(l.lines, car.engine.redline, 4000, 500).set, 1);
 });
 
-// Mini-shape: final_drive.primaries is EMPTY, so each drawn set must use its own gear
-// set's primary — not the selected set's. Set A and Set B differ only in primary
-// (1.0 vs 1.3) with identical gears, so any line that used the wrong primary (e.g.
-// always set 0's, or the state's selected set regardless of which set is drawn) would
-// produce equal top speeds for both sets. This is the regression guard for the exact
-// bug the brief's layout() would have shipped: hoisting fdValue(car, state) once outside
-// the loop over state.draw uses the SELECTED set's primary for every drawn set.
+// Mini-shape: final_drive.primaries is EMPTY, so the drawn set must use its own gear set's
+// primary. Set A and Set B differ only in primary (1.0 vs 1.3) with identical gears, so a
+// line that used the wrong primary (e.g. always set 0's) would give both sets equal top
+// speeds.
 const emptyPrimaryCar = {
   slug: 'test-mini',
   engine: { redline: 6000 },
@@ -95,13 +94,12 @@ const emptyPrimaryCar = {
   tyres: { Tarmac_Dry: { asset: 'x', free_radius: 0.3 } },
   defaults: { loaded_radius_factor: 0.95 },
 };
-const emptyState = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0, 1], k: 0.95 };
+const emptyState = { surface: 'Tarmac_Dry', fd: 0, set: 0, k: 0.95 };
 
 test('sets with different primaries and identical gears draw different top speeds ' +
      '(regression guard for the hoisted-fdValue bug)', () => {
-  const l = layout(emptyPrimaryCar, emptyState);
-  const set0Tops = l.lines.filter(x => x.set === 0).map(x => x.topSpeed);
-  const set1Tops = l.lines.filter(x => x.set === 1).map(x => x.topSpeed);
+  const set0Tops = layout(emptyPrimaryCar, emptyState).lines.map(x => x.topSpeed);
+  const set1Tops = layout(emptyPrimaryCar, { ...emptyState, set: 1 }).lines.map(x => x.topSpeed);
   set0Tops.forEach((top0, i) => {
     assert.notEqual(top0, set1Tops[i]);
     // set 1's primary (1.3) is larger than set 0's (1.0), so the same gear ratio
@@ -111,11 +109,6 @@ test('sets with different primaries and identical gears draw different top speed
   });
 });
 
-test('changing state.set does not change any drawn line\'s top speed', () => {
-  const atSet0 = layout(emptyPrimaryCar, { ...emptyState, set: 0 }).lines.map(x => x.topSpeed);
-  const atSet1 = layout(emptyPrimaryCar, { ...emptyState, set: 1 }).lines.map(x => x.topSpeed);
-  assert.deepEqual(atSet0, atSet1);
-});
 
 // Shape 3: final_drive is null, fixed_final_drive is a plain number (i20, Fabia, Polo R5,
 // 208 Rally4). No combo exists to select, so fdValue must fall back to the fixed ratio.
@@ -170,8 +163,8 @@ test('at the default ceiling the lines are what they always were, ending at the 
 });
 
 test('a lowered ceiling ends every line at the ceiling rpm, and vmax follows', () => {
-  const full = layout(car, { ...state, draw: [0, 1] });
-  const low = layout(car, { ...state, draw: [0, 1], ceil: 7000 });
+  const full = layout(car, state);
+  const low = layout(car, { ...state, ceil: 7000 });
   assert.equal(low.ceil, 7000);
   low.lines.forEach((line, i) => {
     assert.equal(line.total, full.lines[i].total);

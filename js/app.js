@@ -12,7 +12,7 @@ import { barSummaryParts, setLabel } from './barSummary.js';
 import { FACTOR_NOTE, ISSUES, PROMO, dataLine, revLimitNote } from './footer.js';
 import { currentTheme, onThemeChange } from './theme.js';
 import { track } from './tracking.js';
-import { coarseClick, leaveRedraws, movesHover } from './hover.js';
+import { coarseClick, isTap, leaveRedraws, movesHover, touchStep } from './hover.js';
 import * as powerTorque from './charts/powerTorque.js';
 import * as finalDrive from './charts/finalDrive.js';
 import * as ladder from './charts/ladder.js';
@@ -50,7 +50,7 @@ const SECTIONS = [
   { id: 'ladder', title: 'Where each gear tops out',
     cap: 'One lane per gear set, all of them at once. Click a lane name to select that gear set.' },
   { id: 'shift', title: 'Shift points', cap: shiftPoints.shiftCaption(REV_FLOOR) },
-  { id: 'revs', title: 'Speed against revs', cap: 'Pick the gear sets to draw.' },
+  { id: 'revs', title: 'Speed against revs', cap: 'One line per gear of the selected gear set.' },
 ];
 
 const K_MIN = 0.8;
@@ -59,7 +59,6 @@ const K_MAX = 1.1;
 // Everything else in the charts is a CSS variable and repaints itself on a theme change.
 // The gear-set colours are an indexed list, so they are picked here and redrawn.
 const setColours = () => (currentTheme() === 'dark' ? SET_COLOURS_DARK : SET_COLOURS);
-const colourFor = i => { const c = setColours(); return c[i % c.length]; };
 
 const h = (tag, attrs = {}, ...kids) => {
   const node = document.createElement(tag);
@@ -200,9 +199,8 @@ function buildShell() {
   for (const s of SECTIONS) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.id = 'svg-' + s.id;
-    const panel = h('div', { class: s.id === 'revs' ? 'panel row' : 'panel' });
+    const panel = h('div', { class: 'panel' });
     panel.appendChild(svg);
-    if (s.id === 'revs') panel.appendChild(buildSetList());
     if (s.id === 'shift') panel.appendChild(revs.box);
     // the 206 WRC runs on another car's curve, and its power section says whose
     const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
@@ -223,6 +221,7 @@ function buildShell() {
   wireHover('shift', (map, p) => ({ gear: map.yToGear(p.y), speed: map.xToSpeed(p.x) }));
   wireHover('revs', (map, p) => map.atPoint(p.x, p.y));
   wireLanePick();
+  wireTouchDismiss();
 
   return { surfaceSel, fdSel, setSel, factor, revLimit, revs, summary, subLimit: sub.limit,
     ceils: [revs.ceil, barCeil], ratios };
@@ -390,25 +389,6 @@ function shiftReadoutEdge() {
   return Math.min(full, (b.left - s.left) / s.width * (vb.width || s.width) - 8);
 }
 
-function buildSetList() {
-  const list = h('div', { class: 'setlist' }, h('h4', {}, 'Gear sets'));
-  car.gear_sets.forEach((s, i) => {
-    list.appendChild(h('div', {
-      class: 'opt',
-      'data-set': String(i),
-      onclick: () => {
-        const on = state.draw.includes(i);
-        if (on && state.draw.length === 1) return;   // never leave the chart empty
-        state.draw = on ? state.draw.filter(x => x !== i)
-                        : [...state.draw, i].sort((a, b) => a - b);
-        track('toggle-drawn-set');
-        commit();
-      },
-    }, h('i'), s.label.replace('Gear set', 'Set'), h('small', {}, ` ${s.gears.length}sp`)));
-  });
-  return list;
-}
-
 function buildFooter() {
   const factor = h('input', { type: 'number', step: '0.0001', min: String(K_MIN),
     max: String(K_MAX), value: String(state.k),
@@ -486,21 +466,71 @@ function toViewBox(svg, e) {
   };
 }
 
+const HOVER_IDS = ['power', 'ladder', 'shift', 'revs'];
+
 function wireHover(id, toHover) {
   const svg = svgOf(id);
-  svg.addEventListener('pointermove', e => {
+  const show = e => {
     const map = maps[id];
-    // Redrawing replaces every node, so a redraw between pointerdown and click swaps the
-    // lane name out from under the click. See js/hover.js.
-    if (!map || !movesHover(e)) return;
+    if (!map) return;
     hover[id] = toHover(map, toViewBox(svg, e));
     if (id === 'shift') track('shift-helper');
     RENDER[id]();
+  };
+  // A finger: tap to place the readout, drag sideways to scrub it (js/hover.js touchStep).
+  let gesture = null;
+  const onTouch = e => {
+    if (e.pointerType !== 'touch') return false;
+    // a finger down on a lane name is picking a gear set: see wireLanePick
+    const lane = e.type === 'pointerdown' && id === 'ladder' && isLaneTap(svg, e);
+    const step = touchStep(gesture, { type: e.type, x: e.clientX, y: e.clientY, lane });
+    gesture = step.gesture;
+    // keep a scrub's moves coming to the svg, which a redraw never replaces
+    if (e.type === 'pointerdown' && !lane) svg.setPointerCapture?.(e.pointerId);
+    if (step.draw) show(e);
+    return true;
+  };
+  for (const type of ['pointerdown', 'pointerup', 'pointercancel']) {
+    svg.addEventListener(type, onTouch);
+  }
+  svg.addEventListener('pointermove', e => {
+    if (onTouch(e)) return;
+    // Redrawing replaces every node, so a redraw between pointerdown and click swaps the
+    // lane name out from under the click. See js/hover.js.
+    if (movesHover(e)) show(e);
   });
-  svg.addEventListener('pointerleave', () => {
-    if (!leaveRedraws(hover[id])) return;
+  svg.addEventListener('pointerleave', e => {
+    if (!leaveRedraws(hover[id], e.pointerType)) return;
     hover[id] = null;
     RENDER[id]();
+  });
+}
+
+/** Whether a finger went down on a lane name of the ladder, the same test its click uses. */
+function isLaneTap(svg, e) {
+  const i = maps.ladder?.laneAt(toViewBox(svg, e), { coarse: true });
+  return i !== null && i !== undefined;
+}
+
+/** A tap outside every chart takes a touch readout away. */
+function wireTouchDismiss() {
+  let down = null;
+  const onChart = target => target instanceof Element && !!target.closest('svg[id^="svg-"]');
+  document.addEventListener('pointerdown', e => {
+    down = e.pointerType === 'touch' ? { x: e.clientX, y: e.clientY, chart: onChart(e.target) }
+      : null;
+  });
+  document.addEventListener('pointercancel', () => { down = null; });
+  document.addEventListener('pointerup', e => {
+    const from = down;
+    down = null;
+    if (!from || e.pointerType !== 'touch' || from.chart
+        || !isTap(from, { x: e.clientX, y: e.clientY })) return;
+    for (const id of HOVER_IDS) {
+      if (hover[id] === null) continue;
+      hover[id] = null;
+      RENDER[id]();
+    }
   });
 }
 
@@ -604,14 +634,6 @@ function syncControls() {
   for (const c of controls.ceils) paintRpm(c, views.ceil);
   document.querySelector('#sec-shift .cap').textContent =
     shiftPoints.shiftCaption(state.floor, state.ceil, car.engine.redline);
-  document.querySelectorAll('.setlist .opt').forEach(node => {
-    const i = Number(node.dataset.set);
-    const on = state.draw.includes(i);
-    node.classList.toggle('on', on);
-    const box = node.querySelector('i');
-    box.style.background = on ? colourFor(i) : 'var(--field)';
-    box.style.borderColor = on ? colourFor(i) : 'var(--line)';
-  });
 }
 
 async function main() {

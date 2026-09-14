@@ -144,7 +144,6 @@ export function defaultState(car) {
     surface: available.length ? available[0].key : 'Tarmac_Dry',
     fd: stockIndex(car),
     set: 0,
-    draw: [0],
     k: car.defaults?.loaded_radius_factor ?? DEFAULT_FACTOR,
     floor: REV_FLOOR,
     rl: car.engine.redline,
@@ -214,12 +213,9 @@ export function parseHash(hash, car) {
   const set = intOr(q.get('set'), -1);
   if (set >= 0 && set < car.gear_sets.length) out.set = set;
 
-  if (q.has('draw')) {
-    const drawn = [...new Set((q.get('draw') || '').split(',')
-      .map(v => intOr(v, -1))
-      .filter(i => i >= 0 && i < car.gear_sets.length))].sort((a, b) => a - b);
-    if (drawn.length) out.draw = drawn;
-  }
+  // `draw` (the gear sets Speed against revs used to draw) is no longer read: that chart draws
+  // the selected gear set, so an old link's `draw` is ignored
+
 
   const k = Number.parseFloat(q.get('k'));
   if (Number.isFinite(k) && k >= K_MIN && k <= K_MAX) out.k = k;
@@ -272,7 +268,6 @@ export function toHash(state, car) {
     }
   } else if (combosFor(car).length) q.set('fd', String(state.fd));
   q.set('set', String(state.set));
-  q.set('draw', state.draw.join(','));
   q.set('k', String(state.k));
   if (state.floor !== REV_FLOOR) q.set('floor', String(state.floor));
   const rl = revLimitOf(car, state);

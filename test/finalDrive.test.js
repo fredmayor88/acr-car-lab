@@ -7,7 +7,7 @@ const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
 
 const stateFor = (car, over = {}) => ({
-  surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0],
+  surface: 'Tarmac_Dry', fd: 0, set: 0,
   k: car.defaults.loaded_radius_factor, ...over,
 });
 

@@ -1,7 +1,5 @@
-// Chart 5 — speed against revs, one line per gear of each ticked gear set.
-// Its gear-set list (state.draw) is separate state from the page's selected gear set
-// (state.set): a set can be drawn without being selected, and the selected set can be
-// left off the chart.
+// Chart 5 — speed against revs, one line per gear of the gear set selected in the control
+// bar (state.set). drawnSets is the list the chart draws; it holds that one set.
 //
 // fdValue(car, state, si) is called per set inside the loop, not hoisted once outside it.
 // Every gear set carries its own primary, and on four cars (Mini, Fiat 124, Fiat 131,
@@ -50,11 +48,14 @@ export const tipTop = pointY => Math.max(4, pointY - 46);
 /** The rpm a hover reads: never below zero, never past the ceiling the lines end at. */
 export const hoverRpm = (rpm, ceil) => Math.max(0, Math.min(ceil, rpm));
 
+/** The gear sets the chart draws: the selected one. */
+export const drawnSets = state => [state.set];
+
 export function layout(car, state) {
   const ceil = ceilingOf(car, state);
   const circ = circumference(car.tyres[state.surface].free_radius, state.k);
   const lines = [];
-  for (const si of state.draw) {
+  for (const si of drawnSets(state)) {
     const fd = fdValue(car, state, si);
     car.gear_sets[si].gears.forEach((g, gi) => {
       const total = g.value * fd;
@@ -92,7 +93,8 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
   const xs = r => L + (r / rpmMax) * (R - L);
   const ys = v => B - (v / l.vmax) * (B - T);
   const marker = ceilingMarker(car.engine.redline, l.ceil);
-  const cols = labelColumns(xs(l.ceil), state.draw.length,
+  const sets = drawnSets(state);
+  const cols = labelColumns(xs(l.ceil), sets.length,
                             marker ? xs(car.engine.redline) : null);
   svg.setAttribute('viewBox', `0 0 ${cols.width} ${FRAME.H}`);
 
@@ -117,7 +119,7 @@ export function render(svg, car, state, hover = null, colours = SET_COLOURS) {
                       y2: ys(line.topSpeed), stroke: colour, 'stroke-width': 2.1,
                       'stroke-opacity': 0.85 });
     // one label column per gear set, so two sets never collide
-    text(svg, cols.xs[state.draw.indexOf(line.set)],
+    text(svg, cols.xs[sets.indexOf(line.set)],
          ys(line.topSpeed) + 3.6, line.gear + 1, 'val', { fill: colour });
   });
 

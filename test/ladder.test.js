@@ -26,7 +26,7 @@ const car = {
   tyres: { Tarmac_Dry: { asset: 'PirelliT03', free_radius: 0.296 } },
   defaults: { loaded_radius_factor: DEFAULT_FACTOR },
 };
-const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: DEFAULT_FACTOR };
+const state = { surface: 'Tarmac_Dry', fd: 0, set: 0, k: DEFAULT_FACTOR };
 
 // Mini-shape: final_drive.primaries is EMPTY, so each lane must use its own gear set's
 // primary. Set A and Set B differ only in primary (1.0 vs 1.3) — same gears, same final
@@ -51,7 +51,7 @@ const emptyPrimaryCar = {
   tyres: { Tarmac_Dry: { asset: 'x', free_radius: 0.3 } },
   defaults: { loaded_radius_factor: 0.95 },
 };
-const emptyState = { surface: 'Tarmac_Dry', fd: 0, set: 0, draw: [0], k: 0.95 };
+const emptyState = { surface: 'Tarmac_Dry', fd: 0, set: 0, k: 0.95 };
 
 test('every gear set gets a lane, selected or not', () => {
   const l = layout(car, state);

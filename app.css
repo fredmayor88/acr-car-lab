@@ -119,8 +119,6 @@ h2{font-size:17px;margin:0 0 2px;color:var(--fg-strong);letter-spacing:-.01em}
 .cap.axlewarn{color:var(--warn-text);font-weight:600}
 .panel{background:var(--surface);border:1px solid var(--line);
   border-radius:3px;padding:16px 18px}
-.panel.row{display:flex;gap:18px;align-items:flex-start}
-.panel.row svg{flex:1;min-width:0}
 svg{display:block;width:100%;height:auto}
 .axis{font:10.5px "SF Mono",Menlo,Consolas,monospace;fill:var(--muted-text)}
 .lbl{font:11px -apple-system,"Segoe UI",sans-serif;fill:var(--muted-text)}
@@ -132,6 +130,10 @@ svg{display:block;width:100%;height:auto}
    itself, as it always has, so the column stays out of its way. The chart carries the click
    listener, so iOS would flash it on every tap without the transparent highlight. */
 #svg-ladder,#svg-ladder .lanehit{-webkit-tap-highlight-color:transparent}
+/* The hover charts take a sideways finger drag to scrub their readout; a vertical swipe still
+   scrolls the page, and two fingers still zoom it. */
+#svg-power,#svg-ladder,#svg-shift,#svg-revs{touch-action:pan-y pinch-zoom;
+  -webkit-tap-highlight-color:transparent}
 .lanehit{pointer-events:none}
 @media (pointer:coarse){.lanehit{pointer-events:all;cursor:pointer}}
 
@@ -165,17 +167,6 @@ svg{display:block;width:100%;height:auto}
   .ctl .floorbox .floorin{width:44px;padding:0 2px}
   .ctl .floorbox .unit{display:none}
 }
-
-.setlist{width:158px;flex:0 0 158px;padding-top:6px}
-.setlist h4{font-size:10px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted-text);margin:0 0 8px;font-weight:600}
-.opt{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:2px;
-  font:12px "SF Mono",Menlo,Consolas,monospace;color:var(--muted-text);
-  border:1px solid transparent;cursor:pointer}
-.opt i{width:12px;height:12px;border:1px solid var(--line);border-radius:2px;
-  background:var(--field);flex:0 0 12px}
-.opt.on{color:var(--fg);border-color:var(--line);background:var(--field)}
-.opt small{color:var(--muted-text);font-size:10.5px}
 
 .foot{border-top:1px solid var(--line);padding-top:22px;display:flex;gap:34px;
   flex-wrap:wrap;align-items:flex-start}
@@ -246,8 +237,6 @@ svg{display:block;width:100%;height:auto}
 
 @media (max-width:720px){
   .wrap{padding:0 16px 60px}
-  .panel.row{flex-direction:column}
-  .setlist{width:100%;flex:1 1 auto}
   .facts{grid-template-columns:minmax(0,1fr);gap:2px}
   .facts dd{margin-bottom:12px}
   .revboxes{position:static;flex-direction:column;align-items:flex-end;gap:8px;

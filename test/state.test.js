@@ -21,20 +21,16 @@ const car = {
   defaults: { loaded_radius_factor: 0.9904 },
 };
 
-test('the default state is dry tarmac, first gear set, first set drawn', () => {
+test('the default state is dry tarmac, first gear set', () => {
   const s = defaultState(car);
   assert.equal(s.surface, 'Tarmac_Dry');
   assert.equal(s.set, 0);
-  assert.deepEqual(s.draw, [0]);
   assert.equal(s.k, 0.9904);
-});
-
-test('exactly one gear set is drawn by default', () => {
-  assert.equal(defaultState(car).draw.length, 1);
+  assert.equal('draw' in s, false, 'Speed against revs follows the gear set; no list of its own');
 });
 
 test('a full hash round-trips', () => {
-  const s = { surface: 'Gravel', fd: 2, set: 1, draw: [0, 2], k: 0.97, floor: 3500, rl: 8750,
+  const s = { surface: 'Gravel', fd: 2, set: 1, k: 0.97, floor: 3500, rl: 8750,
     ceil: 8000 };
   assert.deepEqual(parseHash(toHash(s, car), car), s);
 });
@@ -57,14 +53,20 @@ test('an out-of-range final drive falls back to the default', () => {
   assert.equal(parseHash('#fd=999', car).fd, defaultState(car).fd);
 });
 
-test('drawn sets drop out-of-range entries and never end up empty', () => {
-  assert.deepEqual(parseHash('#draw=0,99', car).draw, [0]);
-  assert.deepEqual(parseHash('#draw=99', car).draw, [0]);
-  assert.deepEqual(parseHash('#draw=', car).draw, [0]);
+test('an old link with draw= still loads, and draw is ignored', () => {
+  const old = parseHash('#s=Gravel&fd=1&set=2&draw=0,1&k=0.97', car);
+  assert.deepEqual(old, parseHash('#s=Gravel&fd=1&set=2&k=0.97', car));
+  assert.equal(old.set, 2);
+  assert.equal('draw' in old, false);
+  for (const junk of ['#draw=', '#draw=99', '#draw=banana']) {
+    assert.deepEqual(parseHash(junk, car), defaultState(car));
+  }
 });
 
-test('drawn sets are de-duplicated and sorted', () => {
-  assert.deepEqual(parseHash('#draw=2,0,2', car).draw, [0, 2]);
+test('the hash no longer carries draw', () => {
+  const hash = toHash(parseHash('#set=1&draw=0,2', car), car);
+  assert.equal(new URLSearchParams(hash.slice(1)).has('draw'), false);
+  assert.match(hash, /(^#|&)set=1(&|$)/);
 });
 
 test('the factor is clamped to a sane range', () => {
