@@ -25,15 +25,15 @@
 <dl class="facts"><dt>Layout</dt><dd>Front-wheel drive</dd><dt>Gearing settings</dt><dd><ul class="settings"><li><span class="setname">Gear Set</span> 10 gear sets: sets 1–2 7-speed, sets 3–8 6-speed, sets 9–10 5-speed</li><li><span class="setname">Differential Ratio Front</span> 44 steps · stock <span class="mono">69//15</span><details><summary>All 44 steps</summary><p class="mono steps">68//12, 67//12, 66//12, 65//12, 70//13, 69//13, 68//13, 57//11, 56//11, 61//12, 55//11, 59//12, 53//11, 67//14, 57//12, 52//11, 51//11, 69//15, 55//12, 50//11, 67//15, 49//11, 62//14, 53//12, 57//13, 48//11, 64//15, 68//16, 67//16, 50//12, 61//15, 65//16, 77//19, 52//13, 67//17, 63//16, 61//16, 49//13, 59//16, 66//18, 61//17, 59//17, 48//14, 65//19</p></details></li></ul></dd><dt>Final drive</dt><dd>One ratio sits below the gearbox, and setup offers it.<div class="formula"><code>final drive = Differential Ratio Front</code></div></dd><dt>Primary gear</dt><dd>No Primary Gear setting: each gear set&#x27;s own primary applies (25//25 on every set).<div class="formula"><code>primary = the gear set&#x27;s own primary</code></div></dd><dt>Rev limit</dt><dd>9500 rpm, measured in game with telemetry (ACR 0.6).</dd><dt>Engine curve</dt><dd>Own curve.</dd></dl>
 </section>
 <section class="workings" id="workings">
-<div class="workhead" data-event="read-drivetrain-workings"><h2>How we worked it out</h2><p class="cap">The reasoning and the in-game runs behind the numbers above.</p><p>Every speed on these pages is engine revs turned into road speed, from the gearing alone:</p></div>
+<div class="workhead" data-event="read-drivetrain-workings"><h2>How we worked it out</h2><p class="cap">The reasoning and the in-game runs behind the numbers above.</p><p>Every speed on these pages is worked out from engine revs and the gearing alone:</p></div>
 <div class="formula"><code>speed (km/h) = rpm × tyre circumference (m) × 0.06 ÷ total ratio</code></div>
-<p>0.06 turns metres per minute into km/h: × 60 minutes per hour ÷ 1000 metres per kilometre.</p>
+<p>rpm × tyre circumference ÷ total ratio is metres per minute; × 0.06 (× 60 minutes per hour ÷ 1000 metres per kilometre) turns that into km/h.</p>
 <div class="formula"><code>total ratio = primary × gear × final drive</code><code>tyre circumference = 2π × free radius × 0.9904</code></div>
-<p>The free radius is the tyre&#x27;s, read from the game files. The rolling factor, 0.9904, was fitted to the top speeds measured in game on 14 runs across seven cars (Stratos, 306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale and Impreza).</p>
+<p>The free radius is the tyre radius stored in the game files. The rolling factor, 0.9904, allows for a loaded tyre rolling on a slightly smaller radius; it was fitted to the top speeds measured in game on 14 runs across seven cars (Stratos, 306 Maxi, Xsara WRC, 037, 206 WRC, Delta Integrale and Impreza).</p>
 <p>The rev limit, 9500 rpm, was measured in game with telemetry. The end of the torque curve in the game files is not the limiter: on every car here the curve runs past it.</p>
 <p>The final drive is Differential Ratio Front alone, the one ratio below the gearbox in the game files:</p>
 <div class="formula"><code>final drive = Differential Ratio Front</code></div>
-<p>The run on gear set 4 with Differential Ratio Front 68//12 is one of the runs the rolling factor was fitted on, and it fits that formula: the speedometer read 183 km/h in 6th, where final drive = Differential Ratio Front puts it at 185.</p>
+<p>A run on gear set 4 with Differential Ratio Front 68//12 fits that formula: the speedometer read 183 km/h in 6th, where it puts 6th at 185. That run is also one of those the rolling factor was fitted on.</p>
 </section>
 <section class="measured" id="measured">
 <h2>Measured in game</h2>

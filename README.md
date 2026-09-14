@@ -22,7 +22,8 @@ and the rolling factor is fitted, not read — see below.
 
 - **Surface**: the tyre, and so the tyre radius, the speeds are worked out for.
 - **Final drive**: one select listing every final drive the car offers (on the Stratos each
-  entry is a Primary Gear and Differential Ratio Rear pair). On the five cars with front and
+  entry is a Primary Gear and Differential Ratio Rear pair). The four fixed-final-drive cars
+  (i20, Fabia, Polo R5, 208 Rally4) have no Final drive select. On the five cars with front and
   rear ratio settings (Delta Integrale, 206 WRC, Impreza, Xsara WRC, Quattro) there is instead
   one select per ratio setting, plus Primary Gear on the 206, and a readout of the final drive
   they make. Clicking a row of the Final drive chart picks that final drive too.
@@ -35,8 +36,8 @@ On a narrow screen the bar collapses to a one-line summary and a button that ope
 
 **Shift points** has its own **Rev floor** and **Rev ceiling** over the chart (the ceiling is
 the same one as the bar's). **Speed against revs** draws one line per gear of the gear set
-selected in the bar. The **rolling factor** (0.8–1.1) and the **rev limit** (2000–15000 rpm)
-are editable at the foot of the page, each with a reset link.
+selected in the bar. The rolling factor, labelled **Rolling radius factor** (0.8–1.1), and the **Rev limit**
+(2000–15000 rpm) are editable at the foot of the page, each with a reset link.
 
 **Readouts.** With a mouse, hover over Power and torque, Where each gear tops out, Shift
 points or Speed against revs; the readout goes when the pointer leaves. On a touch screen,
@@ -113,7 +114,7 @@ rear path ratio  = Center Differential Ratio × Center Ratio to Rear × Differen
 ```
 
 With all four wheels turning at the same road speed, the centre differential's input turns at
-(front output speed + rear output speed) ÷ 2, so the equivalent final drive is:
+(front output speed + rear output speed) ÷ 2, so the equivalent final drive is:
 
 ```
 final drive = (front path ratio + rear path ratio) ÷ 2
@@ -168,8 +169,10 @@ pages.
      shift-light value it was measured against), the speed runs and the fit.
    - `drivetrain_notes.json`: the drivetrain pages' prose. Every number in it is a placeholder
      computed at export, so a data change updates the text. A note that no longer resolves
-     fails that car: it is skipped, the rest of the export completes, and the run ends
-     non-zero naming it.
+     fails that car: it is left out of the export, the rest of the export completes, and the
+     run ends non-zero naming it. A car left out is also pruned: its `data/<slug>.json` and its
+     three pages are deleted, so committing with `git add -A` (step 4) removes it from the site.
+     Fix the note and export again before committing.
 
 3. Check the result before committing:
    - The export prints `!! <slug>: … re-measure` when a car's shift-light rev stages changed
@@ -203,8 +206,10 @@ pages.
    - Spot-check one top speed in game. The Stratos on gear set 1, top gear, stock final
      drive, dry tarmac should read 215 km/h. If it has drifted, the rolling factor needs
      refitting rather than the code changing: add the new runs to `calibration.json`, run
-     `python tools/gearing-charts/calibration.py` to refit, and set `LOADED_RADIUS_FACTOR`
-     to the printed value (the acr-setup-engineer tests fail until the two agree).
+     `python tools/gearing-charts/calibration.py` to refit, set `LOADED_RADIUS_FACTOR` in
+     `tools/gearing-charts/gearing.py` to the printed value (the acr-setup-engineer tests fail
+     until the two agree), and set `DEFAULT_FACTOR` in this repo's `js/gearing.js` to the same
+     value (`node --test` fails until it matches).
    - `node --test` here: the tests read the generated pages too.
 
 4. Commit here:

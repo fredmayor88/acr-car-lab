@@ -233,9 +233,9 @@ test('every drivetrain page opens its workings with the speed formulas and where
       'total ratio = primary × gear × final drive',
       `tyre circumference = 2π × free radius × ${DEFAULT_FACTOR}`,
     ], d);
-    assert.ok(decode(work).includes('<p>0.06 turns metres per minute into km/h: × 60 minutes per hour ÷ 1000 metres per kilometre.</p>'), d);
+    assert.ok(decode(work).includes('<p>rpm × tyre circumference ÷ total ratio is metres per minute; × 0.06 (× 60 minutes per hour ÷ 1000 metres per kilometre) turns that into km/h.</p>'), d);
     // the 0.06 sentence sits directly after the speed line
-    assert.ok(/<code>speed \(km\/h\)[^<]*<\/code><\/div>\s*<p>0\.06 turns/.test(work), d);
+    assert.ok(/<code>speed \(km\/h\)[^<]*<\/code><\/div>\s*<p>rpm × tyre circumference ÷ total ratio is metres per minute/.test(work), d);
   }
 });
 
