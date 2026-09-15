@@ -260,6 +260,7 @@ node --test
 | `js/app.js` | Gearing page wiring. |
 | `js/drivetrain.js` | The drivetrain pages' theme toggle and tracking (`read-drivetrain-workings`, promo and issues clicks). |
 | `app.css` | Shared styles. |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The site icon: a rev dial in the site's colours. The PNGs are rendered from the SVG (32 and 180 px) for browsers and home screens that don't take SVG. |
 | `test/` | Unit tests, one file per module, plus the generated pages and the copy rules. |
 | `package.json` | `npm test` runs `node --test`. |
 | `data/` | Generated. Never edit by hand. |
