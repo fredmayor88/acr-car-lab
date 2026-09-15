@@ -64,10 +64,22 @@ header{border-bottom:1px solid var(--line);margin-bottom:26px}
 .brand{font-size:12.5px;letter-spacing:.17em;text-transform:uppercase;
   color:var(--muted-text);font-weight:600}
 .brand b{color:var(--accent-text);font-weight:600}
-.crumb{font-size:12.5px;color:var(--muted-text);text-decoration:none;margin-left:auto}
+/* A car page's row, all on the left: the wordmark (a link home there, plain text on the picker),
+   a muted dot, "‹ All cars" and any further crumb after its own dot. The dots sit closer than
+   the row's gap. The toggle takes the rest of the row and sits on the right. */
+a.brand{text-decoration:none}
+a.brand:hover{color:var(--fg)}
+.sep{font-size:12.5px;color:var(--muted-text);margin:0 -5px}
+/* the wordmark's letter-spacing trails its last letter; take it back so the dot sits centred */
+.brand + .sep{margin-left:-7px}
+.crumb{font-size:12.5px;color:var(--muted-text);text-decoration:none}
+.crumb:hover{color:var(--accent-text)}
+/* the chevron at the text's weight: no heavier glyph, just a touch of room before the words */
+.crumb .chev{margin-right:.3em}
+a.brand:focus-visible,.crumb:focus-visible{outline:2px solid var(--accent);outline-offset:2px;
+  border-radius:1px}
 .theme{font-family:inherit;font-size:12.5px;line-height:1.2;color:var(--muted-text);background:none;
   border:1px solid var(--line);border-radius:2px;padding:1px 8px;cursor:pointer;margin-left:auto}
-.crumb + .theme,.crumb + .crumb{margin-left:0}
 /* sun or moon, drawn in the label's colour; sits inside the line box so the toggle stays
    no taller than the brand line */
 .theme .icon{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:4px}
@@ -137,12 +149,23 @@ svg{display:block;width:100%;height:auto}
 .lanehit{pointer-events:none}
 @media (pointer:coarse){.lanehit{pointer-events:all;cursor:pointer}}
 
-/* Power and torque's unit checkbox, over the top right of the chart, in the rev controls' style */
+/* Power and torque's unit switch, "kW · hp", in the panel's top right corner in the axis labels'
+   type: the unit in force in the accent, the other muted. No box: each word is a button whose
+   padding is its hit area, pulled back by an equal negative margin so it takes no more room
+   than the text. */
 #sec-power .panel{position:relative}
-.unitbox{position:absolute;top:10px;right:18px;display:flex;align-items:center;gap:7px}
-.unitbox input{margin:0;width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
-.unitbox label{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted-text);font-weight:600;cursor:pointer}
+.unitbox{position:absolute;top:12px;right:18px;display:flex;align-items:baseline;gap:2px;
+  font:11.5px/1 "SF Mono",Menlo,Consolas,monospace;color:var(--muted-text)}
+.unitbox button{font:inherit;color:var(--muted-text);background:none;border:0;border-radius:2px;
+  padding:4px;margin:-4px;cursor:pointer}
+.unitbox button:hover{color:var(--fg)}
+.unitbox button[aria-pressed="true"]{color:var(--accent-text);cursor:default}
+.unitbox button:focus-visible{outline:2px solid var(--accent);outline-offset:0}
+.unitbox .sep{font-size:inherit;margin:0 6px}
+/* a finger gets at least 32 by 28 per word, still without moving the text */
+@media (pointer:coarse){
+  .unitbox button{padding:9px 10px;margin:-9px -10px}
+}
 
 /* Shift points' rev floor and ceiling, over the top right of the chart */
 #sec-shift .panel{position:relative}
@@ -257,9 +280,9 @@ div.formula code{display:block;font:inherit;padding-left:2ch;text-indent:-2ch}
   .facts dd{margin-bottom:12px}
   .revboxes{position:static;flex-direction:column;align-items:flex-end;gap:8px;
     margin-bottom:10px}
-  .unitbox{position:static;justify-content:flex-end;margin-bottom:10px}
-  /* the plot's 30 of 1100 viewBox units of room for the checkbox, which now sits above it */
-  #svg-power{margin-top:calc(-100% * 30 / 1100)}
+  /* the chart's own lettering shrinks with it, so its unit label starts only a few px into the
+     plot; the switch rises into the panel's top padding to stay clear of it */
+  .unitbox{top:5px}
 
   /* The bar collapses to one line: what is selected, and a button that opens the controls.
      Open, they hang below the line over the page rather than pushing it down, so opening

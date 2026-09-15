@@ -15,7 +15,7 @@ export const REV_LIMIT_MIN = 2000;
 export const REV_LIMIT_MAX = 15000;
 
 /**
- * The Power and torque chart's power unit: 'hp' when the Power in hp box is ticked, else 'kW'.
+ * The Power and torque chart's power unit: 'hp' when the unit switch is on hp, else 'kW'.
  * Only 'hp' is stored (`state.pw`, hash `pw=hp`); kW is the default and leaves no trace.
  */
 export const powerUnitOf = state => (state?.pw === 'hp' ? 'hp' : 'kW');

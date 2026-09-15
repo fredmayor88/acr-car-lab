@@ -138,8 +138,8 @@ export const readoutLines = (r, unit = 'kW') => [
   `${powerIn(r.kw, unit).toFixed(0)} ${unit}    ${r.kwPct}% of peak`,
 ];
 
-// The top margin leaves room for the power unit checkbox over the top right of the plot.
-export const PLOT = Object.freeze({ L: 64, R: 1030, T: 76, B: 322, W: 1100, H: 370 });
+// The unit switch sits in the panel's padding above the chart, so the plot keeps its own margins.
+export const PLOT = Object.freeze({ L: 64, R: 1030, T: 46, B: 292, W: 1100, H: 340 });
 
 export function render(svg, car, hoverRpm = null, ceil = car.engine.redline, unit = 'kW') {
   clear(svg);

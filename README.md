@@ -29,7 +29,7 @@ and the rolling factor is fitted, not read — see below.
 
 On a narrow screen the bar collapses to a one-line summary and a button that opens it.
 
-**Power and torque** has a **Power in hp** checkbox over the chart: ticked, the power axis,
+**Power and torque** has a **kW · hp** switch in its top right corner: on hp, the power axis,
 the peak power label and the readout are in hp (metric hp, kW × 1.35962, the unit of the car
 catalogue in acr-setup-engineer) instead of kW. The curves and the percentages do not change.
 
@@ -57,7 +57,7 @@ tap on a lane name selects that gear set without drawing a readout.
 | `floor` | Rev floor, only when not 3000 |
 | `rl` | Rev limit, only when edited |
 | `ceil` | Rev ceiling, only when below the rev limit |
-| `pw` | `hp` when Power in hp is ticked; absent (kW) otherwise |
+| `pw` | `hp` when the power unit switch is on hp; absent (kW) otherwise |
 
 The old `draw` key (which gear sets Speed against revs drew) is gone; links that still carry
 it load normally and ignore it.

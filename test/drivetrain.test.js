@@ -172,7 +172,7 @@ test('no gears page links to a drivetrain page yet', () => {
     const html = read(`${d}/gears/index.html`);
     assert.doesNotMatch(html, /drivetrain\//, d);
     assert.doesNotMatch(html, /Drivetrain notes/, d);
-    assert.ok(html.includes('<a class="crumb" href="../../">All cars'), d);
+    assert.ok(html.includes('<a class="crumb" href="../../"><span class="chev" aria-hidden="true">‹</span>All cars</a>'), d);
   }
 });
 

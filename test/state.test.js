@@ -468,12 +468,37 @@ test('an invalid pw in a link is kW', async () => {
   }
 });
 
-test('app.js: the Power in hp checkbox tracks toggle-power-unit and draws the chart in its unit', () => {
+test('app.js: the kW · hp switch tracks toggle-power-unit and draws the chart in its unit', () => {
   const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
   assert.equal((src.match(/'toggle-power-unit'/g) || []).length, 1);
-  assert.match(src, /'Power in hp'/);
+  assert.doesNotMatch(src, /Power in hp|type: 'checkbox'/);
+  const build = src.slice(src.indexOf('function buildPowerUnitControl'), src.indexOf('// The bar\'s short labels'));
+  // one button per unit, in POWER_UNITS order (kW, hp), each a real button with aria-pressed
+  assert.match(build, /for \(const unit of powerTorque\.POWER_UNITS\)/);
+  assert.match(build, /h\('button', \{ type: 'button', 'aria-pressed': 'false', onclick:/);
+  // pressing the unit already in force changes nothing and tracks nothing
+  assert.match(build, /if \(powerUnitOf\(state\) === unit\) return;\s*state = setPowerUnit\(state, unit === 'hp'\);\s*track\('toggle-power-unit'\);\s*commit\(\);/);
+  assert.match(build, /h\('div', \{ class: 'unitbox', role: 'group', 'aria-label': 'Power unit' \},\s*buttons\.kW, h\('span', \{ class: 'sep', 'aria-hidden': 'true' \}, '·'\), buttons\.hp\)/);
   assert.match(src, /powerTorque\.render\(svgOf\('power'\), car, hover\.power, state\.ceil,\s*powerUnitOf\(state\)\)/);
-  assert.match(src, /controls\.powerUnit\.checked = powerUnitOf\(state\) === 'hp'/);
+  assert.match(src, /for \(const \[unit, button\] of Object\.entries\(controls\.powerUnit\)\) \{\s*button\.setAttribute\('aria-pressed', String\(powerUnitOf\(state\) === unit\)\);/);
+});
+
+test('app.css: the switch is text, not a box; the pressed unit in the accent; a finger gets 32×28', () => {
+  const css = readFileSync(new URL('../app.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = sel => css.match(new RegExp(sel.replace(/[.[\]"()*+?^$|]/g, '\\$&') + '\\{([^}]*)\\}'))?.[1] ?? '';
+  assert.match(rule('.unitbox'), /position:absolute;top:12px;right:18px/);
+  assert.match(rule('.unitbox'), /font:11\.5px\/1 "SF Mono",Menlo,Consolas,monospace/);
+  assert.match(rule('.unitbox button'), /background:none;border:0/);
+  assert.match(rule('.unitbox button'), /color:var\(--muted-text\)/);
+  assert.match(rule('.unitbox button[aria-pressed="true"]'), /color:var\(--accent-text\)/);
+  assert.match(rule('.unitbox button:focus-visible'), /outline:2px solid var\(--accent\)/);
+  assert.doesNotMatch(css, /text-transform:uppercase[^}]*\}\s*\.unitbox|\.unitbox[^{]*\{[^}]*(?:letter-spacing|text-transform)/);
+  // touch: 9px + 11.5px + 9px is 29.5 tall; 10px either side of a two-letter mono word is over 32 wide.
+  // The equal negative margin keeps the words where they were.
+  assert.match(css, /@media \(pointer:coarse\)\{\s*\.unitbox button\{padding:9px 10px;margin:-9px -10px\}/);
+  // on a narrow screen it stays in the corner: no static rule, and no room pulled out of the plot
+  assert.doesNotMatch(css, /\.unitbox\{position:static/);
+  assert.doesNotMatch(css, /#svg-power\{margin-top/);
 });
 
 test('Copy settings does not mention the power unit', async () => {

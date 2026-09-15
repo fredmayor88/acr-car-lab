@@ -241,6 +241,19 @@ test('render draws hp on the right axis, the peak label and the readout, and the
   for (const v of ['50', '100', '150', '200', '250']) assert.ok(hp.texts.includes(v), v);
 });
 
+test('the plot has its pre-switch margins again: viewBox 1100 × 340, top 46, bottom 292', async () => {
+  const { render, PLOT } = await import('../js/charts/powerTorque.js');
+  assert.deepEqual({ ...PLOT }, { L: 64, R: 1030, T: 46, B: 292, W: 1100, H: 340 });
+  const svg = stubDocument();
+  const map = render(svg, car, null, car.engine.redline, 'kW');
+  delete globalThis.document;
+  assert.equal(svg.attrs.viewBox, '0 0 1100 340');
+  assert.deepEqual(map.plot, { L: 64, R: 1030, T: 46, B: 292 });
+  // the axis unit labels sit 16 over the plot top, as before round 6
+  const unit = svg.children.find(n => n.tag === 'text' && n.textContent === 'kW');
+  assert.equal(unit.attrs.y, '30');
+});
+
 /** A minimal DOM for render(), as in test/speedRevs.test.js, with the bounding box it measures. */
 function stubDocument() {
   const make = tag => ({

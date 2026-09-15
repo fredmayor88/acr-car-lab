@@ -203,7 +203,7 @@ function buildShell() {
     const panel = h('div', { class: 'panel' });
     panel.appendChild(svg);
     if (s.id === 'shift') panel.appendChild(revs.box);
-    // before the chart, so on a narrow screen it stacks above it
+    // before the chart, so it comes before it in reading and tab order too
     if (s.id === 'power') panel.insertBefore(power.box, svg);
     // the 206 WRC runs on another car's curve, and its power section says whose
     const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
@@ -227,24 +227,28 @@ function buildShell() {
   wireTouchDismiss();
 
   return { surfaceSel, fdSel, setSel, factor, revLimit, revs, summary, subLimit: sub.limit,
-    ceils: [revs.ceil, barCeil], ratios, powerUnit: power.input };
+    ceils: [revs.ceil, barCeil], ratios, powerUnit: power.buttons };
 }
 
 /**
- * Power and torque's unit: a checkbox over the top right of the chart (above it on a narrow
- * screen) that labels power in hp instead of kW. The curves do not move; only the right axis,
- * the peak power label and the readout change.
+ * Power and torque's unit: a "kW · hp" switch in the panel's top right corner, two buttons with
+ * aria-pressed in a labelled group. hp labels power in hp instead of kW. The curves do not move;
+ * only the right axis, the peak power label and the readout change. Pressing the unit already
+ * in force does nothing, so a toggle is tracked only when the unit changes.
  */
 function buildPowerUnitControl() {
-  const input = h('input', { id: 'power-unit', type: 'checkbox',
-    onchange: e => {
-      state = setPowerUnit(state, e.target.checked);
+  const buttons = {};
+  for (const unit of powerTorque.POWER_UNITS) {
+    buttons[unit] = h('button', { type: 'button', 'aria-pressed': 'false', onclick: () => {
+      if (powerUnitOf(state) === unit) return;
+      state = setPowerUnit(state, unit === 'hp');
       track('toggle-power-unit');
       commit();
-    } });
-  const box = h('div', { class: 'unitbox' }, input,
-    h('label', { for: 'power-unit' }, 'Power in hp'));
-  return { box, input };
+    } }, unit);
+  }
+  const box = h('div', { class: 'unitbox', role: 'group', 'aria-label': 'Power unit' },
+    buttons.kW, h('span', { class: 'sep', 'aria-hidden': 'true' }, '·'), buttons.hp);
+  return { box, buttons };
 }
 
 // The bar's short labels for the ratio settings; each select's accessible name and title is
@@ -667,7 +671,9 @@ function syncControls() {
     readout.textContent = finalDrive.finalDriveReadout(car, state);
   } else if (controls.fdSel?.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
-  controls.powerUnit.checked = powerUnitOf(state) === 'hp';
+  for (const [unit, button] of Object.entries(controls.powerUnit)) {
+    button.setAttribute('aria-pressed', String(powerUnitOf(state) === unit));
+  }
   controls.factor.value = String(state.k);
   controls.revLimit.value = String(state.rl);
   controls.subLimit.textContent = String(car.engine.redline);

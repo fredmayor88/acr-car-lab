@@ -148,6 +148,43 @@ test('car pages live at <slug>/gears/ and reach the site root two levels up', ()
   }
 });
 
+// --- the header row ----------------------------------------------------------------------
+
+/** A page's header row as its element list: tag.class=text, in order. */
+const brandrow = html => {
+  const row = html.slice(html.indexOf('<div class="brandrow">'), html.indexOf('<h1>'));
+  return [...row.matchAll(/<(a|span|button) class="([^"]+)"[^>]*>(.*?)<\/\1>/g)]
+    .map(([, tag, cls, inner]) => `${tag}.${cls}=${inner.replace(/<svg[\s\S]*?<\/svg>/g, '')
+      .replace(/<[^>]+>/g, '')}`);
+};
+const BACK = 'a.crumb=‹All cars';
+
+test('a car page header: the wordmark links home, then a dot and ‹ All cars, then the toggle', () => {
+  for (const d of carDirs) {
+    const gears = read(`${d}/gears/index.html`);
+    assert.deepEqual(brandrow(gears), ['a.brand=ACR Car Lab', 'span.sep=·', BACK, 'button.theme=DarkLight'], d);
+    assert.ok(gears.includes('<a class="brand" href="../../">ACR <b>Car Lab</b></a>'), d);
+    // the chevron is decoration, so the link is named "All cars"
+    assert.ok(gears.includes('<a class="crumb" href="../../"><span class="chev" aria-hidden="true">‹</span>All cars</a>'), d);
+    assert.ok(gears.includes('<span class="sep" aria-hidden="true">·</span>'), d);
+    const dt = read(`${d}/drivetrain/index.html`);
+    assert.deepEqual(brandrow(dt), ['a.brand=ACR Car Lab', 'span.sep=·', BACK, 'span.sep=·',
+      'a.crumb=Gearing charts', 'button.theme=DarkLight'], d);
+  }
+});
+
+test('the picker keeps its plain wordmark and has no back link', () => {
+  assert.deepEqual(brandrow(read('index.html')), ['span.brand=ACR Car Lab', 'button.theme=DarkLight']);
+});
+
+test('the crumbs sit on the left; only the toggle takes the free space', () => {
+  assert.equal(block('.crumb')['margin-left'], undefined);
+  assert.equal(block('.theme')['margin-left'], 'auto');
+  assert.doesNotMatch(css, /\.crumb \+ \.theme/);
+  assert.equal(block('a.brand')['text-decoration'], 'none');
+  assert.match(css, /a\.brand:focus-visible,\.crumb:focus-visible\{outline:2px solid var\(--accent\)/);
+});
+
 test('<slug>/ forwards to gears/ with the hash, and is not counted', () => {
   for (const d of carDirs) {
     const html = read(`${d}/index.html`);
