@@ -182,6 +182,8 @@ test('the crumbs sit on the left; only the toggle takes the free space', () => {
   assert.equal(block('.theme')['margin-left'], 'auto');
   assert.doesNotMatch(css, /\.crumb \+ \.theme/);
   assert.equal(block('a.brand')['text-decoration'], 'none');
+  // the header dot is scoped to the row: the bar summary has .sep dots of its own
+  assert.doesNotMatch(css, /(?:^|\})\s*\.sep\{/);
   assert.match(css, /a\.brand:focus-visible,\.crumb:focus-visible\{outline:2px solid var\(--accent\)/);
 });
 
