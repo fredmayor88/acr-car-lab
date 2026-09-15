@@ -9,6 +9,9 @@
   /* text only: Steel and Deep Cyan darkened until text clears 4.5:1 on ground and panel.
      Steel and Deep Cyan themselves stay for rules, grid, curves and marks. */
   --muted-text:#676F77; --accent-text:#0E6E85;
+  /* footer links: a bluer cyan that still clears 4.5:1, with a faint underline, so a small link
+     reads as one beside muted text of the same lightness */
+  --link-text:#0069A6; --link-line:rgba(0,105,166,.35);
   --line:rgba(123,133,142,.28);
   --surface:rgba(255,255,255,.62); --field:#fff;
   --accent-edge:rgba(20,143,172,.35); --accent-wash:rgba(20,143,172,.05);
@@ -32,6 +35,7 @@
     --bg:#212529; --fg:#D5D3CE; --fg-strong:#F5F2EB; --muted:#A6ABAF;
     --data:#B89873; --accent:#25C4E2; --warn:#9C3B2E;
     --muted-text:#A6ABAF; --accent-text:#25C4E2;
+    --link-text:#25C4E2; --link-line:transparent;
     --line:rgba(245,242,235,.13);
     --surface:#30353A; --field:#212529;
     --accent-edge:rgba(37,196,226,.4); --accent-wash:rgba(37,196,226,.08);
@@ -46,6 +50,7 @@
   --bg:#212529; --fg:#D5D3CE; --fg-strong:#F5F2EB; --muted:#A6ABAF;
   --data:#B89873; --accent:#25C4E2; --warn:#9C3B2E;
   --muted-text:#A6ABAF; --accent-text:#25C4E2;
+  --link-text:#25C4E2; --link-line:transparent;
   --line:rgba(245,242,235,.13);
   --surface:#30353A; --field:#212529;
   --accent-edge:rgba(37,196,226,.4); --accent-wash:rgba(37,196,226,.08);
@@ -212,8 +217,9 @@ svg{display:block;width:100%;height:auto}
 .limits ul{margin:0;padding-left:16px}
 .limits li{margin-bottom:3px}
 .promo{flex-basis:100%;font-size:12px;color:var(--muted-text);margin:0}
-.promo a{color:var(--accent-text);text-decoration:none}
-.promo a:hover{text-decoration:underline}
+.promo a{color:var(--link-text);text-decoration:underline;text-decoration-color:var(--link-line);
+  text-underline-offset:2px}
+.promo a:hover{text-decoration-color:currentColor}
 .notadjustable{font-size:13px;color:var(--muted-text);margin:0;padding:10px 2px}
 
 .carlist{list-style:none;margin:0;padding:0;display:grid;gap:2px;
