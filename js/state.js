@@ -15,15 +15,15 @@ export const REV_LIMIT_MIN = 2000;
 export const REV_LIMIT_MAX = 15000;
 
 /**
- * The Power and torque chart's power unit: 'hp' when the unit switch is on hp, else 'kW'.
- * Only 'hp' is stored (`state.pw`, hash `pw=hp`); kW is the default and leaves no trace.
+ * The Power and torque chart's power unit: 'kW' when the unit switch is on kW, else 'hp'.
+ * Only 'kW' is stored (`state.pw`, hash `pw=kW`); hp is the default and leaves no trace.
  */
-export const powerUnitOf = state => (state?.pw === 'hp' ? 'hp' : 'kW');
+export const powerUnitOf = state => (state?.pw === 'kW' ? 'kW' : 'hp');
 
-/** The state with the power unit set: `pw: 'hp'` when on, no `pw` at all when off. */
+/** The state with the power unit set: no `pw` at all for hp, `pw: 'kW'` for kW. */
 export function setPowerUnit(state, hp) {
   const { pw: _old, ...rest } = state;
-  return hp ? { ...rest, pw: 'hp' } : rest;
+  return hp ? rest : { ...rest, pw: 'kW' };
 }
 
 /**
@@ -244,8 +244,8 @@ export function parseHash(hash, car) {
   const floor = parseFloor(q.get('floor'), limited, out.ceil);
   out.floor = floor !== null ? floor : Math.min(REV_FLOOR, out.ceil - FLOOR_STEP);
 
-  // anything but pw=hp is kW, the default
-  if (q.get('pw') === 'hp') out.pw = 'hp';
+  // anything but pw=kW is hp, the default (so older pw=hp links still read hp)
+  if (q.get('pw') === 'kW') out.pw = 'kW';
 
   return out;
 }
@@ -291,6 +291,6 @@ export function toHash(state, car) {
   if (rl !== car.engine.redline) q.set('rl', String(rl));
   const ceil = state.ceil ?? rl;
   if (ceil !== rl) q.set('ceil', String(ceil));
-  if (powerUnitOf(state) === 'hp') q.set('pw', 'hp');
+  if (powerUnitOf(state) === 'kW') q.set('pw', 'kW');
   return '#' + q.toString();
 }

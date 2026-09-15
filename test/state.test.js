@@ -445,25 +445,25 @@ test('the rev limit input steps by 10, so every stored limit is a valid value of
 
 // --- Power and torque's unit ---------------------------------------------------------------
 
-test('power in hp: pw=hp in the hash when on, nothing when off, and it round-trips', async () => {
+test('power unit: hp by default with no pw in the hash, pw=kW when on kW, and it round-trips', async () => {
   const { powerUnitOf, setPowerUnit } = await import('../js/state.js');
-  const off = defaultState(car);
-  assert.equal(powerUnitOf(off), 'kW');
-  assert.equal('pw' in off, false);
-  assert.equal(toHash(off, car).includes('pw='), false);
-  const on = setPowerUnit(off, true);
-  assert.equal(powerUnitOf(on), 'hp');
-  assert.match(toHash(on, car), /&pw=hp$/);
-  assert.deepEqual(parseHash(toHash(on, car), car), on);
-  assert.deepEqual(setPowerUnit(on, false), off);
-  assert.deepEqual(parseHash(toHash(setPowerUnit(on, false), car), car), off);
+  const hp = defaultState(car);
+  assert.equal(powerUnitOf(hp), 'hp');
+  assert.equal('pw' in hp, false);
+  assert.equal(toHash(hp, car).includes('pw='), false);
+  const kw = setPowerUnit(hp, false);
+  assert.equal(powerUnitOf(kw), 'kW');
+  assert.match(toHash(kw, car), /&pw=kW$/);
+  assert.deepEqual(parseHash(toHash(kw, car), car), kw);
+  assert.deepEqual(setPowerUnit(kw, true), hp);
+  assert.deepEqual(parseHash(toHash(setPowerUnit(kw, true), car), car), hp);
 });
 
-test('an invalid pw in a link is kW', async () => {
+test('a pw other than kW in a link is hp, including the older pw=hp', async () => {
   const { powerUnitOf } = await import('../js/state.js');
-  for (const raw of ['ps', 'kW', 'HP', '1', '', 'hp ']) {
+  for (const raw of ['hp', 'ps', 'kw', 'HP', '1', '', 'kW ']) {
     const s = parseHash(`#s=Gravel&pw=${encodeURIComponent(raw)}`, car);
-    assert.equal(powerUnitOf(s), 'kW', raw);
+    assert.equal(powerUnitOf(s), 'hp', raw);
     assert.equal('pw' in s, false, raw);
   }
 });
