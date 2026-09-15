@@ -283,6 +283,10 @@ div.formula code{display:block;font:inherit;padding-left:2ch;text-indent:-2ch}
   /* the chart's own lettering shrinks with it, so its unit label starts only a few px into the
      plot; the switch rises into the panel's top padding to stay clear of it */
   .unitbox{top:5px}
+  /* on a phone the chart's own lettering is tiny, so the switch drops a size and marks the
+     unit in use by weight of colour, not the accent, to stay quieter than the chart */
+  .unitbox{font-size:10px}
+  .unitbox button[aria-pressed="true"]{color:var(--fg)}
 
   /* The bar collapses to one line: what is selected, and a button that opens the controls.
      Open, they hang below the line over the page rather than pushing it down, so opening
