@@ -68,6 +68,21 @@ export function formulaNote(car) {
   return `Final drive = ${formulaExpression(car)}${fixed}`;
 }
 
+/**
+ * The line under the caption for a car with an adjustable final drive but no ratio settings:
+ * which in-game parameter (and, on the Stratos, primary) the one Final drive select moves.
+ * Mirrors `_final_drive_lines`/`_primary_fact` in acr-setup-engineer's drivetrain_page.py,
+ * combined into the single select this page offers. '' for a car with ratio settings
+ * (`formulaNote` covers it) or no Final drive select at all.
+ */
+export function adjustmentNote(car) {
+  const fd = car.final_drive;
+  if (!fd || hasRatioSettings(car)) return '';
+  const rest = Math.abs(fd.rest - 1) < 1e-9 ? '' : ` × ${fd.rest.toFixed(3)}`;
+  const primary = fd.primaries.length ? 'Primary Gear × ' : '';
+  return `Final drive = ${primary}${fd.adjustment}${rest}`;
+}
+
 /** Only on a car with no centre differential, and only while its row settings disagree. */
 export function axleWarning(car, state) {
   if (!hasRatioSettings(car) || car.final_drive.formula.centre_differential !== false) return '';

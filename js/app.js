@@ -207,8 +207,9 @@ function buildShell() {
     if (s.id === 'power') panel.insertBefore(power.box, svg);
     // the 206 WRC runs on another car's curve, and its power section says whose
     const borrowed = s.id === 'power' ? powerTorque.borrowedCurveNote(car) : '';
-    // the averaged-axle cars say how their settings make the final drive
-    const formula = s.id === 'fd' ? finalDrive.formulaNote(car) : '';
+    // the averaged-axle cars say how their settings make the final drive; every other car
+    // with a Final drive select says which in-game parameter it is
+    const formula = s.id === 'fd' ? (finalDrive.formulaNote(car) || finalDrive.adjustmentNote(car)) : '';
     const warn = s.id === 'fd' && car.final_drive?.formula?.centre_differential === false;
     root.appendChild(h('section', { id: 'sec-' + s.id },
       h('h2', {}, s.title), h('p', { class: 'cap' }, s.cap),
