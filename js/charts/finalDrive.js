@@ -63,8 +63,12 @@ export function formulaExpression(car) {
 export function formulaNote(car) {
   if (!hasRatioSettings(car)) return '';
   const f = car.final_drive.formula;
+  // fixed_front/fixed_rear are otherwise unexplained numbers dropped into the expression
+  // (2.778, 2.786 on the Xsara): say what they are and why they're not on the setup screen.
   const fixed = !f.front.length && !f.rear.length
-    ? ' (the front and rear differentials are fixed)' : '';
+    ? ` (${f.fixed_front.toFixed(3)} front, ${f.fixed_rear.toFixed(3)} rear: fixed in the `
+      + `game files, not on the setup screen)`
+    : '';
   return `Final drive = ${formulaExpression(car)}${fixed}`;
 }
 

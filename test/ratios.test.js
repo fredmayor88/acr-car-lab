@@ -206,7 +206,8 @@ test('each car names its formula under the Final drive caption; no other car has
   assert.equal(formulaNote(load(IMPREZA)), 'Final drive = (Differential Ratio Front + Center Ratio '
     + 'to Rear × Differential Ratio Rear)\u00a0÷\u00a02');
   assert.equal(formulaNote(load(XSARA)), 'Final drive = Center Differential Ratio × (2.778 + '
-    + '2.786)\u00a0÷\u00a02 (the front and rear differentials are fixed)');
+    + '2.786)\u00a0÷\u00a02 (2.778 front, 2.786 rear: fixed in the game files, not on the '
+    + 'setup screen)');
   assert.equal(formulaNote(load(AUDI)), 'Final drive = (Differential Ratio Front + Differential '
     + 'Ratio Rear)\u00a0÷\u00a02');
   for (const slug of slugs.filter(s => !FIVE.includes(s))) assert.equal(formulaNote(load(slug)), '');
