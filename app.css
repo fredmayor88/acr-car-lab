@@ -117,6 +117,11 @@ select{font:13.5px/1 "SF Mono",Menlo,Consolas,monospace;padding:7px 10px;
    steps, and the final drive they make, level with the selects' text */
 .ratiorow{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 26px;flex-basis:100%}
 .bar select.ratio{min-width:0}
+/* the Stratos: its final drive options are a primary x final drive pair and their decimal, the
+   widest select on the site. Its bar gives up some gap and the other selects' spare width, so
+   the copy buttons stay on the first row at full width. */
+.bar:has(select.pair){gap:20px}
+.bar:has(select.pair) select{min-width:150px}
 .fdreadbox{justify-content:flex-end}
 .fdread{display:flex;align-items:center;height:30px;white-space:nowrap;
   font:12.5px/1 "SF Mono",Menlo,Consolas,monospace;color:var(--muted-text)}

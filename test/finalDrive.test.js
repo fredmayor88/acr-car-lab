@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { layout } from '../js/charts/finalDrive.js';
-import { stockRatios } from '../js/gearing.js';
+import { finalDriveCombos, stockRatios } from '../js/gearing.js';
 
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
@@ -250,10 +250,12 @@ test('dropdown labels put the decimal value next to the name', async () => {
   const { stepLabel, selectLabel } = await import('../js/charts/finalDrive.js');
   assert.equal(stepLabel({ name: '23//25', value: 0.92 }), '23//25 · 0.920');
   assert.equal(stepLabel({ name: '36//7', value: 36 / 7 }), '36//7 · 5.143');
-  // the combined Final drive select: the option's decimal; a primary x option pair stays as is
-  assert.equal(selectLabel({ primary: null, option: { name: '67//14', value: 67 / 14 } }), '67//14 · 4.786');
-  const pair = { primary: { name: '35//30*33//28', value: 1.375 }, option: { name: '65//17', value: 65 / 17 } };
-  assert.equal(selectLabel(pair), '35//30*33//28  ·  65//17');
+  // the combined Final drive select: the option's decimal; a primary x option pair (the Stratos)
+  // shows what the two make together, 1.375 x 3.8235
+  assert.equal(selectLabel({ primary: null, option: { name: '67//14', value: 67 / 14 }, below: 67 / 14 }),
+    '67//14 · 4.786');
+  const pair = finalDriveCombos(stratos.final_drive)[0];
+  assert.equal(selectLabel(pair), '35//30*33//28  ·  65//17 · 5.257');
 });
 
 test('on the 206 the note adds the primary gear, so rows that differ by primary read differently', async () => {

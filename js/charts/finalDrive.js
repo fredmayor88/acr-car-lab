@@ -31,8 +31,13 @@ export const comboLabel = combo =>
 /** A dropdown option: the game's spelling, then the decimal it works out to. */
 export const stepLabel = step => `${step.name} · ${step.value.toFixed(3)}`;
 
-/** The combined Final drive select. A primary x option pair is two ratios: it stays as named. */
-export const selectLabel = combo => combo.primary ? comboLabel(combo) : stepLabel(combo.option);
+/**
+ * The combined Final drive select. A primary x option pair (the Stratos) is two ratios, so its
+ * decimal is what they make together: the ratio the chart sorts its rows on.
+ */
+export const selectLabel = combo => combo.primary
+  ? `${comboLabel(combo)} · ${(combo.primary.value * combo.below).toFixed(3)}`
+  : stepLabel(combo.option);
 
 /** The ratio settings' short names: the control bar's labels, and the caption's words. */
 export const RATIO_LABELS = Object.freeze({

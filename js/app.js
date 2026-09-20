@@ -118,7 +118,9 @@ function buildShell() {
     commit();
   } }, ...surfaces.map(s => h('option', { value: s.key }, s.label)));
 
-  const fdSel = ratios ? null : h('select', { onchange: e => {
+  // `pair`: options that name a primary and a final drive (the Stratos); app.css makes room
+  const fdSel = ratios ? null : h('select', {
+    ...(car.final_drive?.primaries.length ? { class: 'pair' } : {}), onchange: e => {
     state.fd = Number(e.target.value);
     track('change-final-drive');
     commit();
