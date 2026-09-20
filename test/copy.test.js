@@ -26,6 +26,7 @@ const clean = (text, where) => {
 
 const slugs = readdirSync(ROOT).filter(d => existsSync(new URL(`data/${d}.json`, ROOT)));
 const load = slug => JSON.parse(read(`data/${slug}.json`));
+const description = html => html.match(/<meta name="description" content="([^"]+)">/)[1];
 
 test('no generated page and not the README says average or names a person', () => {
   assert.equal(slugs.length, 18);
@@ -47,11 +48,16 @@ test('every indexed page names itself a gearing calculator for the game', () => 
   const home = read('index.html');
   assert.ok(home.includes(`<h1>${TAGLINE}</h1>`));
   assert.ok(home.includes(`<title>${TAGLINE} — ACR Car Lab</title>`));
+  assert.ok(description(home).startsWith(`${TAGLINE}:`));
   for (const slug of slugs) {
     const p = `${slug}/gears/index.html`;
     const { name } = load(slug);
     const html = read(p);
     assert.ok(html.includes(`<title>${name} gearing — Assetto Corsa Rally</title>`), p);
+    const desc = description(html);
+    assert.ok(desc.startsWith(`Gearing calculator for the ${name} in Assetto Corsa Rally`), p);
+    // a result page shows about 155 characters of it; past that the tail is cut off
+    assert.ok(desc.length <= 155, `${p}: ${desc.length} characters`);
     const h1 = html.indexOf(`<h1>${name}</h1>`);
     const tagline = html.indexOf(`<p class="sub">${TAGLINE}</p>`);
     assert.ok(h1 > 0, p);

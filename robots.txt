@@ -1,0 +1,8 @@
+# Crawlers read robots.txt from the host root, and a project page does not own it: for
+# https://fredmayor88.github.io/acr-car-lab/ that is https://fredmayor88.github.io/robots.txt.
+# So this file does nothing until the site has its own domain, and the sitemap below is the
+# one submitted to Search Console by hand.
+User-agent: *
+Allow: /
+
+Sitemap: https://fredmayor88.github.io/acr-car-lab/sitemap.xml
