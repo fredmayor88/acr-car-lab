@@ -183,11 +183,10 @@ test('different front and rear ratios get their own selected row, sorted into pl
 });
 
 test('the custom row carries the selected primary on the 206 WRC', () => {
-  const p206 = load('peugeot-206-wrc-1999');
   const n = p206.final_drive.options.length;
   const state = stateFor(p206, { fd: n, ratios: ratiosFor(p206, { dfr: 0, drr: 1 }) });
   const rows = layout(p206, state).rows;
-  assert.equal(rows.length, 3 * n + 1);
+  assert.equal(rows.length, p206.final_drive.primaries.length * n + 1);
   const picked = rows.find(r => r.selected);
   assert.equal(picked.primary.name, p206.final_drive.primaries[1].name);
   assert.equal(picked.label, `${picked.primary.name}  ·  current settings`);

@@ -121,16 +121,11 @@ test('every car opens on a combo carrying its stock option and fitted primary', 
     const combos = finalDriveCombos(c.final_drive);
     const stock = combos[state.fd];
     assert.equal(stock.option.name, c.final_drive.stock_option, slug);
+    // every car with a primary selector opens on the primary its gear sets are fitted with.
+    // The 206 used to be an exception: its 20//25 was missing from the published list, so the
+    // page opened on the first selectable primary instead. The list is complete now.
     if (stock.primary) {
-      if (slug === 'peugeot-206-wrc-1999') {
-        // the one exception: its gear sets carry 20//25, which is not one of its selectable
-        // primaries, so the page opens on the first selectable one
-        const selectable = c.final_drive.primaries.map(p => p.name);
-        assert.ok(!selectable.includes(c.gear_sets[0].primary.name), slug);
-        assert.equal(stock.primary.name, selectable[0], slug);
-      } else {
-        assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
-      }
+      assert.equal(stock.primary.name, c.gear_sets[0].primary.name, slug);
     }
     // and it is the row the chart highlights
     assert.equal(layout(c, state).rows.filter(r => r.selected).length, 1, slug);

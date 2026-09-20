@@ -87,5 +87,5 @@ test('an averaged-axle car summarises its final drive readout, below the gearbox
   assert.equal(barSummary(delta, defaultState(delta)),
     'Dry tarmac  ·  final drive 3.84  ·  Gear set 1  (6-speed)');
   const p206 = load('peugeot-206-wrc-1999');
-  assert.equal(barSummaryParts(p206, defaultState(p206))[1].text, '21//24  ·  final drive 5.34');
+  assert.equal(barSummaryParts(p206, defaultState(p206))[1].text, '20//25  ·  final drive 5.34');
 });

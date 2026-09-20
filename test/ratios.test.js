@@ -113,14 +113,15 @@ test('the 206: Primary Gear as pg, both diffs apart, round-trips', () => {
 
 test('an old fd=N link picks Final drive chart row N: primary and both diffs, the rest at stock', () => {
   const car = load(P206);
-  // rows are primaries x [46//14*26//16, 40//18*26//16]: fd=3 is 22//24 with 40//18*26//16
-  const s = parseHash('#s=Tarmac_Dry&fd=3&set=0&draw=0', car);
+  // rows are primaries x [46//14*26//16, 40//18*26//16, 39//19*26//16]: fd=4 is the second
+  // primary (22//24) on the second row (40//18*26//16)
+  const s = parseHash('#s=Tarmac_Dry&fd=4&set=0&draw=0', car);
   assert.equal(car.final_drive.primaries[primaryIndex(car, s)].name, '22//24');
   assert.equal(s.ratios.dfr, step(car, 'dfr', '40//18*26//16'));
   assert.equal(s.ratios.drr, step(car, 'drr', '40//18*26//16'));
   assert.equal(s.ratios.cdr, defaultState(car).ratios.cdr);
-  assert.equal(selectedRow(car, s), 3);
-  assert.equal(layout(car, s).rows.find(r => r.selected).index, 3);
+  assert.equal(selectedRow(car, s), 4);
+  assert.equal(layout(car, s).rows.find(r => r.selected).index, 4);
   // and the link it writes back reads the same
   assert.deepEqual(parseHash(toHash(s, car), car), s);
 });
@@ -245,7 +246,7 @@ test('Copy settings lists every ratio setting by game name, and Primary Gear on 
   assert.deepEqual(lines.slice(0, 6), [
     'Peugeot 206 WRC 1999',
     'Gear set: Gear set 1 (5-speed)',
-    'Primary Gear: 21//24',
+    'Primary Gear: 20//25',
     'Differential Ratio Front: 43//13*21//13',
     'Center Differential Ratio: 24//24',
     'Differential Ratio Rear: 40//18*26//16',
