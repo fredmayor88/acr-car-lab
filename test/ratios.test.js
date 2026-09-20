@@ -155,12 +155,14 @@ test('a row click sets the row settings together and holds every other one', () 
   assert.equal(selectedRow(car, picked), 0);
 });
 
-test('front and rear apart: no row is highlighted', () => {
+test('front and rear apart: no combo row matches, the current-settings row is highlighted', () => {
   const car = load(IMPREZA);
   const s = withSteps(car, { dfr: '31//9', drr: '48//11' });
   assert.equal(matchingRow(car.final_drive, s.ratios), -1);
   assert.equal(selectedRow(car, s), -1);
-  assert.equal(layout(car, s).rows.filter(r => r.selected).length, 0);
+  const picked = layout(car, s).rows.filter(r => r.selected);
+  assert.equal(picked.length, 1);
+  assert.equal(picked[0].custom, true);
 });
 
 test('chart rows hold the other settings: the Impreza rows move with Center Ratio to Rear', () => {

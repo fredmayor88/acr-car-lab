@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { layout } from '../js/charts/finalDrive.js';
+import { stockRatios } from '../js/gearing.js';
 
 const load = slug =>
   JSON.parse(readFileSync(new URL(`../data/${slug}.json`, import.meta.url)));
@@ -152,4 +153,49 @@ test('the caption names the rev limit at the default and the ceiling when it is 
   assert.equal(caption(stratos, stateFor(stratos, { set: 1, ceil: 7000 })),
     'Every selectable combination. 100% is the shortest. Speed is top gear of gear set 2 '
     + 'at the 7000 rpm rev ceiling. Click a row to use that final drive.');
+});
+
+// --- front and rear ratios that differ (Impreza, 206 WRC, Quattro) -----------------------
+
+const impreza = load('subaru-impreza-555-s3-1993');
+const ratiosFor = (car, over = {}) => ({ ...stockRatios(car.final_drive), ...over });
+
+test('equal front and rear ratios sit on a chart row and add none', () => {
+  const state = stateFor(impreza, { ratios: ratiosFor(impreza, { dfr: 1, drr: 1 }) });
+  const rows = layout(impreza, state).rows;
+  assert.equal(rows.length, impreza.final_drive.options.length);
+  assert.equal(rows.find(r => r.selected).option.name, '39//8');
+});
+
+test('different front and rear ratios get their own selected row, sorted into place', () => {
+  // front 39//8 (4.875), rear stock 35//9 (3.889), centre to rear 1.0: mean 4.3819
+  const state = stateFor(impreza, { ratios: ratiosFor(impreza, { dfr: 1 }) });
+  const rows = layout(impreza, state).rows;
+  assert.equal(rows.length, impreza.final_drive.options.length + 1);
+  const picked = rows.filter(r => r.selected);
+  assert.equal(picked.length, 1);
+  assert.equal(picked[0].custom, true);
+  assert.equal(picked[0].index, -1);
+  assert.equal(picked[0].label, 'Current settings');
+  assert.ok(Math.abs(picked[0].value - (4.875 + 35 / 9) / 2) < 1e-9);
+  for (let i = 1; i < rows.length; i++) assert.ok(rows[i - 1].value >= rows[i].value);
+  assert.ok(rows.every(r => r.pct >= 100 && Number.isFinite(r.kmh)));
+});
+
+test('the custom row carries the selected primary on the 206 WRC', () => {
+  const p206 = load('peugeot-206-wrc-1999');
+  const n = p206.final_drive.options.length;
+  const state = stateFor(p206, { fd: n, ratios: ratiosFor(p206, { dfr: 0, drr: 1 }) });
+  const rows = layout(p206, state).rows;
+  assert.equal(rows.length, 3 * n + 1);
+  const picked = rows.find(r => r.selected);
+  assert.equal(picked.primary.name, p206.final_drive.primaries[1].name);
+  assert.equal(picked.label, `${picked.primary.name}  ·  current settings`);
+});
+
+test('the caption explains the current-settings row only while it is shown', async () => {
+  const { caption } = await import('../js/charts/finalDrive.js');
+  const note = ' The highlighted row is your current front and rear ratios.';
+  assert.ok(caption(impreza, stateFor(impreza, { ratios: ratiosFor(impreza, { dfr: 1 }) })).endsWith(note));
+  assert.ok(!caption(impreza, stateFor(impreza, { ratios: ratiosFor(impreza) })).includes(note));
 });

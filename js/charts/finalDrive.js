@@ -16,7 +16,7 @@
 // which is what `state.fd` and the URL hash mean. They are not the same number.
 
 import { averagedBelow, ceilingOf, circumference, finalDriveCombos, hasRatioSettings, kmh,
-  matchingRow, overallRatio, ratioSteps, selectedRow } from '../gearing.js';
+  matchingRow, overallRatio, primaryIndex, ratioSteps, selectedRow } from '../gearing.js';
 import { C, el, text, clear } from '../svg.js';
 
 const NBSP = '\u00a0';
@@ -34,7 +34,10 @@ export function caption(car, state) {
   const at = ceil === car.engine.redline ? 'the rev limit' : `the ${ceil} rpm rev ceiling`;
   return 'Every selectable combination. 100% is the shortest. Speed is top gear of '
     + `${car.gear_sets[state.set].label.toLowerCase()} at ${at}. `
-    + 'Click a row to use that final drive.';
+    + 'Click a row to use that final drive.'
+    // front and rear apart: say what the extra row is (see `layout`)
+    + (hasRatioSettings(car) && state.ratios && selectedRow(car, state) < 0
+      ? ' The highlighted row is your current front and rear ratios.' : '');
 }
 
 /**
@@ -125,8 +128,22 @@ export function layout(car, state) {
       label: comboLabel(combo),
       value: overallRatio(car, state.set, combo),
       selected: index === selected,
-    }))
-    .sort((a, b) => b.value - a.value); // shortest gearing first — largest ratio
+    }));
+  // Front and rear ratios that differ sit on no row (every row sets them equal), so the
+  // settings get a row of their own: index -1, because no combo index means it.
+  if (averaged && selected < 0) {
+    const primary = car.final_drive.primaries[primaryIndex(car, state)] ?? null;
+    rows.push({
+      index: -1,
+      custom: true,
+      primary,
+      option: null,
+      label: primary ? `${primary.name}  ·  current settings` : 'Current settings',
+      value: overallRatio(car, state.set, { primary }, state.ratios),
+      selected: true,
+    });
+  }
+  rows.sort((a, b) => b.value - a.value); // shortest gearing first — largest ratio
 
   const shortest = rows[0].value;
   for (const r of rows) {
@@ -177,6 +194,8 @@ export function render(svg, car, state, onPick) {
     text(svg, xs(r.pct) + 12, y + 3.6,
          `${r.pct.toFixed(0).padStart(3)}%     ${r.kmh.toFixed(0)} km/h`, 'val',
          { 'fill-opacity': r.selected ? 1 : 0.72 });
+    // the current-settings row is already what is selected: nothing to pick
+    if (r.custom) return;
     // `fill: transparent` is still a painted fill, so `visiblePainted` hit-testing finds
     // it; `pointer-events: all` says so outright rather than relying on that reading.
     const hit = el(svg, 'rect', { x: 6, y: y - 12, width: 1080, height: 24, rx: 2,
