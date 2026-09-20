@@ -36,6 +36,15 @@ test('the redirect and drivetrain pages stay out, and stay unindexable', () => {
   }
 });
 
+test('every page in the sitemap canonicals to itself', () => {
+  // a gearing page takes ?pw=kW and a state hash, so the same page has many URLs; the
+  // canonical folds them into one, and points at the directory, not at index.html
+  for (const loc of locs) {
+    const p = `${loc.slice(SITE.length)}index.html`;
+    assert.ok(read(p).includes('<link rel="canonical" href="./">'), p);
+  }
+});
+
 test('robots.txt allows everything and names the sitemap at the same site', () => {
   const robots = read('robots.txt');
   assert.match(robots, /^User-agent: \*$/m);

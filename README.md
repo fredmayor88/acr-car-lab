@@ -225,6 +225,44 @@ pages.
    git add -A && git commit -m "chore: regenerate for ACR <game_version from data/index.json>"
    ```
 
+## Search
+
+Every page that may be indexed says what the site is in the HTML it serves: the picker's h1,
+and a line under the car's name on each gearing page. The line the app draws under that name
+is the car's own numbers, and a crawler does not run the app, so it never sees that line. The
+purpose has to be in the markup the server sends. Each page canonicals to `./`, so `?pw=kW`
+and the state hash do not read as pages of their own.
+
+`sitemap.xml` is written by the exporter from the same car list as the picker, in the same
+run, so a car cannot be exported without being listed or pruned without leaving. The forward
+at `<slug>/` and the drivetrain pages are left out: one canonicals to `gears/` and the other
+is noindex. `test/sitemap.test.js` holds all of that in place.
+
+**`robots.txt` does nothing while this is a project page.** Crawlers read robots.txt from the
+host root, and a project page does not own it: for `https://fredmayor88.github.io/acr-car-lab/`
+the file they fetch is `https://fredmayor88.github.io/robots.txt`, which this repo cannot
+serve. It is in place for the day the site has its own domain. Until then the sitemap is
+submitted by hand, once:
+
+1. Open [Google Search Console](https://search.google.com/search-console) and sign in with the
+   Google account you want to own the data.
+2. Add a property, and pick **URL prefix**, not Domain — Domain needs DNS records, which a
+   `github.io` subpath cannot have. Enter the address with its trailing slash:
+   `https://fredmayor88.github.io/acr-car-lab/`.
+3. Verify with the **HTML file** method. Download the `google<...>.html` file it offers, commit
+   it to this repo's root, push, and wait for Pages to deploy (a minute). Check it is live at
+   `https://fredmayor88.github.io/acr-car-lab/google<...>.html`, then press Verify. Leave the
+   file committed — removing it un-verifies the property. The HTML tag method works too, but
+   the picker is generated, so the tag would have to go into the exporter's template.
+4. In the left sidebar open **Sitemaps**. The field is relative to the property, so enter
+   `sitemap.xml` and press Submit. It should read *Success* within a few minutes, and
+   *19 discovered pages* within a day or so.
+5. Optional, and the same idea: [Bing Webmaster Tools](https://www.bing.com/webmasters) can
+   import the property straight from Search Console once step 4 is done.
+
+Nothing needs doing after a re-export. The sitemap is rewritten with the pages, and Google
+re-reads it on its own; there is no resubmitting.
+
 ## Local development
 
 ES modules need a server; `file://` will not work.
@@ -265,6 +303,8 @@ node --test
 | `package.json` | `npm test` runs `node --test`. |
 | `data/` | Generated. Never edit by hand. |
 | `index.html` | The car picker. Generated. Never edit by hand. |
+| `sitemap.xml` | The picker and every car's gearing page, absolute. Generated. Never edit by hand. |
+| `robots.txt` | Hand-written, and inert while the site is a project page — see Search. |
 | `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
 | `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer and kept current, but not linked from the site yet and marked noindex: set `PUBLISH_DRIVETRAIN_LINKS = True` in `export_car_data.py` to link them from the picker and each gearing page. Never edit by hand. |
 | `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
