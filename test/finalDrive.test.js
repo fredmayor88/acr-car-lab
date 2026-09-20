@@ -199,3 +199,73 @@ test('the caption explains the current-settings row only while it is shown', asy
   assert.ok(caption(impreza, stateFor(impreza, { ratios: ratiosFor(impreza, { dfr: 1 }) })).endsWith(note));
   assert.ok(!caption(impreza, stateFor(impreza, { ratios: ratiosFor(impreza) })).includes(note));
 });
+
+// --- the selected row's note, the rows caption, and the dropdown labels -------------------
+
+const p206 = load('peugeot-206-wrc-1999');
+const quattro = load('audi-quattro-gr4-1981');
+const delta = load('lancia-delta-integrale-evoluzione-1992');
+const stepOf = (car, key, name) =>
+  car.final_drive.settings.find(s => s.key === key).steps.findIndex(st => st.name === name);
+
+test('the selected row carries its role and the final drive the bar reads out', () => {
+  const rows = layout(impreza, stateFor(impreza, { ratios: ratiosFor(impreza) })).rows;
+  assert.equal(rows.find(r => r.selected).note, 'selected · final drive 3.89');
+  assert.ok(rows.filter(r => !r.selected).every(r => r.note === ''));
+  // a car without ratio settings has no readout to tie to: no note
+  assert.ok(layout(stratos, stateFor(stratos)).rows.every(r => r.note === ''));
+});
+
+test('the note moves with a setting the rows hold: the 206 centre diff', () => {
+  const at = name => layout(p206, stateFor(p206, { ratios: ratiosFor(p206, { cdr: stepOf(p206, 'cdr', name) }) }))
+    .rows.find(r => r.selected);
+  const a = at(p206.final_drive.settings[1].steps[0].name);
+  const b = at(p206.final_drive.settings[1].steps[5].name);
+  assert.equal(a.index, b.index);
+  assert.notEqual(a.note, b.note);
+  assert.match(b.note, /^selected · final drive \d+\.\d\d · with primary gear \d+\.\d\d$/);
+});
+
+test('the current-settings row carries the note too', () => {
+  const rows = layout(impreza, stateFor(impreza, { ratios: ratiosFor(impreza, { dfr: 1 }) })).rows;
+  assert.equal(rows.find(r => r.custom).note, 'selected · final drive 4.38');
+});
+
+test('the caption of a car with ratio settings says what the rows are and what they hold', async () => {
+  const { caption } = await import('../js/charts/finalDrive.js');
+  const tail = ' 100% is the shortest. Speed is top gear of gear set 1 at the rev limit. '
+    + 'Click a row to use that final drive.';
+  const cap = car => caption(car, stateFor(car, { ratios: ratiosFor(car) }));
+  assert.equal(cap(impreza),
+    'Rows are front diff and rear diff on the same ratio, with centre to rear 31//31 as selected.' + tail);
+  assert.equal(cap(p206),
+    'Rows are front diff and rear diff on the same ratio, with centre diff 24//24 as selected.' + tail);
+  assert.equal(cap(quattro), 'Rows are front diff and rear diff on the same ratio.' + tail);
+  const [, ctr, drr] = delta.final_drive.settings.map(s => s.stock);
+  assert.equal(cap(delta),
+    `Rows are centre diff ratios, with centre to rear ${ctr} and rear diff ${drr} as selected.` + tail);
+});
+
+test('dropdown labels put the decimal value next to the name', async () => {
+  const { stepLabel, selectLabel } = await import('../js/charts/finalDrive.js');
+  assert.equal(stepLabel({ name: '23//25', value: 0.92 }), '23//25 · 0.920');
+  assert.equal(stepLabel({ name: '36//7', value: 36 / 7 }), '36//7 · 5.143');
+  // the combined Final drive select: the option's decimal; a primary x option pair stays as is
+  assert.equal(selectLabel({ primary: null, option: { name: '67//14', value: 67 / 14 } }), '67//14 · 4.786');
+  const pair = { primary: { name: '35//30*33//28', value: 1.375 }, option: { name: '65//17', value: 65 / 17 } };
+  assert.equal(selectLabel(pair), '35//30*33//28  ·  65//17');
+});
+
+test('on the 206 the note adds the primary gear, so rows that differ by primary read differently', async () => {
+  const { fullReadout } = await import('../js/charts/finalDrive.js');
+  const n = p206.final_drive.options.length;
+  const at = p => stateFor(p206, { fd: p * n, ratios: ratiosFor(p206) });
+  // stock settings: 5.34 below the gearbox; primaries 21//24, 22//24, 21//25
+  assert.equal(fullReadout(p206, at(0)), 'final drive 5.34 · with primary gear 4.67');
+  assert.equal(fullReadout(p206, at(1)), 'final drive 5.34 · with primary gear 4.89');
+  assert.equal(fullReadout(p206, at(2)), 'final drive 5.34 · with primary gear 4.49');
+  assert.equal(layout(p206, at(2)).rows.find(r => r.selected).note,
+    'selected · final drive 5.34 · with primary gear 4.49');
+  // a car without a primary selector: the final drive alone
+  assert.equal(fullReadout(impreza, stateFor(impreza, { ratios: ratiosFor(impreza) })), 'final drive 3.89');
+});

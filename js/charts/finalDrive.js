@@ -28,11 +28,45 @@ const NBSP = '\u00a0';
 export const comboLabel = combo =>
   combo.primary ? `${combo.primary.name}  ·  ${combo.option.name}` : combo.option.name;
 
+/** A dropdown option: the game's spelling, then the decimal it works out to. */
+export const stepLabel = step => `${step.name} · ${step.value.toFixed(3)}`;
+
+/** The combined Final drive select. A primary x option pair is two ratios: it stays as named. */
+export const selectLabel = combo => combo.primary ? comboLabel(combo) : stepLabel(combo.option);
+
+/** The ratio settings' short names: the control bar's labels, and the caption's words. */
+export const RATIO_LABELS = Object.freeze({
+  cdr: 'Centre diff', ctf: 'Centre to front', ctr: 'Centre to rear',
+  dfr: 'Front diff', drr: 'Rear diff',
+});
+
+const and = words => words.length < 2 ? words.join('')
+  : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+
+/**
+ * What a row is on a car with ratio settings: the `rows` settings moved together, every other
+ * setting held where it is. Named with its value, because a held setting moves every row's
+ * km/h without moving the highlight, and nothing else on the chart says why.
+ */
+function rowsSentence(car, state) {
+  const fd = car.final_drive;
+  const word = s => (RATIO_LABELS[s.key] ?? s.adjustment).toLowerCase();
+  const moved = fd.settings.filter(s => fd.rows.includes(s.key));
+  const steps = ratioSteps(fd, state.ratios);
+  const held = fd.settings.filter(s => !fd.rows.includes(s.key))
+    .map(s => `${word(s)} ${steps[s.key].name}`);
+  const what = moved.length > 1 ? `${and(moved.map(word))} on the same ratio`
+    : `${word(moved[0])} ratios`;
+  return `Rows are ${what}${held.length ? `, with ${and(held)} as selected` : ''}.`;
+}
+
 /** The section caption: which gear set and rpm the km/h column is read at. */
 export function caption(car, state) {
   const ceil = ceilingOf(car, state);
   const at = ceil === car.engine.redline ? 'the rev limit' : `the ${ceil} rpm rev ceiling`;
-  return 'Every selectable combination. 100% is the shortest. Speed is top gear of '
+  const rows = hasRatioSettings(car) && state.ratios ? rowsSentence(car, state)
+    : 'Every selectable combination.';
+  return `${rows} 100% is the shortest. Speed is top gear of `
     + `${car.gear_sets[state.set].label.toLowerCase()} at ${at}. `
     + 'Click a row to use that final drive.'
     // front and rear apart: say what the extra row is (see `layout`)
@@ -103,6 +137,20 @@ export function axleWarning(car, state) {
 export const finalDriveReadout = (car, state) =>
   `final drive ${averagedBelow(car.final_drive, state.ratios).toFixed(2)}`;
 
+/**
+ * The readout where a Primary Gear is selectable (the 206 WRC): the final drive, then the same
+ * with the primary in. Rows that differ only by primary share a final drive, so the first
+ * number alone does not move between them.
+ */
+export function fullReadout(car, state) {
+  const fd = car.final_drive;
+  const primary = fd.primaries[primaryIndex(car, state)];
+  const base = finalDriveReadout(car, state);
+  return primary
+    ? `${base} · with primary gear ${(primary.value * averagedBelow(fd, state.ratios)).toFixed(2)}`
+    : base;
+}
+
 /** Each ratio setting's game name and spelling, in the car's order. */
 export const ratioLines = (car, state) => {
   const steps = ratioSteps(car.final_drive, state.ratios);
@@ -145,8 +193,12 @@ export function layout(car, state) {
   }
   rows.sort((a, b) => b.value - a.value); // shortest gearing first — largest ratio
 
+  // the selected row says so, with the final drive the bar reads out: a setting the rows hold
+  // (the 206's centre diff) moves that number and nothing else the eye catches
+  const note = averaged ? `selected · ${fullReadout(car, state)}` : '';
   const shortest = rows[0].value;
   for (const r of rows) {
+    r.note = r.selected ? note : '';
     r.pct = shortest / r.value * 100;
     r.kmh = kmh(ceilingOf(car, state), top * r.value, circ);
   }
@@ -159,7 +211,13 @@ export function render(svg, car, state, onPick) {
   if (!l.adjustable) return;
 
   const rows = l.rows;
-  const L = 196, R = 930, T = 16, step = 26.6;
+  // The selected row's note follows its km/h, so a car that has one keeps room for it: the
+  // longest bar reaches 95% of the way to R, and the readout (22 characters of % and km/h,
+  // then the note, at 6.4 a character) has to end inside the 1086 the row is wide.
+  const L = 196, T = 16, step = 26.6;
+  const noteLength = Math.max(...rows.map(r => r.note.length));
+  const R = noteLength
+    ? Math.min(930, L + (1086 - 12 - 6.4 * (22 + noteLength) - L) / 0.95) : 930;
   const maxPct = Math.max(...rows.map(r => r.pct));
   const xs = v => L + ((v - 97) / (maxPct * 1.06 - 97)) * (R - L);
   const bottom = T + rows.length * step;
@@ -192,7 +250,8 @@ export function render(svg, car, state, onPick) {
     text(svg, L - 12, y + 3.6, r.label, 'val',
          { 'text-anchor': 'end', 'fill-opacity': r.selected ? 1 : 0.72 });
     text(svg, xs(r.pct) + 12, y + 3.6,
-         `${r.pct.toFixed(0).padStart(3)}%     ${r.kmh.toFixed(0)} km/h`, 'val',
+         `${r.pct.toFixed(0).padStart(3)}%     ${r.kmh.toFixed(0)} km/h`
+           + (r.note ? `     ${r.note}` : ''), 'val',
          { 'fill-opacity': r.selected ? 1 : 0.72 });
     // the current-settings row is already what is selected: nothing to pick
     if (r.custom) return;

@@ -122,7 +122,7 @@ function buildShell() {
     state.fd = Number(e.target.value);
     track('change-final-drive');
     commit();
-  } }, ...combos.map((c, i) => h('option', { value: String(i) }, finalDrive.comboLabel(c))));
+  } }, ...combos.map((c, i) => h('option', { value: String(i) }, finalDrive.selectLabel(c))));
 
   const setSel = h('select', { onchange: e => {
     state.set = Number(e.target.value);
@@ -254,10 +254,7 @@ function buildPowerUnitControl() {
 
 // The bar's short labels for the ratio settings; each select's accessible name and title is
 // the game's own adjustment name.
-const RATIO_LABELS = Object.freeze({
-  cdr: 'Centre diff', ctf: 'Centre to front', ctr: 'Centre to rear',
-  dfr: 'Front diff', drr: 'Rear diff',
-});
+const { RATIO_LABELS } = finalDrive;
 
 /** An averaged-axle car's Primary Gear (206 WRC), ratio setting selects and readout. */
 function buildRatioControls() {
@@ -269,7 +266,7 @@ function buildRatioControls() {
       state = setPrimary(data, state, Number(e.target.value));
       track('edit-final-drive-setting');
       commit();
-    } }, ...fd.primaries.map((p, i) => h('option', { value: String(i) }, p.name)));
+    } }, ...fd.primaries.map((p, i) => h('option', { value: String(i) }, finalDrive.stepLabel(p))));
     boxes.push(h('div', { class: 'ctl' }, h('label', { for: 'bar-primary' }, 'Primary Gear'),
       primary));
   }
@@ -280,7 +277,7 @@ function buildRatioControls() {
         state = setRatio(data, state, s.key, Number(e.target.value));
         track('edit-final-drive-setting');
         commit();
-      } }, ...s.steps.map((st, i) => h('option', { value: String(i) }, st.name)));
+      } }, ...s.steps.map((st, i) => h('option', { value: String(i) }, finalDrive.stepLabel(st))));
     boxes.push(h('div', { class: 'ctl' },
       h('label', { for: id, title: s.adjustment }, RATIO_LABELS[s.key] ?? s.adjustment), sel));
     return { key: s.key, sel };
@@ -669,7 +666,7 @@ function syncControls() {
     const { primary, selects, readout } = controls.ratios;
     if (primary) primary.value = String(primaryIndex(car, state));
     for (const { key, sel } of selects) sel.value = String(state.ratios[key]);
-    readout.textContent = finalDrive.finalDriveReadout(car, state);
+    readout.textContent = finalDrive.fullReadout(car, state);
   } else if (controls.fdSel?.options.length) controls.fdSel.value = String(state.fd);
   controls.setSel.value = String(state.set);
   for (const [unit, button] of Object.entries(controls.powerUnit)) {
