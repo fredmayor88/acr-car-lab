@@ -52,6 +52,14 @@ test('robots.txt allows everything and names the sitemap at the same site', () =
   assert.ok(robots.includes(`Sitemap: ${SITE}sitemap.xml`));
 });
 
+// Deleting this file un-verifies the Search Console property, and nothing about it looks
+// load-bearing: it is 53 bytes of token at the site root with no link to it anywhere.
+test('the Search Console verification file is still here, and still says its own name', () => {
+  const name = 'google8024ca1d43961260.html';
+  assert.ok(existsSync(new URL(name, ROOT)), name);
+  assert.equal(read(name), `google-site-verification: ${name}`);
+});
+
 test('the README sends people to the same site the sitemap does', () => {
   assert.ok(read('README.md').includes(SITE));
 });

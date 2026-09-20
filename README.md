@@ -251,9 +251,10 @@ submitted by hand, once:
    `https://fredmayor88.github.io/acr-car-lab/`.
 3. Verify with the **HTML file** method. Download the `google<...>.html` file it offers, commit
    it to this repo's root, push, and wait for Pages to deploy (a minute). Check it is live at
-   `https://fredmayor88.github.io/acr-car-lab/google<...>.html`, then press Verify. Leave the
-   file committed — removing it un-verifies the property. The HTML tag method works too, but
-   the picker is generated, so the tag would have to go into the exporter's template.
+   `https://fredmayor88.github.io/acr-car-lab/google<...>.html`, then press Verify. The HTML tag
+   method works too, but the picker is generated, so the tag would have to go into the
+   exporter's template. **Done:** `google8024ca1d43961260.html` is in the root, and a test keeps
+   it there — removing it un-verifies the property.
 4. In the left sidebar open **Sitemaps**. The field is relative to the property, so enter
    `sitemap.xml` and press Submit. It should read *Success* within a few minutes, and
    *19 discovered pages* within a day or so.
@@ -305,6 +306,7 @@ node --test
 | `index.html` | The car picker. Generated. Never edit by hand. |
 | `sitemap.xml` | The picker and every car's gearing page, absolute. Generated. Never edit by hand. |
 | `robots.txt` | Hand-written, and inert while the site is a project page — see Search. |
+| `google8024ca1d43961260.html` | Search Console's verification token. Deleting it un-verifies the property. |
 | `<slug>/gears/index.html` | A car's gearing page. Generated. Never edit by hand. |
 | `<slug>/drivetrain/index.html` | A car's drivetrain page. Static, generated with its prose from `drivetrain_notes.json` in acr-setup-engineer and kept current, but not linked from the site yet and marked noindex: set `PUBLISH_DRIVETRAIN_LINKS = True` in `export_car_data.py` to link them from the picker and each gearing page. Never edit by hand. |
 | `<slug>/index.html` | Forwards to `gears/`, keeping the hash, for links from before the move. Generated. |
