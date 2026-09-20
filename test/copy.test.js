@@ -39,6 +39,27 @@ test('no generated page and not the README says average or names a person', () =
   for (const p of pages) clean(read(p), p);
 });
 
+// What the site is, in the served HTML of every page a crawler is allowed to read. The line
+// under a car's name on screen ("5 speed · 3 gear sets · rev limit ...") is built in JS, so it
+// is the car's numbers and not the site's purpose; this one is static and says the purpose.
+test('every indexed page names itself a gearing calculator for the game', () => {
+  const TAGLINE = 'Gearing calculator for Assetto Corsa Rally';
+  const home = read('index.html');
+  assert.ok(home.includes(`<h1>${TAGLINE}</h1>`));
+  assert.ok(home.includes(`<title>${TAGLINE} — ACR Car Lab</title>`));
+  for (const slug of slugs) {
+    const p = `${slug}/gears/index.html`;
+    const { name } = load(slug);
+    const html = read(p);
+    assert.ok(html.includes(`<title>${name} gearing — Assetto Corsa Rally</title>`), p);
+    const h1 = html.indexOf(`<h1>${name}</h1>`);
+    const tagline = html.indexOf(`<p class="sub">${TAGLINE}</p>`);
+    assert.ok(h1 > 0, p);
+    // straight under the name, and still inside the header
+    assert.ok(tagline > h1 && tagline < html.indexOf('</header>'), p);
+  }
+});
+
 test('the strings the gears page builds, for every car and each of its gear sets', () => {
   for (const slug of slugs) {
     const car = load(slug);
