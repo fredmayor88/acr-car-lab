@@ -503,3 +503,39 @@ test('Copy settings does not mention the power unit', async () => {
   const s = defaultState(stratos);
   assert.equal(settingsText(stratos, setPowerUnit(s, true)), settingsText(stratos, s));
 });
+
+// --- Shift points' gear ratio format -------------------------------------------------------
+
+test('ratio format: decimal by default with no gr in the hash, gr=frac on fraction, and it round-trips', async () => {
+  const { ratioFormatOf, setRatioFormat } = await import('../js/state.js');
+  const dec = defaultState(car);
+  assert.equal(ratioFormatOf(dec), 'decimal');
+  assert.equal('gr' in dec, false);
+  assert.equal(toHash(dec, car).includes('gr='), false);
+  const frac = setRatioFormat(dec, true);
+  assert.equal(ratioFormatOf(frac), 'fraction');
+  assert.match(toHash(frac, car), /&gr=frac$/);
+  assert.deepEqual(parseHash(toHash(frac, car), car), frac);
+  assert.deepEqual(setRatioFormat(frac, false), dec);
+});
+
+test('a gr other than frac in a link is decimal', async () => {
+  const { ratioFormatOf } = await import('../js/state.js');
+  for (const raw of ['dec', 'fraction', 'FRAC', '1', '', 'frac ']) {
+    const s = parseHash(`#s=Gravel&gr=${encodeURIComponent(raw)}`, car);
+    assert.equal(ratioFormatOf(s), 'decimal', raw);
+    assert.equal('gr' in s, false, raw);
+  }
+});
+
+test('app.js: the decimal · fraction switch and its copy track their events and copy the format in force', () => {
+  const src = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+  assert.equal((src.match(/'toggle-ratio-format'/g) || []).length, 1);
+  assert.equal((src.match(/'copy-gear-ratios'/g) || []).length, 1);
+  const build = src.slice(src.indexOf('function buildRatioFormatControl'), src.indexOf('// The bar\'s short labels'));
+  assert.match(build, /for \(const format of shiftPoints\.RATIO_FORMATS\)/);
+  // pressing the format already in force changes nothing and tracks nothing
+  assert.match(build, /if \(ratioFormatOf\(state\) === format\) return;\s*state = setRatioFormat\(state, format === 'fraction'\);\s*track\('toggle-ratio-format'\);\s*commit\(\);/);
+  assert.match(build, /shiftPoints\.ratiosText\(car, state, ratioFormatOf\(state\)\)/);
+  assert.match(src, /for \(const \[format, button\] of Object\.entries\(controls\.ratioFormat\)\) \{\s*button\.setAttribute\('aria-pressed', String\(ratioFormatOf\(state\) === format\)\);/);
+});

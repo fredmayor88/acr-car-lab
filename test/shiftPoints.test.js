@@ -273,3 +273,45 @@ test('the readout never runs past the edge it is given', () => {
   assert.ok(readoutX(700, w, 820) + w <= 820);
   assert.equal(readoutX(10, w, 820), 4, 'and never runs off the left');
 });
+
+// --- each gear's own ratio, beside its row label -------------------------------------------
+
+const named = {
+  ...car,
+  gear_sets: [{ label: 'Gear set 1', primary: { name: 'p', value: 1.1 },
+    gears: [['42//15', 42 / 15], ['39//19', 39 / 19], ['30//26', 30 / 26], ['25//25', 1]]
+      .map(([name, value]) => ({ name, value })) }],
+};
+
+test('ratioLabels: three decimals by default, the tooth counts with one slash as fractions', async () => {
+  const { RATIO_FORMATS, ratioLabels } = await import('../js/charts/shiftPoints.js');
+  assert.deepEqual(RATIO_FORMATS, ['decimal', 'fraction']);
+  assert.deepEqual(ratioLabels(named, state, 'decimal'), ['2.800', '2.053', '1.154', '1.000']);
+  assert.deepEqual(ratioLabels(named, state), ['2.800', '2.053', '1.154', '1.000']);
+  assert.deepEqual(ratioLabels(named, state, 'fraction'), ['42/15', '39/19', '30/26', '25/25']);
+});
+
+test('ratioLabels reads the selected gear set', async () => {
+  const { ratioLabels } = await import('../js/charts/shiftPoints.js');
+  assert.deepEqual(ratioLabels(car, { ...state, set: 1 }, 'decimal'),
+    ['3.143', '2.235', '1.762', '1.417', '1.154']);
+});
+
+test('ratiosText: every gear, one bare value per line, in the format asked for', async () => {
+  const { ratiosText } = await import('../js/charts/shiftPoints.js');
+  assert.equal(ratiosText(named, state, 'decimal'), '2.800\n2.053\n1.154\n1.000');
+  assert.equal(ratiosText(named, state, 'fraction'), '42/15\n39/19\n30/26\n25/25');
+});
+
+test('every gear in the data is named as tooth counts that make its value', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const dir = new URL('../data/', import.meta.url);
+  for (const f of readdirSync(dir).filter(f => f !== 'index.json')) {
+    const c = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
+    for (const s of c.gear_sets) for (const g of s.gears) {
+      const m = g.name.match(/^(\d+)\/\/(\d+)$/);
+      assert.ok(m, `${f} ${g.name}`);
+      assert.ok(Math.abs(m[1] / m[2] - g.value) < 1e-9, `${f} ${g.name}`);
+    }
+  }
+});

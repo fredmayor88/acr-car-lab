@@ -35,7 +35,10 @@ car catalogue in acr-setup-engineer); on kW they switch to kW. The curves and th
 not change.
 
 **Shift points** has its own **Rev floor** and **Rev ceiling** over the chart (the ceiling is
-the same one as the bar's). **Speed against revs** draws one line per gear of the gear set
+the same one as the bar's). Each row shows the gear's own ratio beside its number (gearbox
+only, no final drive). A **decimal · fraction** switch at the bottom left of the chart writes it
+as `2.800` or as tooth counts, `42/15`, and **copy** beside it copies every gear's ratio, one
+per line, in the format in force. **Speed against revs** draws one line per gear of the gear set
 selected in the bar. The rolling factor, labelled **Rolling radius factor** (0.8–1.1), and the
 **Rev limit** (2000–15000 rpm, to the nearest 10) are editable at the foot of the page, each
 with a reset link.
@@ -59,6 +62,7 @@ tap on a lane name selects that gear set without drawing a readout.
 | `rl` | Rev limit, only when edited |
 | `ceil` | Rev ceiling, only when below the rev limit |
 | `pw` | `kW` when the power unit switch is on kW; absent (hp, the default) otherwise |
+| `gr` | `frac` when Shift points writes gear ratios as fractions; absent (decimal, the default) otherwise |
 
 The old `draw` key (which gear sets Speed against revs drew) is gone; links that still carry
 it load normally and ignore it.

@@ -20,6 +20,19 @@ const ceilOf = (car, state) => state.ceil ?? car.engine.redline;
 const totals = (car, state) =>
   car.gear_sets[state.set].gears.map(g => g.value * fdValue(car, state));
 
+export const RATIO_FORMATS = ['decimal', 'fraction'];
+
+/**
+ * Each gear's own ratio in the selected gear set, gearbox only (no final drive): three
+ * decimals, or the tooth counts the data names it by, written with one slash (42//15 → 42/15).
+ */
+export const ratioLabels = (car, state, format = 'decimal') =>
+  car.gear_sets[state.set].gears.map(g =>
+    format === 'fraction' ? g.name.replace('//', '/') : g.value.toFixed(3));
+
+/** What the copy beside the format switch copies: every gear, one bare value per line. */
+export const ratiosText = (car, state, format) => ratioLabels(car, state, format).join('\n');
+
 export function layout(car, state) {
   const circ = circOf(car, state);
   const tot = totals(car, state);
@@ -89,7 +102,8 @@ export function chipX(cursorX, width, edge = 1096) {
   return right + width <= edge ? right : cursorX - 13 - width;
 }
 
-export function render(svg, car, state, hover = null, readoutEdge = 1096) {
+export function render(svg, car, state, hover = null, readoutEdge = 1096,
+                       ratioFormat = 'decimal') {
   clear(svg);
   const l = layout(car, state);
   const L = 132, R = 1012, T = 76, step = 44;
@@ -98,6 +112,7 @@ export function render(svg, car, state, hover = null, readoutEdge = 1096) {
   svg.setAttribute('viewBox', `0 0 1100 ${bottom + 60}`);
 
   const hot = hover ? hover.gear : -1;
+  const ratios = ratioLabels(car, state, ratioFormat);
 
   for (let v = 0; v <= l.vmax; v += 20) {
     el(svg, 'line', { x1: xs(v), x2: xs(v), y1: T - 6, y2: bottom,
@@ -112,9 +127,13 @@ export function render(svg, car, state, hover = null, readoutEdge = 1096) {
     el(svg, 'line', { x1: xs(bar.from), x2: xs(bar.to), y1: y, y2: y,
                       stroke: C.data, 'stroke-width': on ? 11 : 8,
                       'stroke-opacity': on ? 0.95 : 0.45, 'stroke-linecap': 'round' });
-    text(svg, L - 16, y + 4, 'Gear ' + (i + 1), 'rowlbl',
+    // "Gear N · ratio": the ratio in a column of its own against the plot edge
+    text(svg, L - 66, y + 4, 'Gear ' + (i + 1), 'rowlbl',
          { 'text-anchor': 'end', 'fill-opacity': on ? 1 : 0.7,
            'font-weight': on ? '600' : '400' });
+    text(svg, L - 57, y + 3.6, '·', 'val', { 'text-anchor': 'middle', fill: C.mutedText });
+    text(svg, L - 16, y + 3.6, ratios[i], 'val',
+         { 'text-anchor': 'end', fill: on ? C.fg : C.mutedText });
     text(svg, xs(bar.to) + 12, y + 3.6, bar.to.toFixed(0), 'val',
          { 'fill-opacity': on ? 1 : 0.6 });
     const fromLabel = bar.from.toFixed(0);

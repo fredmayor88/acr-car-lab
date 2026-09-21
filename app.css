@@ -175,7 +175,14 @@ svg{display:block;width:100%;height:auto}
 /* a finger gets at least 32 by 28 per word, still without moving the text */
 @media (pointer:coarse){
   .unitbox button{padding:9px 10px;margin:-9px -10px}
+  .unitbox .ratiocopy{margin-left:12px}
 }
+
+/* Shift points' gear ratio format switch and its copy, in the unit switch's type, bottom left
+   under the ratio column, level with the axis title. The copy is a word, not a boxed button. */
+.unitbox.ratiobox{top:auto;right:auto;left:18px;bottom:13px}
+.unitbox .ratiocopy{margin-left:18px}
+.unitbox .ratiocopy.done{color:var(--accent-text)}
 
 /* Shift points' rev floor and ceiling, over the top right of the chart */
 #sec-shift .panel{position:relative}
@@ -298,6 +305,8 @@ div.formula code{display:block;font:inherit;padding-left:2ch;text-indent:-2ch}
      unit in use by weight of colour, not the accent, to stay quieter than the chart */
   .unitbox{font-size:10px}
   .unitbox button[aria-pressed="true"]{color:var(--fg)}
+  /* no room left of the axis title on a phone: the ratio switch takes a line under the chart */
+  .unitbox.ratiobox{position:static;margin:10px 0 14px}
 
   /* The bar collapses to one line: what is selected, and a button that opens the controls.
      Open, they hang below the line over the page rather than pushing it down, so opening

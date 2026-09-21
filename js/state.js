@@ -27,6 +27,18 @@ export function setPowerUnit(state, hp) {
 }
 
 /**
+ * How Shift points writes each gear's ratio: 'fraction' (tooth counts, 42/15) when the switch is
+ * on fraction, else 'decimal'. Only fraction is stored (`state.gr`, hash `gr=frac`).
+ */
+export const ratioFormatOf = state => (state?.gr === 'frac' ? 'fraction' : 'decimal');
+
+/** The state with the ratio format set: no `gr` at all for decimal, `gr: 'frac'` for fraction. */
+export function setRatioFormat(state, fraction) {
+  const { gr: _old, ...rest } = state;
+  return fraction ? { ...rest, gr: 'frac' } : rest;
+}
+
+/**
  * A typed or linked rev limit as an integer, or null when it is not a valid one. It goes to the
  * nearest 10 rpm, as the measured limits are stored and as the input steps.
  */
@@ -246,6 +258,7 @@ export function parseHash(hash, car) {
 
   // anything but pw=kW is hp, the default (so older pw=hp links still read hp)
   if (q.get('pw') === 'kW') out.pw = 'kW';
+  if (q.get('gr') === 'frac') out.gr = 'frac';
 
   return out;
 }
@@ -292,5 +305,6 @@ export function toHash(state, car) {
   const ceil = state.ceil ?? rl;
   if (ceil !== rl) q.set('ceil', String(ceil));
   if (powerUnitOf(state) === 'kW') q.set('pw', 'kW');
+  if (ratioFormatOf(state) === 'fraction') q.set('gr', 'frac');
   return '#' + q.toString();
 }

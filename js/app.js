@@ -5,7 +5,8 @@
 import { REV_FLOOR, SET_COLOURS, SET_COLOURS_DARK, SURFACES, finalDriveCombos, hasRatioSettings,
   primaryIndex, withRevLimit } from './gearing.js';
 import { REV_LIMIT_MAX, REV_LIMIT_MIN, applyRevLimit, floorFocusAfterStep, parseCeil, parseFloor,
-  parseHash, parseRevLimit, pickRow, powerUnitOf, revControlViews, rpmInputKey, setPowerUnit,
+  parseHash, parseRevLimit, pickRow, powerUnitOf, ratioFormatOf, revControlViews, rpmInputKey,
+  setPowerUnit, setRatioFormat,
   setPrimary, setRatio, stepCeil, stepFloor, toHash } from './state.js';
 import { settingsText } from './settingsText.js';
 import { barSummaryParts, setLabel } from './barSummary.js';
@@ -107,6 +108,7 @@ function buildShell() {
 
   const revs = buildRevControls();
   const power = buildPowerUnitControl();
+  const ratioFormat = buildRatioFormatControl();
   const surfaces = SURFACES.filter(s => s.key in car.tyres);
   const combos = car.final_drive ? finalDriveCombos(car.final_drive) : [];
   // an averaged-axle car has a select per ratio setting instead of the combined one
@@ -204,7 +206,8 @@ function buildShell() {
     svg.id = 'svg-' + s.id;
     const panel = h('div', { class: 'panel' });
     panel.appendChild(svg);
-    if (s.id === 'shift') panel.appendChild(revs.box);
+    // the ratio switch first: on a phone both sit under the chart, and it belongs next to it
+    if (s.id === 'shift') { panel.appendChild(ratioFormat.box); panel.appendChild(revs.box); }
     // before the chart, so it comes before it in reading and tab order too
     if (s.id === 'power') panel.insertBefore(power.box, svg);
     // the 206 WRC runs on another car's curve, and its power section says whose
@@ -230,7 +233,8 @@ function buildShell() {
   wireTouchDismiss();
 
   return { surfaceSel, fdSel, setSel, factor, revLimit, revs, summary, subLimit: sub.limit,
-    ceils: [revs.ceil, barCeil], ratios, powerUnit: power.buttons };
+    ceils: [revs.ceil, barCeil], ratios, powerUnit: power.buttons,
+    ratioFormat: ratioFormat.buttons };
 }
 
 /**
@@ -251,6 +255,39 @@ function buildPowerUnitControl() {
   }
   const box = h('div', { class: 'unitbox', role: 'group', 'aria-label': 'Power unit' },
     buttons.kW, h('span', { class: 'sep', 'aria-hidden': 'true' }, '·'), buttons.hp);
+  return { box, buttons };
+}
+
+/**
+ * Shift points' gear ratios: a "decimal · fraction" switch like the power unit's, under the
+ * ratio column it governs, and a quiet "copy" beside it that copies every gear's ratio, one per
+ * line, in the format in force.
+ */
+function buildRatioFormatControl() {
+  const buttons = {};
+  for (const format of shiftPoints.RATIO_FORMATS) {
+    buttons[format] = h('button', { type: 'button', 'aria-pressed': 'false', onclick: () => {
+      if (ratioFormatOf(state) === format) return;
+      state = setRatioFormat(state, format === 'fraction');
+      track('toggle-ratio-format');
+      commit();
+    } }, format);
+  }
+  const copy = h('button', { class: 'ratiocopy', type: 'button', 'aria-label': 'Copy gear ratios',
+    onclick: async () => {
+      track('copy-gear-ratios');
+      try {
+        await navigator.clipboard.writeText(shiftPoints.ratiosText(car, state, ratioFormatOf(state)));
+        copy.textContent = 'copied';
+        copy.classList.add('done');
+        setTimeout(() => { copy.textContent = 'copy'; copy.classList.remove('done'); }, 1500);
+      } catch {
+        // no clipboard access: the ratios are on the chart to read
+      }
+    } }, 'copy');
+  const box = h('div', { class: 'unitbox ratiobox', role: 'group', 'aria-label': 'Gear ratios' },
+    buttons.decimal, h('span', { class: 'sep', 'aria-hidden': 'true' }, '·'), buttons.fraction,
+    copy);
   return { box, buttons };
 }
 
@@ -638,7 +675,8 @@ const RENDER = {
     maps.ladder = ladder.render(svgOf('ladder'), car, state, hover.ladder);
   },
   shift: () => {
-    maps.shift = shiftPoints.render(svgOf('shift'), car, state, hover.shift, shiftReadoutEdge());
+    maps.shift = shiftPoints.render(svgOf('shift'), car, state, hover.shift, shiftReadoutEdge(),
+      ratioFormatOf(state));
   },
   revs: () => {
     maps.revs = speedRevs.render(svgOf('revs'), car, state, hover.revs, setColours());
@@ -673,6 +711,9 @@ function syncControls() {
   controls.setSel.value = String(state.set);
   for (const [unit, button] of Object.entries(controls.powerUnit)) {
     button.setAttribute('aria-pressed', String(powerUnitOf(state) === unit));
+  }
+  for (const [format, button] of Object.entries(controls.ratioFormat)) {
+    button.setAttribute('aria-pressed', String(ratioFormatOf(state) === format));
   }
   controls.factor.value = String(state.k);
   controls.revLimit.value = String(state.rl);
