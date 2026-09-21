@@ -486,6 +486,8 @@ test('app.css: the switch is text, not a box; the pressed unit in the accent; a 
   assert.match(rule('.unitbox button'), /background:none;border:0/);
   assert.match(rule('.unitbox button'), /color:var\(--muted-text\)/);
   assert.match(rule('.unitbox button[aria-pressed="true"]'), /color:var\(--accent-text\)/);
+  // and nowhere else: a phone rule once put it in the text colour, which read as unselected
+  assert.equal((css.match(/\.unitbox button\[aria-pressed="true"\]\{/g) || []).length, 1);
   assert.match(rule('.unitbox button:focus-visible'), /outline:2px solid var\(--accent\)/);
   assert.doesNotMatch(css, /text-transform:uppercase[^}]*\}\s*\.unitbox|\.unitbox[^{]*\{[^}]*(?:letter-spacing|text-transform)/);
   // touch: 9px + 11.5px + 9px is 29.5 tall; 10px either side of a two-letter mono word is over 32 wide.
